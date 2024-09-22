@@ -2,20 +2,23 @@
 
 namespace Game_Engine;
 
-internal class Program
+internal partial class Program
 {
-    [DllImport("kernel32.dll")]
-    private static extern IntPtr GetConsoleWindow();
+    public const int SW_HIDE = 0b_0000;
+    public const int SW_SHOW = 0b_0101;
+    public static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
 
-    [DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-    private const int SW_HIDE = 0b_0000;
-    private const int SW_SHOW = 0b_0101;
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.SysInt)]
+    private static partial IntPtr GetConsoleWindow();
 
     private static void Main()
     {
-        ShowWindow(GetConsoleWindow(), SW_HIDE);
+        ShowWindow(WINDOW_DESCRIPTOR, SW_HIDE);
 
         using Window appWindow = new(800, 450, "TestLib");
         appWindow.Run();
