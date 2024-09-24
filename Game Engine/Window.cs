@@ -3,15 +3,17 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
+using System.Diagnostics;
 
 namespace Game_Engine
 {
     internal class Window : GameWindow
     {
-        private readonly float[] _vertices;
         private readonly Shader _shader;
+        private float[] _vertices;
         private int _vertexBufferObject;
         private int _vertexArrayObject;
+        private Stopwatch _stopwatch = new();
 
         public Window(int wight, int height, string title) :
             base(GameWindowSettings.Default, new NativeWindowSettings()
@@ -20,9 +22,9 @@ namespace Game_Engine
                 Title = title        
             })
         {
-            _vertices = [ -1.0f, -1.0f, -1.0f,
-                          0.0f, 1.0f, 0.0f,
-                          1.0f, -1.0f, 0.0f ];
+            _vertices = [ -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
+                           0.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+                           1.0f, -1.0f, 0.0f, 0.0f, 1.0f, ];
 
             _shader = new Shader(@"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.vert",
                                  @"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.frag");
@@ -31,8 +33,9 @@ namespace Game_Engine
         sealed protected override void OnLoad()
         {
             base.OnLoad();
+            _stopwatch.Start();
 
-            GL.ClearColor(0.7f, 0.6f, 0.2f, 1f);
+            GL.ClearColor(0.4f, 0.4f, 0.4f, 1f);
 
             _vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -41,8 +44,10 @@ namespace Game_Engine
             _vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(_vertexArrayObject);
 
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2 * sizeof(float));
+            GL.EnableVertexAttribArray(1);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
@@ -51,8 +56,15 @@ namespace Game_Engine
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
+            var sin = (float)Math.Abs(Math.Sin(_stopwatch.Elapsed.TotalSeconds));
+            var cos = (float)Math.Abs(Math.Cos(_stopwatch.Elapsed.TotalSeconds));
+
+            _vertices = [ -1.0f, -1.0f, cos, sin, 0.0f,
+                           0.0f,  1.0f, 0.0f, cos, sin,
+                           1.0f, -1.0f, sin, 0.0f, cos, ];
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+
             _shader.Use();
-            GL.BindVertexArray(_vertexArrayObject);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
             SwapBuffers();
