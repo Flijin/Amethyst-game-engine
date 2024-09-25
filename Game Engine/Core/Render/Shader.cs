@@ -1,11 +1,10 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace Game_Engine
+namespace Game_Engine.Core.Render
 {
     internal class Shader : IDisposable
     {
         private readonly int _handle;
-        private bool _hasDisposed;
 
         public Shader(string vertexShaderPath, string fragmentShaderPath)
         {
@@ -57,33 +56,7 @@ namespace Game_Engine
             }
         }
 
-        ~Shader()
-        {
-            if (_hasDisposed == false)
-            {
-                Program.ShowWindow(Program.WINDOW_DESCRIPTOR, Program.SW_SHOW);
-                Console.Write("Не был использован метод Dispose утечка памяти GPU");
-            }  
-        }
-
         public void Use() => GL.UseProgram(_handle);
-
-        public void Dispose()
-        {
-            if (_hasDisposed == false)
-            {
-                Dispose(true);
-                GC.SuppressFinalize(this);
-            }
-        }
-
-        public virtual void Dispose(bool disposing)
-        {
-            if (_hasDisposed == false)
-            {
-                GL.DeleteProgram(_handle);
-                _hasDisposed = true;
-            }
-        }
+        public void Dispose() => GL.DeleteProgram(_handle);
     }
 }

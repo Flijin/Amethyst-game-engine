@@ -4,36 +4,29 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using System.Diagnostics;
+using Game_Engine.Core.Render;
 
 namespace Game_Engine
 {
-    internal class Window : GameWindow
+    internal class Window(int wight, int height, string title) : GameWindow(GameWindowSettings.Default, new NativeWindowSettings()
+        {
+            ClientSize = new Vector2i(wight, height),
+            Title = title        
+        })
     {
-        private readonly Shader _shader;
-        private float[] _vertices;
+
+        private readonly Shader _shader = new(@"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.vert",
+                                                    @"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.frag");
+        private float[] _vertices = [ -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
+                           0.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+                           1.0f, -1.0f, 0.0f, 0.0f, 1.0f, ];
         private int _vertexBufferObject;
         private int _vertexArrayObject;
         private Stopwatch _stopwatch = new();
 
-        public Window(int wight, int height, string title) :
-            base(GameWindowSettings.Default, new NativeWindowSettings()
-            {
-                ClientSize = new Vector2i(wight, height),
-                Title = title        
-            })
-        {
-            _vertices = [ -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
-                           0.0f,  1.0f, 0.0f, 1.0f, 0.0f,
-                           1.0f, -1.0f, 0.0f, 0.0f, 1.0f, ];
-
-            _shader = new Shader(@"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.vert",
-                                 @"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.frag");
-        }
-
         sealed protected override void OnLoad()
         {
             base.OnLoad();
-            _stopwatch.Start();
 
             GL.ClearColor(0.4f, 0.4f, 0.4f, 1f);
 
@@ -52,6 +45,7 @@ namespace Game_Engine
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            _stopwatch.Restart();
             base.OnRenderFrame(args);
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -62,6 +56,7 @@ namespace Game_Engine
             _vertices = [ -1.0f, -1.0f, cos, sin, 0.0f,
                            0.0f,  1.0f, 0.0f, cos, sin,
                            1.0f, -1.0f, sin, 0.0f, cos, ];
+
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
             _shader.Use();
