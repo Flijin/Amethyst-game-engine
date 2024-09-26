@@ -2,12 +2,18 @@
 
 namespace Game_Engine.Core
 {
-    public readonly struct Triangle
+    internal readonly struct Triangle
     {
         public Vector3 Color { get; } = new(0.5f, 0.5f, 0.5f);
         public Vector3 NormalVector { get; }
         public Vector3[] Vertices { get; }
         public ushort AttributeByteCount { get; }
+
+        public Vector3 this[int index]
+        {
+            get => Vertices[index];
+            set => Vertices[index] = value;
+        }
 
         public Triangle(Vector3 normalVector, Vector3[] vertexes, ushort attributeByteCount)
         {
@@ -31,11 +37,23 @@ namespace Game_Engine.Core
         }
     }
 
-    public class STLModel
+    internal class STLModel
     {
         public string Header { get; }
         public uint TrianglesCount { get; }
         public Triangle[] Triangles { get; }
+
+        public Triangle this[int index]
+        {
+            get => Triangles[index];
+            set => Triangles[index] = value;
+        }
+
+        public Vector3 this[int triangleIndex, int vertexIndex]
+        {
+            get => Triangles[triangleIndex][vertexIndex];
+            set => Triangles[triangleIndex][vertexIndex] = value;
+        }
 
         public STLModel(string path)
         {

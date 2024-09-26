@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace Game_Engine.Core.Render
 {
@@ -18,10 +19,13 @@ namespace Game_Engine.Core.Render
             }
         }
 
+        public void UseShader() => _shader.Use();
+
         public void LoadModelInGPU(STLModel model)
         {
-            var vertices = new float[model.TrianglesCount * 5];
+            var vertices = new float[model.TrianglesCount * 18];
             var index = 0;
+            Random r = new();
 
             foreach (var polygon in model.Triangles)
             {
@@ -31,8 +35,25 @@ namespace Game_Engine.Core.Render
                     {
                         vertices[index++] = coordinate;
                     }
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        vertices[index++] = (float)r.NextDouble();
+                    }
                 }
             }
+
+            var vertexBufferObject = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            var vertexArrayObject = GL.GenVertexArray();
+            GL.BindVertexArray(vertexArrayObject);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+            GL.EnableVertexAttribArray(1);
         }
 
         public virtual void Dispose(bool disposing)
