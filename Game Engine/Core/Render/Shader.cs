@@ -4,19 +4,19 @@ namespace Game_Engine.Core.Render
 {
     internal class Shader : IDisposable
     {
-        private readonly int _handle;
+        public int Handle { get; private set; }
 
         public Shader(string vertexShaderPath, string fragmentShaderPath)
         {
-            _handle = GL.CreateProgram();
+            Handle = GL.CreateProgram();
 
             var vertexDescriptor = CreateAndAttachShader(vertexShaderPath, ShaderType.VertexShader);
             var fragmentDescriptor = CreateAndAttachShader(fragmentShaderPath, ShaderType.FragmentShader);
 
-            GL.LinkProgram(_handle);
-            GL.GetProgram(_handle, GetProgramParameterName.LinkStatus, out int code);
+            GL.LinkProgram(Handle);
+            GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
 
-            if (code == 0) PrintErrorMessage(GL.GetProgramInfoLog(_handle));
+            if (code == 0) PrintErrorMessage(GL.GetProgramInfoLog(Handle));
 
             ClearShader(vertexDescriptor);
             ClearShader(fragmentDescriptor);
@@ -44,19 +44,19 @@ namespace Game_Engine.Core.Render
 
                 GL.ShaderSource(shaderDescriptor, shaderSourse);
                 CompileShader(shaderDescriptor);
-                GL.AttachShader(_handle, shaderDescriptor);
+                GL.AttachShader(Handle, shaderDescriptor);
 
                 return shaderDescriptor;
             }
 
             void ClearShader(int descriptor)
             {
-                GL.DetachShader(_handle, descriptor);
+                GL.DetachShader(Handle, descriptor);
                 GL.DeleteShader(descriptor);
             }
         }
 
-        public void Use() => GL.UseProgram(_handle);
-        public void Dispose() => GL.DeleteProgram(_handle);
+        public void Use() => GL.UseProgram(Handle);
+        public void Dispose() => GL.DeleteProgram(Handle);
     }
 }

@@ -1,5 +1,7 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using Game_Engine.Enums;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Game_Engine.Core.Render
 {
@@ -18,42 +20,35 @@ namespace Game_Engine.Core.Render
                 Console.Write("Не был использован метод Dispose утечка памяти GPU");
             }
         }
-
-        public void UseShader() => _shader.Use();
-
-        public void LoadModelInGPU(STLModel model)
+        public static void LoadGameObjectInGPU(GameObjectBase3D obj)
         {
-            var vertices = new float[model.TrianglesCount * 18];
-            var index = 0;
-            Random r = new();
-
-            foreach (var polygon in model.Triangles)
-            {
-                foreach (var vertex in polygon.Vertices)
-                {
-                    foreach (var coordinate in GetVectorCoordonates(NormalizeVector(vertex)))
-                    {
-                        vertices[index++] = coordinate;
-                    }
-
-                    for (int i = 0; i < 3; i++)
-                    {
-                        vertices[index++] = (float)r.NextDouble();
-                    }
-                }
-            }
-
             var vertexBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, obj.Model.Vertices.Length * sizeof(float),
+                                                    obj.Model.Vertices, BufferUsageHint.DynamicDraw);
 
             var vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayObject);
 
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
-            GL.EnableVertexAttribArray(1);
+
+            obj.Handle = vertexArrayObject;
+        }
+
+        public void DrawGameObject(GameObjectBase3D obj)
+        {
+            GL.BindVertexArray(obj.Handle);
+            _shader.Use();
+
+            var uniformLocation = GL.GetUniformLocation(_shader.Handle, "aColor");
+            var colorIndex = 0;
+
+            for (int i = 0; i < obj.Model.TrianglesCount; i++)
+            {
+                GL.Uniform3(uniformLocation, obj.Model.GetData(AttribTypes.Color, colorIndex++));
+                GL.DrawArrays(PrimitiveType.Triangles, i * 3, 3);
+            }
         }
 
         public virtual void Dispose(bool disposing)
@@ -69,15 +64,6 @@ namespace Game_Engine.Core.Render
                 Dispose(true);
                 GC.SuppressFinalize(this);
             }
-        }
-
-        private Vector3 NormalizeVector(Vector3 vector) => vector / new Vector3(_windowSize.X, _windowSize.Y, _windowSize.X);
-
-        private static IEnumerable<float> GetVectorCoordonates(Vector3 vector)
-        {
-            yield return vector.X;
-            yield return vector.Y;
-            yield return vector.Z;
         }
     }
 }

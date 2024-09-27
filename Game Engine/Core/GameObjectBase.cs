@@ -1,14 +1,16 @@
-﻿using OpenTK.Mathematics;
+﻿using Game_Engine.Enums;
+using OpenTK.Mathematics;
 
 namespace Game_Engine.Core
 {
-    internal class GameObjectBase3D
+    internal class GameObjectBase3D(STLModel model)
     {
         private Vector3 _scale = new(1f, 1f, 1f);
 
+        public STLModel Model { get; } = model;
         public Vector3 Rotation { get; set; }
         public Vector3 Position { get; set; }
-        public STLModel Model { get; }
+        public int Handle { get; set; }
 
         public Vector3 Scale
         {
@@ -17,20 +19,11 @@ namespace Game_Engine.Core
             set
             {
                 _scale = value;
-
-                for (int triangle = 0; triangle < Model.TrianglesCount; triangle++)
+                for (int i = 0; i < Model.TrianglesCount * 3; i++)
                 {
-                    for (int vertex = 0; vertex < 0; vertex++)
-                    {
-                        Model[triangle, vertex] = Vector3.Multiply(Model[triangle, vertex], value);
-                    }
+                    Model.SetData(AttribTypes.Vertex, i, Vector3.Multiply(Model.GetData(AttribTypes.Vertex, i), value));
                 }
             }
-        }
-
-        public GameObjectBase3D(STLModel model)
-        {
-            Model = model;
         }
     }
 }

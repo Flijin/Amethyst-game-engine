@@ -1,105 +1,124 @@
-﻿using OpenTK.Mathematics;
+﻿using Game_Engine.Enums;
+using OpenTK.Mathematics;
 
 namespace Game_Engine.Core
 {
-    internal readonly struct Triangle
-    {
-        public Vector3 Color { get; } = new(0.5f, 0.5f, 0.5f);
-        public Vector3 NormalVector { get; }
-        public Vector3[] Vertices { get; }
-        public ushort AttributeByteCount { get; }
-
-        public Vector3 this[int index]
-        {
-            get => Vertices[index];
-            set => Vertices[index] = value;
-        }
-
-        public Triangle(Vector3 normalVector, Vector3[] vertexes, ushort attributeByteCount)
-        {
-            if (vertexes.Length != 3)
-                throw new ArgumentException("Передано неверное количество вершин");
-
-            NormalVector = normalVector;
-            Vertices = vertexes;
-            AttributeByteCount = attributeByteCount;
-
-            var str = Convert.ToString(attributeByteCount, 2);
-            str = new string('0', sizeof(ushort) * 8 - str.Length) + str;
-
-            if (str[^1] != '0')
-            {
-                Color = new((float)Convert.ToByte(str[..5], 2) / 32,
-                            (float)Convert.ToByte(str[5..10], 2) / 32,
-                            (float)Convert.ToByte(str[10..^1], 2) / 32);
-
-            }
-        }
-    }
-
     internal class STLModel
     {
+        private const int COLOR_OFFSET = 3;
+        private const int STRIDE = 3;
+
+        /// <summary>
+        ///     Structure:
+        ///         <para>Contains vertices of polygons in normalized form</para>
+        ///         <para>(X1, Y1, Z1, X2 ...)</para>
+        /// </summary>
+        public float[] Vertices { get; }
+        /// <summary>
+        ///     Structure:
+        ///         <para>
+        ///             Contains vertices of normal vector and 5-bit corors in normalized form
+        ///         </para>
+        ///         <para>(X1, Y1, Z1, R1, G1, B1, X2 ...)</para>
+        /// </summary>
+        public float[] RenderData { get; }
+
         public string Header { get; }
         public uint TrianglesCount { get; }
-        public Triangle[] Triangles { get; }
+        public Vector3 DefaultColor { get; init; } = new Vector3(0.5f, 0.5f, 0.5f);
 
-        public Triangle this[int index]
+        public STLModel(string path, Vector2i windowSize)
         {
-            get => Triangles[index];
-            set => Triangles[index] = value;
-        }
+            var vIndex = 0;
+            var rIndex = 0;
 
-        public Vector3 this[int triangleIndex, int vertexIndex]
-        {
-            get => Triangles[triangleIndex][vertexIndex];
-            set => Triangles[triangleIndex][vertexIndex] = value;
-        }
-
-        public STLModel(string path)
-        {
             using BinaryReader br = new(File.OpenRead(path));
 
             Header = new string(br.ReadChars(80)).Trim('\0');
             TrianglesCount = br.ReadUInt32();
-            Triangle[] triangles = new Triangle[TrianglesCount];
+            Vertices = new float[TrianglesCount * 9];
+            RenderData = new float[TrianglesCount * 6];
 
-            for (int i = 0; i < triangles.Length; i++)
+            for (int i = 0; i < TrianglesCount; i++)
             {
-                triangles[i] = BuildTriangle(br);
+                for (int vectors = 0; vectors < 3; vectors++)
+                {
+                    RenderData[rIndex++] = br.ReadSingle();
+                }
+
+                for (int vectors = 0; vectors < 3; vectors++)
+                {
+                    Vertices[vIndex++] = br.ReadSingle() / windowSize.X;
+                    Vertices[vIndex++] = br.ReadSingle() / windowSize.Y;
+                    Vertices[vIndex++] = br.ReadSingle() / windowSize.X;
+                }
+
+                ushort attributeByteCount = br.ReadUInt16();
+
+                Vector3 color;
+                var str = Convert.ToString(attributeByteCount, 2);
+                str = new string('0', sizeof(ushort) * 8 - str.Length) + str;
+
+                if (str[^1] != '0')
+                {
+                    color = new((float)Convert.ToByte(str[..5], 2) / 32,
+                                (float)Convert.ToByte(str[5..10], 2) / 32,
+                                (float)Convert.ToByte(str[10..^1], 2) / 32);
+
+                }
+                else
+                {
+                    color = DefaultColor;
+                }
+
+                for (int colorIndex = 0; colorIndex < 3; colorIndex++)
+                {
+                    RenderData[rIndex++] = color[colorIndex];
+                }
             }
-
-            Triangles = triangles;
-
-            if (Triangles[^1].Vertices is null)
-                throw new FileLoadException("Ошибка, поврежденный файл");
         }
 
-        private static Triangle BuildTriangle(BinaryReader br)
+        public Vector3 GetData(AttribTypes type, int index)
         {
-            Vector3 normalVector;
-            Vector3[] vertexes = new Vector3[3];
-            ushort attributeByteCount;
-            float[] triangleProps = new float[12];
+            Vector3 result;
 
-            for (int i = 0; i < 12; i++)
+            var resultArray = type switch
             {
-                triangleProps[i] = br.ReadSingle();
-            }
+                AttribTypes.Vertex => Vertices[(STRIDE * index)..(STRIDE * index + 3)],
+                AttribTypes.Color => RenderData[(STRIDE * index * 2 + COLOR_OFFSET)..(STRIDE * index * 2 + COLOR_OFFSET + 3)],
+                AttribTypes.Normal => RenderData[(STRIDE * index * 2)..(STRIDE * index * 2 + 3)],
+                _ => []
+            };
 
-            for (int i = 0; i < 3; i++)
+            result = new(resultArray[0], resultArray[1], resultArray[2]);
+            return result;
+        }
+
+        public void SetData(AttribTypes type, int index, Vector3 vector)
+        {
+            switch (type)
             {
-                vertexes[i] = new Vector3(x: triangleProps[3 * i + 3],
-                                          y: triangleProps[3 * i + 4],
-                                          z: triangleProps[3 * i + 5]);
+                case AttribTypes.Vertex:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Vertices[STRIDE * index + i] = vector[i];
+                    }
+                    break;
+
+                case AttribTypes.Color:             
+                    for (int i = 0; i < 3; i++)
+                    {
+                        RenderData[STRIDE * index * 2 + COLOR_OFFSET + i] = vector[i];
+                    }
+                    break;
+
+                case AttribTypes.Normal:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        RenderData[STRIDE * index * 2 + i] = vector[i];
+                    }
+                    break;
             }
-
-            normalVector = new(x: triangleProps[0],
-                               y: triangleProps[1],
-                               z: triangleProps[2]);
-
-            attributeByteCount = br.ReadUInt16();
-
-            return new Triangle(normalVector, vertexes, attributeByteCount);
         }
     }
 }

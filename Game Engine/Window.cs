@@ -17,30 +17,29 @@ namespace Game_Engine
             ClientSize = new Vector2i(wight, height);
             Title = title;
             _renderCore = new(Size);
+            test = new(new(@"C:\Users\it_ge\Desktop\Okay.stl", Size));
         }
 
         private Stopwatch _stopwatch = new();
         private RenderCore _renderCore;
-        STLModel test = new(@"C:\Users\it_ge\Desktop\Okay.stl");
+        GameObjectBase3D test;
 
         sealed protected override void OnLoad()
         {
             base.OnLoad();
 
             GL.ClearColor(0.4f, 0.4f, 0.4f, 1f);
-            _renderCore.LoadModelInGPU(test);
+            RenderCore.LoadGameObjectInGPU(test);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             _stopwatch.Restart();
             base.OnRenderFrame(args);
+            test.Scale = new Vector3(test.Scale.X + 0.1f, test.Scale.Y + 0.1f, test.Scale.Z + 0.1f);
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
-
-            _renderCore.UseShader();
-            GL.DrawArrays(PrimitiveType.Triangles, 0, (int)test.TrianglesCount * 3);
-
+            _renderCore.DrawGameObject(test);
             SwapBuffers();
 
             Debug.Print((1000f / (_stopwatch.Elapsed.Microseconds / 1000f)).ToString());
