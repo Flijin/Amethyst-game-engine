@@ -1,17 +1,13 @@
 ﻿using Game_Engine.Enums;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Game_Engine.Core.Render
 {
-    internal class RenderCore(Vector2i windowSize) : IDisposable
+    internal class RenderCore : IDisposable
     {
         private bool _disposed;
-        private readonly Vector2i _windowSize = windowSize;
         private readonly Shader _shader = new(@"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.vert",
                                               @"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.frag");
-
         ~RenderCore()
         {
             if (_disposed == false)
@@ -36,19 +32,17 @@ namespace Game_Engine.Core.Render
             obj.Handle = vertexArrayObject;
         }
 
-        public void DrawGameObject(GameObjectBase3D obj)
+        public void DrawGameObject(GameObjectBase3D obj, Camera cam)
         {
             GL.BindVertexArray(obj.Handle);
             _shader.Use();
 
-            var uniformLocation = GL.GetUniformLocation(_shader.Handle, "aColor");
-            var colorIndex = 0;
+            _shader.SetMatrix4("model", obj.ModelMatrix);
+            _shader.SetMatrix4("view", cam.ViewMatrix);
+            _shader.SetMatrix4("projection", cam.ProjectionMatrix);
+            _shader.SetVector3("aColor", obj.Model.GetData(AttribTypes.Color, 0));
 
-            for (int i = 0; i < obj.Model.TrianglesCount; i++)
-            {
-                GL.Uniform3(uniformLocation, obj.Model.GetData(AttribTypes.Color, colorIndex++));
-                GL.DrawArrays(PrimitiveType.Triangles, i * 3, 3);
-            }
+            GL.DrawArrays(PrimitiveType.Triangles, 0, (int)obj.Model.TrianglesCount * 3);
         }
 
         public virtual void Dispose(bool disposing)

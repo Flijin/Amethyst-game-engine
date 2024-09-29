@@ -1,15 +1,23 @@
-﻿using Game_Engine.Enums;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 
 namespace Game_Engine.Core
 {
     internal class GameObjectBase3D(STLModel model)
     {
-        private Vector3 _scale = new(1f, 1f, 1f);
+        private Vector3 _scale;
+        private Vector3 _position;
+        private float _rotation;
 
+        private float[,] _modelMatrix =
+        {
+            { 1, 0, 0, 0 },
+            { 0, 1, 0, 0 },
+            { 0, 0, 1, 0 },
+            { 0, 0, 0, 1 },
+        };
+
+        public float[,] ModelMatrix => _modelMatrix;
         public STLModel Model { get; } = model;
-        public Vector3 Rotation { get; set; }
-        public Vector3 Position { get; set; }
         public int Handle { get; set; }
 
         public Vector3 Scale
@@ -19,10 +27,33 @@ namespace Game_Engine.Core
             set
             {
                 _scale = value;
-                for (int i = 0; i < Model.TrianglesCount * 3; i++)
-                {
-                    Model.SetData(AttribTypes.Vertex, i, Vector3.Multiply(Model.GetData(AttribTypes.Vertex, i), value));
-                }
+                _modelMatrix = Mathematics.MultiplyMatrices(_modelMatrix,
+                               Mathematics.CreateScaleMatrix(value.X, value.Y, value.Z));
+            }
+        }
+
+        public Vector3 Position
+        {
+            get => _position;
+
+            set
+            {
+                _position = value;
+                _modelMatrix = Mathematics.MultiplyMatrices(_modelMatrix,
+                               Mathematics.CreateTranslationMatrix(value.X, value.Y, value.Z));
+            }
+        }
+
+        public float Rotation
+        {
+            get => _rotation;
+
+            set
+            {
+                _rotation = value;
+                _modelMatrix = Mathematics.MultiplyMatrices(_modelMatrix,
+                               Mathematics.CreateRotationXMatrix(
+                               Mathematics.DegreesToRadians(value)));
             }
         }
     }

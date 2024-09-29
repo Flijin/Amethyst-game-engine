@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Structs\**" />
+    <EmbeddedResource Remove="Structs\**" />
+    <None Remove="Structs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.8.2" />
   </ItemGroup>
 

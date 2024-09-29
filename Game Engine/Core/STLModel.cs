@@ -10,14 +10,14 @@ namespace Game_Engine.Core
 
         /// <summary>
         ///     Structure:
-        ///         <para>Contains vertices of polygons in normalized form</para>
+        ///         <para>Contains vertices of polygons in local space</para>
         ///         <para>(X1, Y1, Z1, X2 ...)</para>
         /// </summary>
         public float[] Vertices { get; }
         /// <summary>
         ///     Structure:
         ///         <para>
-        ///             Contains vertices of normal vector and 5-bit corors in normalized form
+        ///             Contains vertices of normal vector and 5-bit corors in normalized form (0.0 - 1.0)
         ///         </para>
         ///         <para>(X1, Y1, Z1, R1, G1, B1, X2 ...)</para>
         /// </summary>
@@ -27,7 +27,7 @@ namespace Game_Engine.Core
         public uint TrianglesCount { get; }
         public Vector3 DefaultColor { get; init; } = new Vector3(0.5f, 0.5f, 0.5f);
 
-        public STLModel(string path, Vector2i windowSize)
+        public STLModel(string path)
         {
             var vIndex = 0;
             var rIndex = 0;
@@ -46,11 +46,9 @@ namespace Game_Engine.Core
                     RenderData[rIndex++] = br.ReadSingle();
                 }
 
-                for (int vectors = 0; vectors < 3; vectors++)
+                for (int vectors = 0; vectors < 9; vectors++)
                 {
-                    Vertices[vIndex++] = br.ReadSingle() / windowSize.X;
-                    Vertices[vIndex++] = br.ReadSingle() / windowSize.Y;
-                    Vertices[vIndex++] = br.ReadSingle() / windowSize.X;
+                    Vertices[vIndex++] = br.ReadSingle();
                 }
 
                 ushort attributeByteCount = br.ReadUInt16();
