@@ -70,21 +70,6 @@ namespace Game_Engine.Core.Render
             GL.Uniform1(_uniformLocations[name], value);
         }
 
-        private Dictionary<string, int> GetUniforms()
-        {
-            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out int uniformsCount);
-            Dictionary<string, int> result = new(uniformsCount);
-
-            for (int i = 0; i < uniformsCount; i++)
-            {
-                var key = GL.GetActiveUniform(Handle, i, out _, out _);
-                var location = GL.GetUniformLocation(Handle, key);
-                result.Add(key, location);
-            }
-
-            return result;
-        }
-
         private static int CreateAndAttachShader(string path, ShaderType type, int handle)
         {
             var shaderSourse = File.ReadAllText(path);
@@ -111,6 +96,21 @@ namespace Game_Engine.Core.Render
             Console.Write(message);
             Console.ReadKey();
             Environment.Exit(0);
+        }
+
+        private Dictionary<string, int> GetUniforms()
+        {
+            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out int uniformsCount);
+            Dictionary<string, int> result = new(uniformsCount);
+
+            for (int i = 0; i < uniformsCount; i++)
+            {
+                var key = GL.GetActiveUniform(Handle, i, out _, out _);
+                var location = GL.GetUniformLocation(Handle, key);
+                result.Add(key, location);
+            }
+
+            return result;
         }
     }
 }

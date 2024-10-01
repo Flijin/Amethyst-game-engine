@@ -49,6 +49,8 @@ internal static class Mathematics
 
     public static float[,] CreateRotationXMatrix(float angle)
     {
+        angle = DegreesToRadians(angle);
+
         return new float[,]
         {
             { 1,            0,                       0,           0 },
