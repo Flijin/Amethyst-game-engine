@@ -4,38 +4,63 @@ namespace Game_Engine.Core;
 
 internal class Camera
 {
-    private Vector3 _position = new (0f, 0f, 200f);
+    private readonly float _aspectRatio;
+    private float _yaw = -float.Pi / 2;
+    private float _pitch;
+    private float _fovy;
 
-    public Camera(Vector2i windowSize)
-    {       
-        ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(Mathematics.DegreesToRadians(45f),
-                           (float)windowSize.X / windowSize.Y, 1f, 5000f);
-        CalculateVectors();
+    public Camera(Vector3 position, Vector2i windowSize, float fovy)
+    {
+        Position = position;
+        Fovy = fovy;
+        _aspectRatio = (float)windowSize.X / windowSize.Y;
     }
 
-    public Vector3 Up { get; set; }
-    public Vector3 Right { get; set; }
-    public Vector3 Direction { get; set; }
-    public Matrix4 ProjectionMatrix { get; set;}
-    public Matrix4 ViewMatrix { get; set;}
-    public Vector3 Position
+    public float NearDistance { get; set; } = 1f;
+    public float FarDistance { get; set; } = 500f;
+    public Vector3 Up { get; private set; } = Vector3.UnitY;
+    public Vector3 Right { get; private set; } = Vector3.UnitX;
+    public Vector3 Front { get; private set; } = -Vector3.UnitZ;
+    public Vector3 Position { get; set; }
+    public Matrix4 ViewMatrix => Matrix4.LookAt(Position, Position + Front, Up);
+    public Matrix4 ProjectionMatrix => Matrix4.CreatePerspectiveFieldOfView(_fovy, _aspectRatio, NearDistance, FarDistance);
+
+    public float Fovy
     {
-        get => _position;
+        get => Mathematics.RadiansToDegrees(_fovy);
+        set => _fovy = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -89f, 89f));
+    }
+
+    public float Yaw
+    {
+        get => Mathematics.RadiansToDegrees(_yaw);
 
         set
         {
-            _position = value;
+            _yaw = Mathematics.DegreesToRadians(value);
             CalculateVectors();
         }
     }
 
+    public float Pitch
+    {
+        get => Mathematics.RadiansToDegrees(_pitch);
+
+        set
+        {
+            _pitch = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -89f, 89f));
+            CalculateVectors();
+        }
+    }
+    
     private void CalculateVectors()
     {
-        Vector3 target = Vector3.Zero;
+        var x = MathF.Cos(Pitch) * MathF.Cos(Yaw);
+        var y = MathF.Sin(Pitch);
+        var z = MathF.Cos(Pitch) * MathF.Sin(Yaw);
+        Front = Vector3.Normalize(new Vector3(x, y, z));
 
-        Direction = Vector3.Normalize(_position - target);
-        Right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, Direction));
-        Up = Vector3.Cross(Direction, Right);
-        ViewMatrix = Matrix4.LookAt(_position, Position - Vector3.UnitZ, Vector3.UnitY);
+        Right = Vector3.Normalize(Vector3.Cross(Front, Vector3.UnitY));
+        Up = Vector3.Cross(Right, Front);
     }
 }
