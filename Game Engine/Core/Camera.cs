@@ -12,12 +12,12 @@ internal class Camera
     public Camera(Vector3 position, Vector2i windowSize, float fovy)
     {
         Position = position;
-        Fovy = fovy;
+        Fovy = Mathematics.DegreesToRadians(fovy);
         _aspectRatio = (float)windowSize.X / windowSize.Y;
     }
 
     public float NearDistance { get; set; } = 1f;
-    public float FarDistance { get; set; } = 500f;
+    public float FarDistance { get; set; } = 5000f;
     public Vector3 Up { get; private set; } = Vector3.UnitY;
     public Vector3 Right { get; private set; } = Vector3.UnitX;
     public Vector3 Front { get; private set; } = -Vector3.UnitZ;

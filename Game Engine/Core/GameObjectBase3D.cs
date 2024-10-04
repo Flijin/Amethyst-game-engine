@@ -16,9 +16,11 @@ namespace Game_Engine.Core
             { 0, 0, 0, 1 },
         };
 
+        public string Name { get; set; } = string.Empty;
         public float[,] ModelMatrix => _modelMatrix;
         public STLModel Model { get; } = model;
-        public int Handle { get; set; }
+        public int VAO { get; set; }
+        public int VBO {  get; set; }
 
         public Vector3 Scale
         {
