@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using Game_Engine.Core;
+using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace Game_Engine;
 
@@ -20,7 +22,7 @@ internal partial class Program
     {
         ShowWindow(WINDOW_DESCRIPTOR, SW_HIDE);
 
-        using Window appWindow = new(800, 450, "TestLib");
+        using Window appWindow = new(800, 450, "TestLib") { Scene = new TestScene(new Vector2i(800, 450)) };
         appWindow.Run();
     }
 }
