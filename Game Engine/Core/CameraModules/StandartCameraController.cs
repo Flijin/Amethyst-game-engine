@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Game_Engine.Core;
+namespace Game_Engine.Core.CameraModules;
 
 internal class StandartCameraController
 {

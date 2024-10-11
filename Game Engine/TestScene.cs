@@ -1,6 +1,8 @@
 ﻿using OpenTK.Mathematics;
+using Game_Engine.Core.CameraModules;
+using Game_Engine.Core;
 
-namespace Game_Engine.Core;
+namespace Game_Engine;
 
 internal class TestScene : BaseScene
 {
@@ -8,7 +10,7 @@ internal class TestScene : BaseScene
     {
         AddCamera(new Vector3(0f, 0f, 50f), 45f, "Main");
 
-        AddGameObject(new GameObjectBase3D(new STLModel(@"C:\\Users\\it_ge\\Desktop\\Okay.stl"))
+        AddGameObject(new StaticGameObject3D(new STLModel(@"C:\\Users\\it_ge\\Desktop\\Okay.stl"))
         {
             Scale = new(0.01f, 0.01f, 0.01f)
         });

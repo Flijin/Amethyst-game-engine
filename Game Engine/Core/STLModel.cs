@@ -78,17 +78,30 @@ namespace Game_Engine.Core
 
         public Vector3 GetData(AttribTypes type, int index)
         {
-            Vector3 result;
+            Vector3 result = new();
 
-            var resultArray = type switch
+            switch (type)
             {
-                AttribTypes.Vertex => Vertices[(STRIDE * index)..(STRIDE * index + 3)],
-                AttribTypes.Color => RenderData[(STRIDE * index * 2 + COLOR_OFFSET)..(STRIDE * index * 2 + COLOR_OFFSET + 3)],
-                AttribTypes.Normal => RenderData[(STRIDE * index * 2)..(STRIDE * index * 2 + 3)],
-                _ => []
-            };
+                case AttribTypes.Vertex:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        result[i] = Vertices[STRIDE * index + i];
+                    }
+                    break;
+                case AttribTypes.Color:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        result[i] = RenderData[STRIDE * index * 2 + COLOR_OFFSET + i];
+                    }
+                    break;
+                case AttribTypes.Normal:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        result[i] = RenderData[STRIDE * index * 2 + i];
+                    }
+                    break;
+            }
 
-            result = new(resultArray[0], resultArray[1], resultArray[2]);
             return result;
         }
 
@@ -102,14 +115,12 @@ namespace Game_Engine.Core
                         Vertices[STRIDE * index + i] = vector[i];
                     }
                     break;
-
                 case AttribTypes.Color:             
                     for (int i = 0; i < 3; i++)
                     {
                         RenderData[STRIDE * index * 2 + COLOR_OFFSET + i] = vector[i];
                     }
                     break;
-
                 case AttribTypes.Normal:
                     for (int i = 0; i < 3; i++)
                     {

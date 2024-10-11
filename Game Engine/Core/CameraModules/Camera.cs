@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-namespace Game_Engine.Core;
+namespace Game_Engine.Core.CameraModules;
 
 internal class Camera
 {
@@ -9,20 +9,13 @@ internal class Camera
     private float _pitch;
     private float _fov;
 
-    public Camera(Vector3 position, float aspectRatio, float fov)
-    {
-        Position = position;
-        Fov = fov;
-        _aspectRatio = aspectRatio;
-    }
-
     public float NearDistance { get; set; } = 1f;
     public float FarDistance { get; set; } = 5000f;
     public Vector3 Up { get; private set; } = Vector3.UnitY;
     public Vector3 Right { get; private set; } = Vector3.UnitX;
     public Vector3 Front { get; private set; } = -Vector3.UnitZ;
     public Vector3 Position { get; set; }
-    
+
     public float[,] ProjectionMatrix
     {
         get
@@ -93,6 +86,13 @@ internal class Camera
             _pitch = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -89.9f, 89.9f));
             CalculateVectors();
         }
+    }
+
+    public Camera(Vector3 position, float aspectRatio, float fov)
+    {
+        Position = position;
+        Fov = fov;
+        _aspectRatio = aspectRatio;
     }
 
     private void CalculateVectors()

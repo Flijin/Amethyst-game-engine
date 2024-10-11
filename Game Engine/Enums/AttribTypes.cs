@@ -2,8 +2,8 @@
 {
     internal enum AttribTypes : byte
     {
-        Vertex,
-        Color,
-        Normal
+        Vertex = 0,
+        Color = 1,
+        Normal = 2
     }
 }

@@ -1,4 +1,5 @@
-﻿using Game_Engine.Core.Render;
+﻿using Game_Engine.Core.CameraModules;
+using Game_Engine.Core.Render;
 using Game_Engine.Interfaces;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -9,7 +10,7 @@ internal abstract class BaseScene : IScene, IDisposable
 {
     public event Action<Vector3> ColorUpdate;
 
-    private readonly List<GameObjectBase3D> _objects = [];
+    private readonly List<DrawableObject> _objects = [];
     private readonly List<StandartCameraController> _cameraControllers = [];
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
@@ -69,7 +70,7 @@ internal abstract class BaseScene : IScene, IDisposable
         {
             foreach (var gameObj in _objects)
             {
-                _core.DrawGameObject(gameObj, camera.Value);
+                gameObj.DrawObject(_core, camera.Value);
             }
         }
 
@@ -120,27 +121,26 @@ internal abstract class BaseScene : IScene, IDisposable
     #endregion
 
     #region group of methods with game objects
-    private protected void AddGameObject(GameObjectBase3D obj)
+    private protected void AddGameObject(StaticGameObject3D obj)
     {
         _objects.Add(obj);
-        RenderCore.LoadGameObjectInGPU(obj);
     }
 
-    private protected void RemoveGameObject(Predicate<GameObjectBase3D> obj)
+    private protected void RemoveGameObject(Predicate<DrawableObject> obj)
     {
         foreach (var item in _objects)
         {
             if (obj(item))
             {
                 _objects.Remove(item);
-                GL.DeleteBuffer(item.VBO);
+                item.Dispose();
             }
         }
     }
 
-    private protected GameObjectBase3D[] GetGameObject(Predicate<GameObjectBase3D> obj)
+    private protected DrawableObject[] GetGameObject(Predicate<DrawableObject> obj)
     {
-        List<GameObjectBase3D> result = [];
+        List<DrawableObject> result = [];
 
         foreach (var item in _objects)
         {
@@ -165,7 +165,7 @@ internal abstract class BaseScene : IScene, IDisposable
 
         foreach (var obj in _objects)
         {
-            GL.DeleteBuffer(obj.VBO);
+            obj.Dispose();
         }
 
         ColorUpdate -= Window.ChangeBackgroundColor;
