@@ -40,7 +40,7 @@ namespace Game_Engine.Core.Render
         public void SetMatrix4(string name, float[,] matrix)
         {
             if (matrix.GetLength(0) != 4 && matrix.GetLength(1) != 4)
-                throw new ArgumentException("Размер матрицы должен быть 4x4");
+                throw new ArgumentException("Error. The size of the matrix should be 4x4");
 
             GL.UseProgram(Handle);
 

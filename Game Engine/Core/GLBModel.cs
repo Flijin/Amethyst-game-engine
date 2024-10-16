@@ -1,0 +1,38 @@
+﻿using System.Text;
+
+namespace Game_Engine.Core;
+
+internal class GLBModel
+{
+    private uint _fileSize;
+
+    public GLBModel(string path)
+    {
+        using BinaryReader reader = new(File.OpenRead(path));
+        ReadModel(reader);
+    }
+
+    private void ReadModel(BinaryReader reader)
+    {
+        if (new string(reader.ReadChars(4)) != "glTF")
+            throw new FileLoadException("Error. GLB-file is not valid");
+
+        var version = reader.ReadUInt32();
+
+        if (version != 2)
+            throw new FileLoadException($"Error. unsupported GLB-file version: ({version}). Only version 2 is currently supported");
+       
+        _fileSize = reader.ReadUInt32();
+
+        var chunkLength = reader.ReadUInt32();
+        var chunkData = new byte[chunkLength];
+
+        if (new string(reader.ReadChars(4)) == "JSON")
+        {
+            chunkData = reader.ReadBytes((int)chunkLength);
+        }
+        else throw new FileLoadException("Error. GLB-file is corrupted");
+
+        Console.WriteLine(Encoding.UTF8.GetString(chunkData));
+    }
+}

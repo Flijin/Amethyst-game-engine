@@ -20,9 +20,9 @@ internal partial class Program
 
     private static void Main()
     {
-        ShowWindow(WINDOW_DESCRIPTOR, SW_HIDE);
-
-        using Window appWindow = new(800, 450, "TestLib") { Scene = new TestScene(new Vector2i(800, 450)) };
-        appWindow.Run();
+        ShowWindow(WINDOW_DESCRIPTOR, SW_SHOW);
+        GLBModel model = new(@"C:\Users\it_ge\Desktop\Loona\Model 2\loona_helluvaboss.glb");
+        //using Window appWindow = new(800, 450, "TestLib") { Scene = new TestScene(new Vector2i(800, 450)) };
+        //appWindow.Run();
     }
 }

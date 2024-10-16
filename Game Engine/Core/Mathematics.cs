@@ -17,7 +17,7 @@ internal static class Mathematics
         var result = new float[m1.GetLength(0), m2.GetLength(1)];
 
         if (m1.GetLength(1) != m2.GetLength(0))
-            throw new InvalidOperationException("Матрицы невозможно перемножить");
+            throw new InvalidOperationException("Error. Matrices cannot be multiplied");
 
         for (int i = 0; i < m1.GetLength(0); i++)
         {
