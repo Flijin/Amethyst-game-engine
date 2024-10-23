@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace Game_Engine.Core;
+﻿namespace Game_Engine.Core.Models;
 
 internal class GLBModel
 {
@@ -21,7 +19,7 @@ internal class GLBModel
 
         if (version != 2)
             throw new FileLoadException($"Error. unsupported GLB-file version: ({version}). Only version 2 is currently supported");
-       
+
         _fileSize = reader.ReadUInt32();
 
         var chunkLength = reader.ReadUInt32();
@@ -33,6 +31,6 @@ internal class GLBModel
         }
         else throw new FileLoadException("Error. GLB-file is corrupted");
 
-        Console.WriteLine(Encoding.UTF8.GetString(chunkData));
+        //Console.WriteLine(Encoding.UTF8.GetString(chunkData));
     }
 }

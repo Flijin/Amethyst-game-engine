@@ -1,0 +1,45 @@
+.. Game Engine documentation master file, created by
+   sphinx-quickstart on Fri Oct 18 14:29:51 2024.
+
+.. raw:: html
+
+    <p style="font-size: 35px;">Добро пожаловать в документацию игрового движка Amethyst!</p>
+
+====
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+* :ref:`genindex`
+* :ref:`search`
+
+.. contents:: **Оглавление**
+	:depth: 2
+
+===============
+Класс BaseScene
+===============
+
+.. code-block:: c#
+
+	OnFrameUpdate()
+Метод вызывается при каждой отрисоки кадра
+
+.. code-block:: c#
+OnFixedTimeUpdate()
+OnSceneStart()
+OnSceneExit()
+AddCamera(Vector3 position, float fov, string name, float aspectRatio = default)
+AddControllerToCamera(StandartCameraController controller, string cameraName)
+RemoveCamera(string name)
+GetCamera(string name)
+AddGameObject(StaticGameObject3D obj)
+RemoveGameObject(Predicate<DrawableObject> obj)
+GetGameObject(Predicate<DrawableObject> obj)
+
+.. code-block:: c#
+	
+	public void DrawSTLMolel(StaticGameObject3D obj, Camera cam)
+	
+.. index:: DrawSTLMolel

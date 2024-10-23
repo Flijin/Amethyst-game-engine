@@ -1,7 +1,7 @@
 ﻿using Game_Engine.Enums;
 using OpenTK.Mathematics;
 
-namespace Game_Engine.Core
+namespace Game_Engine.Core.Models
 {
     internal class STLModel
     {
@@ -115,7 +115,7 @@ namespace Game_Engine.Core
                         Vertices[STRIDE * index + i] = vector[i];
                     }
                     break;
-                case AttribTypes.Color:             
+                case AttribTypes.Color:
                     for (int i = 0; i < 3; i++)
                     {
                         RenderData[STRIDE * index * 2 + COLOR_OFFSET + i] = vector[i];
