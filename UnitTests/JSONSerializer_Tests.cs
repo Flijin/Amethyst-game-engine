@@ -1,7 +1,5 @@
 using Game_Engine.Core;
-using System.Reflection;
-using System.Resources;
-using System.Resources.Extensions;
+using System.Text;
 
 namespace UnitTests
 {
@@ -12,7 +10,9 @@ namespace UnitTests
         public void CorrectJSON()
         {
             string dataset = Resources.Correct_file;
-            JSONSerializer.JSONToObj(dataset);
+            JSONSerializer.JsonToObj(dataset);
+            JSONSerializer.JsonToObj(dataset.ToCharArray());
+            JSONSerializer.JsonToObj(Encoding.UTF8.GetBytes(dataset.ToCharArray()));
         }
 
         [TestMethod]
@@ -22,7 +22,9 @@ namespace UnitTests
             {
                 try
                 {
-                    JSONSerializer.JSONToObj(Resources.ResourceManager.GetString($"Incorrect file case {i}")!);
+                    JSONSerializer.JsonToObj(Resources.ResourceManager.GetString($"Incorrect file case {i}")!);
+                    JSONSerializer.JsonToObj(Resources.ResourceManager.GetString($"Incorrect file case {i}")!.ToCharArray());
+                    JSONSerializer.JsonToObj(Encoding.UTF8.GetBytes(Resources.ResourceManager.GetString($"Incorrect file case {i}")!.ToCharArray()));
                 }
                 catch (ArgumentException)
                 {

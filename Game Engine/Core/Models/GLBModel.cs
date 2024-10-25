@@ -1,4 +1,6 @@
-﻿namespace Game_Engine.Core.Models;
+﻿using System.Text;
+
+namespace Game_Engine.Core.Models;
 
 internal class GLBModel
 {
@@ -23,14 +25,12 @@ internal class GLBModel
         _fileSize = reader.ReadUInt32();
 
         var chunkLength = reader.ReadUInt32();
-        var chunkData = new byte[chunkLength];
+        Dictionary<string, object?> chunkData;
 
         if (new string(reader.ReadChars(4)) == "JSON")
         {
-            chunkData = reader.ReadBytes((int)chunkLength);
+            chunkData = JSONSerializer.JsonToObj(Encoding.UTF8.GetString(reader.ReadBytes((int)chunkLength)));
         }
         else throw new FileLoadException("Error. GLB-file is corrupted");
-
-        //Console.WriteLine(Encoding.UTF8.GetString(chunkData));
     }
 }

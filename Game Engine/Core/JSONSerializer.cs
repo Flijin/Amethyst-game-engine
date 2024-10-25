@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 
 namespace Game_Engine.Core;
 
@@ -6,7 +7,14 @@ public static class JSONSerializer
 {
     private static readonly CultureInfo _cultureInfo = new("en-US");
 
-    public static Dictionary<string, object?> JSONToObj(string data)
+    public static Dictionary<string, object?> JsonToObj(string data) => JsonToObj(data.ToCharArray());
+
+    public static Dictionary<string, object?> JsonToObj(byte[] data, int codepage = 0)
+    {
+        return JsonToObj(Encoding.GetEncoding(codepage).GetString(data, 0, data.Length));
+    }
+
+    public static Dictionary<string, object?> JsonToObj(char[] data)
     {
         Dictionary<string, object?>? result = null;
         var symIndex = 0;
@@ -24,7 +32,7 @@ public static class JSONSerializer
         return result ?? [];
     }
 
-    private static Dictionary<string, object?> ReadObject(string data, ref int symIndex)
+    private static Dictionary<string, object?> ReadObject(char[] data, ref int symIndex)
     {
         Dictionary<string, object?> result = [];
 
@@ -113,7 +121,7 @@ public static class JSONSerializer
         throw new ArgumentException("Syntax error. JSON file is invalid");
     }
 
-    private static object?[] ReadArray(string data, ref int symIndex)
+    private static object?[] ReadArray(char[] data, ref int symIndex)
     {
         List<object?> elements = [];
         var isElementItitialized = false;
@@ -167,8 +175,8 @@ public static class JSONSerializer
 
         throw new ArgumentException("Syntax error. JSON file is invalid");
     }
-
-    private static object? ReadLiteral(string data, ref int symIndex)
+    
+    private static object? ReadLiteral(char[] data, ref int symIndex)
     {
         var startIndex = symIndex;
 
@@ -176,7 +184,7 @@ public static class JSONSerializer
                 && symIndex < data.Length) { symIndex++; }
 
         var length = symIndex-- - startIndex;
-        var resultStr = new string(data.ToCharArray(startIndex, length));
+        var resultStr = new string(data[startIndex..(startIndex + length)]);
 
         if (resultStr.Length <= 5)
         {
@@ -196,7 +204,7 @@ public static class JSONSerializer
             throw new ArgumentException("Syntax error. JSON file is invalid");
     }
 
-    private static string ReadString(string data, ref int symIndex)
+    private static string ReadString(char[] data, ref int symIndex)
     {
         var startIndex = symIndex + 1;
 
@@ -210,6 +218,6 @@ public static class JSONSerializer
         else if (length == 0)
             return string.Empty;
         else
-            return new string(data.ToCharArray(startIndex, length));
+            return new string(data[startIndex..(startIndex + length)]);
     }
 }
