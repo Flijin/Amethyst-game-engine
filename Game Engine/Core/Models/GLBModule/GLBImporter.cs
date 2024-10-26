@@ -42,9 +42,10 @@ internal class GLBImporter
         try
         {
             var indexOfDefaultScene = (int)_jsonChunk["scene"];
-            var scenesElements = (Dictionary<string, object>[])_jsonChunk["scenes"];
+            var scenesElementsObj = (object[])_jsonChunk["scenes"];
+            var scenesElements = scenesElementsObj.Cast<Dictionary<string, object>>().ToArray();
 
-            if (scenesElements.Length == 0)
+            if (scenesElementsObj.Length == 0)
                 throw new Exception();
 
             return new(ReadScenes(scenesElements), indexOfDefaultScene);
@@ -63,7 +64,8 @@ internal class GLBImporter
 
         for (int i = 0; i < scenesElements.Length; i++)
         {
-            var nodes = (int[])scenesElements[i]["nodes"];
+            var nodesObj = (object[])scenesElements[i]["nodes"];
+            var nodes = nodesObj.Cast<int>().ToArray();
 
             if (scenesElements[i].TryGetValue("name", out object? name))
                 result[i] = ReadScene(nodes, (string)name);

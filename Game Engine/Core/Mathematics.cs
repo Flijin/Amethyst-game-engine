@@ -9,7 +9,7 @@ internal static class Mathematics
     {
         float[,] result = new float[rows, colums];
 
-        if (array.Length >= colums * rows)
+        if (array.Length == colums * rows)
         {
             var index = 0;
 
@@ -17,7 +17,7 @@ internal static class Mathematics
             {
                 for (int col = 0; col < colums; col++)
                 {
-                    result[col, row] = array[index++];
+                    result[row, col] = array[index++];
                 }
             }
 

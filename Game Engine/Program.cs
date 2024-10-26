@@ -25,9 +25,7 @@ internal partial class Program
     {
         ShowWindow(WINDOW_DESCRIPTOR, SW_SHOW);
 
-        //GLBImporter model = new(@"C:\Users\it_ge\Desktop\tiny_isometric_room.glb");
-        var test = Mathematics.GetMatrixFromArray([1, 2, 3, 4]);
-        { }
+        GLBImporter model = new(@"C:\Users\it_ge\Desktop\tiny_isometric_room.glb");
         //using Window appWindow = new(800, 450, "TestLib") { Scene = new TestScene(new Vector2i(800, 450)) };
         //appWindow.Run();
     }
