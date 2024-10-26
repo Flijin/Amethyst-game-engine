@@ -5,6 +5,40 @@ internal static class Mathematics
     public static float DegreesToRadians(float degrees) => degrees * (float.Pi / 180);
     public static float RadiansToDegrees(float radians) => radians * 180 / float.Pi;
 
+    public static float[,] GetMatrixFromArray(float[] array, int colums, int rows)
+    {
+        float[,] result = new float[rows, colums];
+
+        if (array.Length >= colums * rows)
+        {
+            var index = 0;
+
+            for (int row = 0; row < rows; row++)
+            {
+                for (int col = 0; col < colums; col++)
+                {
+                    result[col, row] = array[index++];
+                }
+            }
+
+            return result;
+        }
+        else
+        {
+            throw new ArgumentException("Error. The number of elements in the array is less than the size of the matrix");
+        }
+    }
+
+    public static float[,] GetMatrixFromArray(float[] array)
+    {
+        var size = MathF.Sqrt(array.Length);
+
+        if (float.IsInteger(size))
+            return GetMatrixFromArray(array, (int)size, (int)size);
+        else
+            throw new ArgumentException("Error. The matrix is not square or the number of elements in the array is incorrect");
+    }
+
     public static float Clamp(float value, float min, float max)
     {
         if (value < min) return min;
@@ -16,21 +50,25 @@ internal static class Mathematics
     {
         var result = new float[m1.GetLength(0), m2.GetLength(1)];
 
-        if (m1.GetLength(1) != m2.GetLength(0))
-            throw new InvalidOperationException("Error. Matrices cannot be multiplied");
-
-        for (int i = 0; i < m1.GetLength(0); i++)
+        if (m1.GetLength(1) == m2.GetLength(0))
         {
-            for (int j = 0; j < m2.GetLength(1); j++)
+            for (int row = 0; row < m1.GetLength(0); row++)
             {
-                for (int k = 0; k < m1.GetLength(1); k++)
+                for (int col = 0; col < m2.GetLength(1); col++)
                 {
-                    result[i, j] += m1[i, k] * m2[k, j];
+                    for (int i = 0; i < m1.GetLength(1); i++)
+                    {
+                        result[row, col] += m1[row, i] * m2[i, col];
+                    }
                 }
             }
-        }
 
-        return result;
+            return result;
+        }
+        else
+        {
+            throw new ArgumentException("Error. Matrices cannot be multiplied");
+        }
     }
 
     public static float[,] CreateTranslationMatrix(float x, float y, float z)

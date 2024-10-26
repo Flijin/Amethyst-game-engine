@@ -1,7 +1,6 @@
-﻿using Game_Engine.Enums;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 
-namespace Game_Engine.Core.Models
+namespace Game_Engine.Core.Models.STLModule
 {
     internal class STLModel
     {
@@ -14,6 +13,7 @@ namespace Game_Engine.Core.Models
         ///         <para>(X1, Y1, Z1, X2 ...)</para>
         /// </summary>
         public float[] Vertices { get; }
+
         /// <summary>
         ///     Structure:
         ///         <para>

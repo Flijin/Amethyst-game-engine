@@ -1,5 +1,5 @@
 ﻿using Game_Engine.Core.CameraModules;
-using Game_Engine.Enums;
+using Game_Engine.Core.Models.STLModule;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Game_Engine.Core.Render

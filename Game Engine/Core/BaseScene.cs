@@ -54,8 +54,8 @@ internal abstract class BaseScene : IScene, IDisposable
     {
         if (_disposed == false)
         {
-            Program.ShowWindow(Program.WINDOW_DESCRIPTOR, Program.SW_SHOW);
-            Console.Write("Не был использован метод Dispose утечка памяти GPU");
+            Program.ShowWindow(Program.SW_SHOW);
+            Console.Write("Error. The Dispose method was not Called GPU memory leak");
         }
     }
 
@@ -82,8 +82,8 @@ internal abstract class BaseScene : IScene, IDisposable
     {
         if (_cameras.TryGetValue(cameraName, out var camera) == false)
         {
-            Program.ShowWindow(Program.WINDOW_DESCRIPTOR, Program.SW_SHOW);
-            Console.WriteLine("Ошибка! Камеры с таким именем не существует");
+            Program.ShowWindow(Program.SW_SHOW);
+            Console.WriteLine("Error. There is no camera with that name");
         }
         else
         {
@@ -102,8 +102,8 @@ internal abstract class BaseScene : IScene, IDisposable
 
         if (_cameras.TryAdd(name, new Camera(position, ratio, fov)) == false)
         {
-            Program.ShowWindow(Program.WINDOW_DESCRIPTOR, Program.SW_SHOW);
-            Console.WriteLine("Ошибка! Камера с таким именем уже добавлена");
+            Program.ShowWindow(Program.SW_SHOW);
+            Console.WriteLine("Error. A camera with that name has already been added");
         }
     }
 
@@ -112,8 +112,8 @@ internal abstract class BaseScene : IScene, IDisposable
     {
         if (_cameras.Remove(name) == false)
         {
-            Program.ShowWindow(Program.WINDOW_DESCRIPTOR, Program.SW_SHOW);
-            Console.WriteLine("Ошибка! Камеры с таким именем не существует");
+            Program.ShowWindow(Program.SW_SHOW);
+            Console.WriteLine("Error. There is no camera with that name");
         }
     }
 

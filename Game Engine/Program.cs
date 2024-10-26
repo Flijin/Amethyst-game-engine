@@ -1,5 +1,5 @@
 ﻿using Game_Engine.Core;
-using Game_Engine.Core.Models;
+using Game_Engine.Core.Models.GLBModule;
 using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
@@ -11,9 +11,11 @@ internal partial class Program
     public const int SW_SHOW = 0b_0101;
     public static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
 
+    public static bool ShowWindow(int nCmdShow) => ShowWindow(WINDOW_DESCRIPTOR, nCmdShow);
+
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    private static partial bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.SysInt)]
@@ -23,9 +25,9 @@ internal partial class Program
     {
         ShowWindow(WINDOW_DESCRIPTOR, SW_SHOW);
 
-        //var test = JSONParser.JSONToObj("{}");
-
-        GLBModel model = new(@"C:\Users\it_ge\Desktop\Loona\Model 2\loona_helluvaboss.glb");
+        //GLBImporter model = new(@"C:\Users\it_ge\Desktop\tiny_isometric_room.glb");
+        var test = Mathematics.GetMatrixFromArray([1, 2, 3, 4]);
+        { }
         //using Window appWindow = new(800, 450, "TestLib") { Scene = new TestScene(new Vector2i(800, 450)) };
         //appWindow.Run();
     }

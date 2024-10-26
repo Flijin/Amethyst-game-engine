@@ -92,7 +92,7 @@ namespace Game_Engine.Core.Render
 
         private static void PrintErrorMessage(string message)
         {
-            Program.ShowWindow(Program.WINDOW_DESCRIPTOR, Program.SW_SHOW);
+            Program.ShowWindow(Program.SW_SHOW);
             Console.Write(message);
             Console.ReadKey();
             Environment.Exit(0);

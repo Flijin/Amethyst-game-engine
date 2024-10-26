@@ -1,5 +1,5 @@
 ﻿using Game_Engine.Core.CameraModules;
-using Game_Engine.Core.Models;
+using Game_Engine.Core.Models.STLModule;
 using Game_Engine.Core.Render;
 using OpenTK.Mathematics;
 

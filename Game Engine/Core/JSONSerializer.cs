@@ -11,7 +11,7 @@ public static class JSONSerializer
 
     public static Dictionary<string, object?> JsonToObj(byte[] data, int codepage = 0)
     {
-        return JsonToObj(Encoding.GetEncoding(codepage).GetString(data, 0, data.Length));
+        return JsonToObj(Encoding.GetEncoding(codepage).GetString(data));
     }
 
     public static Dictionary<string, object?> JsonToObj(char[] data)
@@ -23,7 +23,7 @@ public static class JSONSerializer
         {
             if (data[symIndex] == '{' && result is null)
                 result = ReadObject(data, ref symIndex);
-            else if (data[symIndex] is not ' ' or '\t' or '\n')
+            else if ((char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex])) == false)
                 throw new ArgumentException("Syntax error. JSON file is invalid");
 
             symIndex++;
@@ -101,7 +101,7 @@ public static class JSONSerializer
                 currentValue = ReadArray(data, ref symIndex);
                 isValueInitialized = true;
             }
-            else if (data[symIndex] is ' ' or '\t' or '\n' or '\r')
+            else if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
             {
                 continue;
             }
@@ -162,7 +162,7 @@ public static class JSONSerializer
                 elements.Add(ReadLiteral(data, ref symIndex));
                 isElementItitialized = true;
             }
-            else if (data[symIndex] is ' ' or '\t' or '\n' or '\r')
+            else if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
             {
                 continue;
             }
