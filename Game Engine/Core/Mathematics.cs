@@ -1,9 +1,22 @@
-﻿namespace Game_Engine.Core;
+﻿using System.Numerics;
+
+namespace Game_Engine.Core;
 
 internal static class Mathematics
 {
     public static float DegreesToRadians(float degrees) => degrees * (float.Pi / 180);
     public static float RadiansToDegrees(float radians) => radians * 180 / float.Pi;
+
+    public static float[,] ConvertQuaternionToMatrix(float x, float y, float z, float w)
+    {
+        return new float[4, 4]
+        {
+            { 1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y), 0 },
+            { 2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x), 0 },
+            { 2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y), 0 },
+            { 0,                   0,                       0,                   1 },
+        };
+    }
 
     public static float[,] GetMatrixFromArray(float[] array, int colums, int rows)
     {

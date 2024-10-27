@@ -7,6 +7,8 @@ internal class GLBImporter
     private readonly Dictionary<string, object> _jsonChunk;
     private readonly BinaryReader _reader;
 
+    public uint FileSize { get; private set; }
+
     public GLBImporter(string path)
     {
         _reader = new BinaryReader(new FileStream(path, FileMode.Open));
@@ -42,13 +44,13 @@ internal class GLBImporter
         try
         {
             var indexOfDefaultScene = (int)_jsonChunk["scene"];
-            var scenesElementsObj = (object[])_jsonChunk["scenes"];
-            var scenesElements = scenesElementsObj.Cast<Dictionary<string, object>>().ToArray();
+            var scenesObj = (object[])_jsonChunk["scenes"];
+            var scenes = scenesObj.Cast<Dictionary<string, object>>().ToArray();
 
-            if (scenesElementsObj.Length == 0)
+            if (scenesObj.Length == 0)
                 throw new Exception();
 
-            return new(ReadScenes(scenesElements), indexOfDefaultScene);
+            return new(ReadScenes(scenes), indexOfDefaultScene);
         }
         catch (Exception)
         {
@@ -56,7 +58,7 @@ internal class GLBImporter
         }
     }
 
-    private static GLBScene[] ReadScenes(Dictionary<string, object>[] scenesElements)
+    private GLBScene[] ReadScenes(Dictionary<string, object>[] scenesElements)
     {
         GLBScene[] result;
 
@@ -70,13 +72,74 @@ internal class GLBImporter
             if (scenesElements[i].TryGetValue("name", out object? name))
                 result[i] = ReadScene(nodes, (string)name);
             else
-                result[i] = ReadScene(nodes, "None");
+                result[i] = ReadScene(nodes);
         }
 
         return result;
     }
 
-    private static GLBScene ReadScene(int[] nodes, string name)
+    private GLBScene ReadScene(int[] sceneNodes, string? name = default)
+    {
+        GLBScene result;
+
+        if (sceneNodes.Length == 1)
+        {
+            var nodes = ((object[])_jsonChunk["nodes"]).Cast<Dictionary<string, object>>().ToArray();
+            var currentNode = nodes[sceneNodes[0]];
+            var currentNodeInfo = new NodeInfo(currentNode);
+            var currentNodeIndex = sceneNodes[0];
+
+            while (currentNodeInfo.Name != "RootNode" && currentNodeInfo.Children?.Length == 1 && currentNodeInfo.Mesh is null)
+            {
+                currentNodeIndex = currentNodeInfo.Children[0];
+                currentNode = nodes[currentNodeIndex];
+                currentNodeInfo = new(currentNode);
+            }
+
+            if (currentNodeInfo.Children is not null && currentNodeInfo.Mesh is null)
+            {
+                var childrenCount = currentNodeInfo.Children.Length;
+                var sceneModels = new GLBModel[childrenCount];
+
+                for (int i = 0; i < childrenCount; i++)
+                {
+                    sceneModels[i] = ReadModel(currentNodeInfo.Children[i]);
+                }
+
+                result = new GLBScene(sceneModels);
+            }
+            else if (currentNodeInfo.Mesh is not null && currentNodeInfo.Children is null)
+            {
+                result = new GLBScene([ReadModel(currentNodeIndex)]);
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+        else if (sceneNodes.Length > 1)
+        {
+            var sceneModels = new GLBModel[sceneNodes.Length];
+
+            for (int i = 0; i < sceneNodes.Length; i++)
+            {
+                sceneModels[i] = ReadModel(sceneNodes[i]);
+            }
+
+            result = new GLBScene(sceneModels);
+        }
+        else
+        {
+            result = new GLBScene([]);
+        }
+
+        if (name is not null)
+            result.Name = name;
+
+        return result;
+    }
+
+    private static GLBModel ReadModel(int node)
     {
         return null;
     }
@@ -91,7 +154,7 @@ internal class GLBImporter
         if (version != 2)
             throw new FileLoadException($"Error. Unsupported GLB-file version: ({version}). Only version 2.0 is currently supported");
 
-        var fileSize = _reader.ReadUInt32();
+        FileSize = _reader.ReadUInt32();
 
         var chunkLength = _reader.ReadUInt32();
         Dictionary<string, object?> chunkData;

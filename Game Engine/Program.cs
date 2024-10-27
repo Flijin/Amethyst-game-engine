@@ -1,6 +1,7 @@
 ﻿using Game_Engine.Core;
 using Game_Engine.Core.Models.GLBModule;
 using OpenTK.Mathematics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Game_Engine;
@@ -24,8 +25,11 @@ internal partial class Program
     private static void Main()
     {
         ShowWindow(WINDOW_DESCRIPTOR, SW_SHOW);
-
+        Stopwatch sw = Stopwatch.StartNew();
         GLBImporter model = new(@"C:\Users\it_ge\Desktop\tiny_isometric_room.glb");
+        sw.Stop();
+
+        Console.WriteLine(sw.ElapsedMilliseconds);
         //using Window appWindow = new(800, 450, "TestLib") { Scene = new TestScene(new Vector2i(800, 450)) };
         //appWindow.Run();
     }
