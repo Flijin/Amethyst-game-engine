@@ -9,7 +9,7 @@ internal class TestScene : BaseScene
 {
     public TestScene(Vector2i windowSize) : base(windowSize)
     {
-        AddCamera(new Vector3(0f, 0f, 50f), 45f, "Main");
+        //AddCamera(new Vector3(0f, 0f, 50f), 45f, "Main");
 
         AddGameObject(new StaticGameObject3D(new STLModel(@"C:\\Users\\it_ge\\Desktop\\Okay.stl"))
         {

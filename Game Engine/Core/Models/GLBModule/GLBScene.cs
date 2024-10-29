@@ -1,4 +1,6 @@
-﻿namespace Game_Engine.Core.Models.GLBModule;
+﻿using Game_Engine.Core.CameraModules;
+
+namespace Game_Engine.Core.Models.GLBModule;
 
 internal class GLBScene(GLBModel[] models)
 {
@@ -6,6 +8,8 @@ internal class GLBScene(GLBModel[] models)
 
     public string Name { get; set; } = "None";
     public int ModelsCount { get; } = models.Length;
+    public Camera? Camera { get; set; } = null;
+
     public float[,] SceneMatrix { get; set; } =
     {
         { 1, 0, 0, 0 },

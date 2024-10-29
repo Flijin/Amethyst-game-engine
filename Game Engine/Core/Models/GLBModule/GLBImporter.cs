@@ -1,4 +1,6 @@
-﻿namespace Game_Engine.Core.Models.GLBModule;
+﻿using Game_Engine.Core.CameraModules;
+
+namespace Game_Engine.Core.Models.GLBModule;
 
 internal class GLBImporter
 {
@@ -78,20 +80,25 @@ internal class GLBImporter
         return result;
     }
 
-    private GLBScene ReadScene(int[] sceneNodes, string? name = default)
+    private GLBScene ReadScene(int[] sceneNodesIndices, string? name = default)
     {
         GLBScene result;
 
-        if (sceneNodes.Length == 1)
+        if (sceneNodesIndices.Length == 1)
         {
             var nodes = ((object[])_jsonChunk["nodes"]).Cast<Dictionary<string, object>>().ToArray();
-            var currentNode = nodes[sceneNodes[0]];
+            var currentNode = nodes[sceneNodesIndices[0]];
             var currentNodeInfo = new NodeInfo(currentNode);
-            var currentNodeIndex = sceneNodes[0];
+            var currentNodeIndex = sceneNodesIndices[0];
+            float[,]? sceneMatrix;
 
             while (currentNodeInfo.Name != "RootNode" && currentNodeInfo.Children?.Length == 1 && currentNodeInfo.Mesh is null)
             {
                 currentNodeIndex = currentNodeInfo.Children[0];
+
+                //if (currentNodeInfo.Camera is not null)
+                    //sceneMatrix = currentNodeInfo.Camera;
+
                 currentNode = nodes[currentNodeIndex];
                 currentNodeInfo = new(currentNode);
             }
@@ -117,13 +124,13 @@ internal class GLBImporter
                 throw new Exception();
             }
         }
-        else if (sceneNodes.Length > 1)
+        else if (sceneNodesIndices.Length > 1)
         {
-            var sceneModels = new GLBModel[sceneNodes.Length];
+            var sceneModels = new GLBModel[sceneNodesIndices.Length];
 
-            for (int i = 0; i < sceneNodes.Length; i++)
+            for (int i = 0; i < sceneNodesIndices.Length; i++)
             {
-                sceneModels[i] = ReadModel(sceneNodes[i]);
+                sceneModels[i] = ReadModel(sceneNodesIndices[i]);
             }
 
             result = new GLBScene(sceneModels);
@@ -139,7 +146,12 @@ internal class GLBImporter
         return result;
     }
 
-    private static GLBModel ReadModel(int node)
+    private Camera ReadCamera(int cameraIndex, Dictionary<string, object>[] cameras)
+    {
+        return null;
+    }
+
+    private static GLBModel ReadModel(int nodeIndex)
     {
         return null;
     }

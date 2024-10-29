@@ -93,14 +93,9 @@ internal abstract class BaseScene : IScene, IDisposable
         
     }
 
-    private protected void AddCamera(Vector3 position, float fov, string name, float aspectRatio = default)
+    private protected void AddCamera(Camera cam, string name)
     {
-        float ratio = _aspectRatio;
-
-        if (aspectRatio != default)
-            ratio = aspectRatio;
-
-        if (_cameras.TryAdd(name, new Camera(position, ratio, fov)) == false)
+        if (_cameras.TryAdd(name, cam) == false)
         {
             Program.ShowWindow(Program.SW_SHOW);
             Console.WriteLine("Error. A camera with that name has already been added");
