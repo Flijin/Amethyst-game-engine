@@ -277,8 +277,7 @@ namespace UnitTests {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на &quot;key&quot; : &quot;value&quot;,
-        ///.
+        ///   Ищет локализованную строку, похожую на &quot;key&quot; : &quot;value&quot;,.
         /// </summary>
         internal static string Incorrect_file_case_24 {
             get {
