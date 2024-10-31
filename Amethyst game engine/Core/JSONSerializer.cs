@@ -123,57 +123,76 @@ public static class JSONSerializer
 
     private static object?[] ReadArray(char[] data, ref int symIndex)
     {
-        List<object?> elements = [];
         var isElementItitialized = false;
+        ReadArrayRec(0, ref symIndex, out object?[] result);
+        return result;
 
-        do
+        void ReadArrayRec(int recDepth, ref int recSymIndex, out object?[] el)
         {
-            symIndex++;
+            object? element;
 
-            if (data[symIndex] == ',')
+            do
             {
-                if (isElementItitialized)
-                    isElementItitialized = false;
+                recSymIndex++;
+
+                if (data[recSymIndex] == ',')
+                {
+                    if (isElementItitialized)
+                        isElementItitialized = false;
+                    else
+                        throw new ArgumentException("Syntax error. JSON file is invalid");
+                }
+                else if (data[recSymIndex] == '"' && isElementItitialized == false)
+                {
+                    element = ReadString(data, ref recSymIndex);
+                    isElementItitialized = true;
+                    ReadArrayRec(recDepth + 1, ref recSymIndex, out el);
+                    el[recDepth] = element;
+                    return;
+                }
+                else if (data[recSymIndex] == '{' && isElementItitialized == false)
+                {
+                    element = ReadObject(data, ref recSymIndex);
+                    isElementItitialized = true;
+                    ReadArrayRec(recDepth + 1, ref recSymIndex, out el);
+                    el[recDepth] = element;
+                    return;
+                }
+                else if (data[recSymIndex] == '[' && isElementItitialized == false)
+                {
+                    element = ReadArray(data, ref recSymIndex);
+                    isElementItitialized = true;
+                    ReadArrayRec(recDepth + 1, ref recSymIndex, out el);
+                    el[recDepth] = element;
+                    return;
+                }
+                else if ((char.IsAsciiLetter(data[recSymIndex]) || char.IsDigit(data[recSymIndex]) || data[recSymIndex] == '-')
+                        && isElementItitialized == false)
+                {
+                    element = ReadLiteral(data, ref recSymIndex);
+                    isElementItitialized = true;
+                    ReadArrayRec(recDepth + 1, ref recSymIndex, out el);
+                    el[recDepth] = element;
+                    return;
+                }
+                else if (data[recSymIndex] == ']')
+                {
+                    el = new object[recDepth];
+                    return;
+                }
+                else if (char.IsSeparator(data[recSymIndex]) || char.IsControl(data[recSymIndex]))
+                {
+                    continue;
+                }
                 else
+                {
                     throw new ArgumentException("Syntax error. JSON file is invalid");
+                }
             }
-            else if (data[symIndex] == '"' && isElementItitialized == false)
-            {
-                elements.Add(ReadString(data, ref symIndex));
-                isElementItitialized = true;
-            }
-            else if (data[symIndex] == '{' && isElementItitialized == false)
-            {
-                elements.Add(ReadObject(data, ref symIndex));
-                isElementItitialized = true;
-            }
-            else if (data[symIndex] == '[' && isElementItitialized == false)
-            {
-                elements.Add(ReadArray(data, ref symIndex));
-                isElementItitialized = true;
-            }
-            else if (data[symIndex] == ']')
-            {
-                return [.. elements];
-            }
-            else if ((char.IsAsciiLetter(data[symIndex]) || char.IsDigit(data[symIndex]) || data[symIndex] == '-')
-                    && isElementItitialized == false)
-            {
-                elements.Add(ReadLiteral(data, ref symIndex));
-                isElementItitialized = true;
-            }
-            else if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
-            {
-                continue;
-            }
-            else
-            {
-                throw new ArgumentException("Syntax error. JSON file is invalid");
-            }
-        }
-        while (symIndex < data.Length - 1);
+            while (recSymIndex < data.Length - 1);
 
-        throw new ArgumentException("Syntax error. JSON file is invalid");
+            throw new ArgumentException("Syntax error. JSON file is invalid");
+        }
     }
     
     private static object? ReadLiteral(char[] data, ref int symIndex)
