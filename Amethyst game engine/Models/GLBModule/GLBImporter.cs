@@ -1,6 +1,5 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Core;
-using Amethyst_game_engine.Core.Models.GLBModule;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 

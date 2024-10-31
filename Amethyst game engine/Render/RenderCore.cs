@@ -1,13 +1,13 @@
 ﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.Core;
 using Amethyst_game_engine.Models.STLModule;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Amethyst_game_engine.Core.Render;
+namespace Amethyst_game_engine.Render;
 
 internal class RenderCore : IDisposable
 {
-    private readonly Shader _shader = new(@"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.vert",
-                                          @"C:\Users\it_ge\source\repos\Game Engine\Game Engine\Shaders\Shader.frag");
+    private readonly Shader _shader = new();
 
     public void Dispose() => _shader.Dispose();
 

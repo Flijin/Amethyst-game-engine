@@ -1,6 +1,6 @@
 ﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Core.Render;
 using Amethyst_game_engine.Models.STLModule;
+using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core;
@@ -11,8 +11,8 @@ public class StaticGameObject3D(STLModel model) : DrawableObject(model.Vertices)
     private Vector3 _position;
     private float _rotation;
 
-    public float[,] ModelMatrix => _modelMatrix;
-    public STLModel Model { get; } = model;
+    internal float[,] ModelMatrix => _modelMatrix;
+    internal STLModel Model { get; } = model;
 
     public Vector3 Scale
     {

@@ -1,24 +1,24 @@
 ﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Core.Render;
-using Amethyst_game_engine.Interfaces;
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core;
 
-public abstract class BaseScene : IScene, IDisposable
+public abstract class BaseScene : IDisposable
 {
-    public event Action<Vector3> ColorUpdate;
+    internal event Action<Vector3> ColorUpdate;
 
     private readonly List<DrawableObject> _objects = [];
     private readonly List<StandartCameraController> _cameraControllers = [];
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
     private readonly RenderCore _core = new();
-    private readonly float _aspectRatio;
 
     private Vector3 _backgroundColor = new(0.3f, 0.3f, 0.3f);
     private bool _disposed;
+
+    public float AspectRatio { get; } = Window.AspectRatio;
 
     public Vector3 BackgroundColor
     {
@@ -31,9 +31,8 @@ public abstract class BaseScene : IScene, IDisposable
         }
     }
 
-    protected BaseScene(Vector2i windowSize, int sceneUpdateFPS = 60)
+    protected BaseScene(int sceneUpdateFPS = 60)
     {
-        _aspectRatio = (float)windowSize.X / windowSize.Y;
         ColorUpdate += Window.ChangeBackgroundColor;
         ColorUpdate(_backgroundColor);
 
@@ -53,18 +52,15 @@ public abstract class BaseScene : IScene, IDisposable
     ~BaseScene()
     {
         if (_disposed == false)
-        {
-            SystemSettings.ShowWindow(SystemSettings.SW_SHOW);
-            Console.Write("Error. The Dispose method was not Called GPU memory leak");
-        }
+            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not Called GPU memory leak");
     }
 
-    public virtual void OnFrameUpdate() { }
-    public virtual void OnFixedTimeUpdate() { }
-    public virtual void OnSceneStart() { }
-    public virtual void OnSceneExit() { }
+    protected virtual void OnFrameUpdate() { }
+    protected virtual void OnFixedTimeUpdate() { }
+    protected virtual void OnSceneStart() { }
+    protected virtual void OnSceneExit() { }
 
-    public void DrawScene()
+    internal void DrawScene()
     {
         foreach (var camera in _cameras)
         {
@@ -78,50 +74,41 @@ public abstract class BaseScene : IScene, IDisposable
     }
 
     #region group of methods with cameras
-    private protected void AddControllerToCamera(StandartCameraController controller, string cameraName)
+    protected void AddControllerToCamera(StandartCameraController controller, string cameraName)
     {
-        if (_cameras.TryGetValue(cameraName, out var camera) == false)
-        {
-            SystemSettings.ShowWindow(SystemSettings.SW_SHOW);
-            Console.WriteLine("Error. There is no camera with that name");
-        }
-        else
+        if (_cameras.TryGetValue(cameraName, out var camera) == true)
         {
             _cameraControllers.Add(controller);
             controller.BindCamera(camera);
         }
-        
+        else
+        {
+            SystemSettings.PrintErrorMessage("Error. There is no camera with that name");
+        }       
     }
 
-    private protected void AddCamera(Camera cam, string name)
+    protected void AddCamera(Camera cam, string name)
     {
         if (_cameras.TryAdd(name, cam) == false)
-        {
-            SystemSettings.ShowWindow(SystemSettings.SW_SHOW);
-            Console.WriteLine("Error. A camera with that name has already been added");
-        }
+            SystemSettings.PrintErrorMessage("Error. A camera with that name has already been added");
     }
 
-
-    private protected void RemoveCamera(string name)
+    protected void RemoveCamera(string name)
     {
         if (_cameras.Remove(name) == false)
-        {
-            SystemSettings.ShowWindow(SystemSettings.SW_SHOW);
-            Console.WriteLine("Error. There is no camera with that name");
-        }
+            SystemSettings.PrintErrorMessage("Error. There is no camera with that name");
     }
 
-    private protected Camera GetCamera(string name) => _cameras[name];
+    protected Camera GetCamera(string name) => _cameras[name];
     #endregion
 
     #region group of methods with game objects
-    private protected void AddGameObject(StaticGameObject3D obj)
+    protected void AddGameObject(StaticGameObject3D obj)
     {
         _objects.Add(obj);
     }
 
-    private protected void RemoveGameObject(Predicate<DrawableObject> obj)
+    protected void RemoveGameObject(Predicate<DrawableObject> obj)
     {
         foreach (var item in _objects)
         {
@@ -133,7 +120,7 @@ public abstract class BaseScene : IScene, IDisposable
         }
     }
 
-    private protected DrawableObject[] GetGameObject(Predicate<DrawableObject> obj)
+    protected DrawableObject[] GetGameObject(Predicate<DrawableObject> obj)
     {
         List<DrawableObject> result = [];
 
@@ -149,31 +136,27 @@ public abstract class BaseScene : IScene, IDisposable
     }
     #endregion
 
-    public virtual void Dispose(bool disposing)
-    {
-        _cancellationTokenSource.Cancel();
-        _cancellationTokenSource.Dispose();
-        _core.Dispose();
-
-        OnSceneExit();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-
-        foreach (var obj in _objects)
-        {
-            obj.Dispose();
-        }
-
-        ColorUpdate -= Window.ChangeBackgroundColor;
-        Window.ClearInputHandlers();
-
-        _disposed = true;
-    }
-
     public void Dispose()
     {
         if (_disposed == false)
         {
-            Dispose(true);
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _core.Dispose();
+
+            OnSceneExit();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            foreach (var obj in _objects)
+            {
+                obj.Dispose();
+            }
+
+            ColorUpdate -= Window.ChangeBackgroundColor;
+            Window.ClearInputHandlers();
+
+            _disposed = true;
+
             GC.SuppressFinalize(this);
         }
     }

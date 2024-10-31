@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Amethyst_game_engine.Core;
+﻿namespace Amethyst_game_engine.Core;
 
 internal static class Mathematics
 {

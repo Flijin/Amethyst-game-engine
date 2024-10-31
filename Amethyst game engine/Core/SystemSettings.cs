@@ -3,12 +3,12 @@ using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine;
 
-internal static partial class SystemSettings
+public static partial class SystemSettings
 {
     public const int SW_HIDE = 0b_0000;
     public const int SW_SHOW = 0b_0101;
-    public static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
-    public static Vector2i SCREEN_RESOLUTION;
+    private static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
+    private static Vector2i _screenResolution;
 
     private static bool _wasInitiated = false;
 
@@ -76,13 +76,14 @@ internal static partial class SystemSettings
         public int border_width, depth;
     }
 
-    public static bool WasInitiated => _wasInitiated;
+    public static Vector2i ScreenResolution => _screenResolution;
+    internal static bool WasInitiated => _wasInitiated;
 
-    public static void Init()
+    public static void PrintErrorMessage(string message)
     {
-        var (Width, Height) = GetScreenResolution();
-        SCREEN_RESOLUTION = new Vector2i(Width, Height);
-        _wasInitiated = true;
+        ShowWindow(SW_SHOW);
+        Console.WriteLine(message);
+        Environment.Exit(0);
     }
 
     public static bool ShowWindow(int nCmdShow)
@@ -91,6 +92,13 @@ internal static partial class SystemSettings
             return ShowWindow(WINDOW_DESCRIPTOR, nCmdShow);
         else
             return false;
+    }
+
+    internal static void Init()
+    {
+        var (Width, Height) = GetScreenResolution();
+        _screenResolution = new Vector2i(Width, Height);
+        _wasInitiated = true;
     }
 
     private static (int Width, int Height) GetWindowsResolution() => (GetSystemMetrics(0), GetSystemMetrics(1));

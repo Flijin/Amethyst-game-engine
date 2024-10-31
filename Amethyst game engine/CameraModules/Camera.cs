@@ -16,14 +16,42 @@ public class Camera
     public float Far { get; set; }
     public Vector3 Position { get; set; }
 
-    public Vector3 Up { get; private set; } = Vector3.UnitY;
-    public Vector3 RightVector { get; private set; } = Vector3.UnitX;
-    public Vector3 Front { get; private set; } = -Vector3.UnitZ;
+    internal Vector3 Up { get; private set; } = Vector3.UnitY;
+    internal Vector3 RightVector { get; private set; } = Vector3.UnitX;
+    internal Vector3 Front { get; private set; } = -Vector3.UnitZ;
 
     public float Right { get; set; }
     public float Left { get; set; }
     public float Bottom { get; set; }
     public float Top { get; set; }
+
+    public float Fov
+    {
+        get => Mathematics.RadiansToDegrees(_fov);
+        set => _fov = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -180f, 180f));
+    }
+
+    public float Yaw
+    {
+        get => Mathematics.RadiansToDegrees(_yaw);
+
+        set
+        {
+            _yaw = Mathematics.DegreesToRadians(value);
+            CalculateVectors();
+        }
+    }
+
+    public float Pitch
+    {
+        get => Mathematics.RadiansToDegrees(_pitch);
+
+        set
+        {
+            _pitch = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -89.9f, 89.9f));
+            CalculateVectors();
+        }
+    }
 
     public float OrthographicBorders
     {
@@ -94,34 +122,6 @@ public class Camera
             };
 
             return Mathematics.MultiplyMatrices(matrixA, matrixB);
-        }
-    }
-
-    public float Fov
-    {
-        get => Mathematics.RadiansToDegrees(_fov);
-        set => _fov = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -180f, 180f));
-    }
-
-    public float Yaw
-    {
-        get => Mathematics.RadiansToDegrees(_yaw);
-
-        set
-        {
-            _yaw = Mathematics.DegreesToRadians(value);
-            CalculateVectors();
-        }
-    }
-
-    public float Pitch
-    {
-        get => Mathematics.RadiansToDegrees(_pitch);
-
-        set
-        {
-            _pitch = Mathematics.DegreesToRadians(Mathematics.Clamp(value, -89.9f, 89.9f));
-            CalculateVectors();
         }
     }
 

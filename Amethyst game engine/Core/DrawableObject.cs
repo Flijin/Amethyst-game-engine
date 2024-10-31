@@ -1,5 +1,5 @@
 ﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Core.Render;
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Core;
@@ -10,8 +10,8 @@ public abstract class DrawableObject : IDisposable
     private protected readonly float[] _vertices;
     private protected readonly BufferUsageHint _usageHint = BufferUsageHint.StaticDraw;
 
-    public int VAO { get; set; }
-    public int VBO { get; set; }
+    internal int VAO { get; set; }
+    internal int VBO { get; set; }
 
     protected DrawableObject(float[] vertices)
     {
@@ -52,5 +52,6 @@ public abstract class DrawableObject : IDisposable
     public void Dispose()
     {
         UploadObjectFromGPU();
+        GC.SuppressFinalize(this);
     }
 }

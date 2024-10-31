@@ -2,14 +2,14 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
-using Amethyst_game_engine.Core;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Amethyst_game_engine;
+namespace Amethyst_game_engine.Core;
 
 public class Window : GameWindow
 {
     private BaseScene? _scene;
+    private static float _aspectRatio;
 
     private static Action<KeyboardState, float>? _keyPressedHandler;
     internal static event Action<KeyboardState, float> KeyPressedEvent
@@ -32,7 +32,9 @@ public class Window : GameWindow
         remove => _resetFirstMoveHadler -= value;
     }
 
-    internal BaseScene? Scene
+    internal static new float AspectRatio => _aspectRatio;
+
+    public BaseScene? Scene
     {
         set
         {
@@ -43,18 +45,24 @@ public class Window : GameWindow
 
     static Window() => SystemSettings.Init();
 
-    public Window(int wight, int height, string title)
-        : base(GameWindowSettings.Default, new NativeWindowSettings() { ClientSize = new Vector2i(wight, height) })
+    public Window(int width, int height, string title)
+        : base(GameWindowSettings.Default, new NativeWindowSettings()
+        {
+            ClientSize = new Vector2i(width, height),
+        })
     {
+        SystemSettings.ShowWindow(SystemSettings.SW_HIDE);
+
+        _aspectRatio = (float)width / height;
         CursorState = CursorState.Grabbed;
-        ClientSize = new Vector2i(wight, height);
+        ClientSize = new Vector2i(width, height);
         Title = title;
 
         GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     public Window(string title)
-        : this(SystemSettings.SCREEN_RESOLUTION.X, SystemSettings.SCREEN_RESOLUTION.Y, title) { }
+        : this(SystemSettings.ScreenResolution.X, SystemSettings.ScreenResolution.Y, title) { }
 
     public static void ChangeBackgroundColor(Vector3 color) => GL.ClearColor(color.X, color.Y, color.Z, 1.0f);
 

@@ -1,7 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace Amethyst_game_engine.Core.Render;
+namespace Amethyst_game_engine.Render;
 
 internal class Shader : IDisposable
 {
@@ -9,12 +9,12 @@ internal class Shader : IDisposable
 
     public int Handle { get; private set; }
 
-    public Shader(string vertexShaderPath, string fragmentShaderPath)
+    public Shader()
     {
         Handle = GL.CreateProgram();
 
-        var vertexDescriptor = CreateAndAttachShader(vertexShaderPath, ShaderType.VertexShader, Handle);
-        var fragmentDescriptor = CreateAndAttachShader(fragmentShaderPath, ShaderType.FragmentShader, Handle);
+        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle);
+        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle);
 
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
@@ -70,9 +70,15 @@ internal class Shader : IDisposable
         GL.Uniform1(_uniformLocations[name], value);
     }
 
-    private static int CreateAndAttachShader(string path, ShaderType type, int handle)
+    private static int CreateAndAttachShader(ShaderType type, int handle)
     {
-        var shaderSourse = File.ReadAllText(path);
+        string shaderSourse;
+
+        if (type == ShaderType.VertexShader)
+            shaderSourse = Resources.Vertex_shader;
+        else
+            shaderSourse = Resources.Fragment_shader;
+
         var shaderDescriptor = GL.CreateShader(type);
 
         GL.ShaderSource(shaderDescriptor, shaderSourse);
