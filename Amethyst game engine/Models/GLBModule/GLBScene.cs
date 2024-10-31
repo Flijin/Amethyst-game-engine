@@ -1,22 +1,30 @@
-﻿using Amethyst_game_engine.CameraModules;
+﻿namespace Amethyst_game_engine.Models.GLBModule;
 
-namespace Amethyst_game_engine.Models.GLBModule;
-
-internal class GLBScene(GLBModel[] models)
+public class GLBScene
 {
-    private readonly GLBModel[] _models = models;
+    private GLBModel[] _models;
 
     public string Name { get; set; } = "None";
-    public int ModelsCount { get; } = models.Length;
-    public Camera? Camera { get; set; } = null;
+    public int ModelsCount { get; private set; }
 
-    public float[,] SceneMatrix { get; set; } =
+    public GLBModel[] Models
     {
-        { 1, 0, 0, 0 },
-        { 0, 1, 0, 0 },
-        { 0, 0, 1, 0 },
-        { 0, 0, 0, 1 },
-    };
+        get => _models;
+
+        set
+        {
+            _models = value;
+            ModelsCount = value.Length;
+        }
+    }
+
+    public GLBScene() : this([]) { }
+
+    public GLBScene(GLBModel[] models)
+    {
+        _models = models;
+        ModelsCount = _models.Length;
+    }
 
     public GLBModel GetModelByIndex(int index) => _models[index];
 }

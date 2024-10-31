@@ -132,10 +132,10 @@ public static class JSONSerializer
 
             if (data[symIndex] == ',')
             {
-                if (isElementItitialized == false)
-                    throw new ArgumentException("Syntax error. JSON file is invalid");
-                else
+                if (isElementItitialized)
                     isElementItitialized = false;
+                else
+                    throw new ArgumentException("Syntax error. JSON file is invalid");
             }
             else if (data[symIndex] == '"' && isElementItitialized == false)
             {
@@ -213,11 +213,11 @@ public static class JSONSerializer
 
         var length = symIndex - startIndex;
 
-        if (symIndex == data.Length)
-            throw new ArgumentException("Syntax error. JSON file is invalid");
+        if (symIndex != data.Length)
+            return new string(data[startIndex..(startIndex + length)]);
         else if (length == 0)
             return string.Empty;
         else
-            return new string(data[startIndex..(startIndex + length)]);
+            throw new ArgumentException("Syntax error. JSON file is invalid");
     }
 }

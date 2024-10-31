@@ -1,9 +1,8 @@
-﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Core;
+﻿using Amethyst_game_engine.Core;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
-internal class GLBImporter
+public class GLBImporter
 {
     private readonly Dictionary<MetadataTypes, string> _metadata;
     private readonly GLBMultiScene _multiScene;
@@ -83,76 +82,53 @@ internal class GLBImporter
 
     private GLBScene ReadScene(int[] sceneNodesIndices, string? name = default)
     {
-        GLBScene result;
+        var nodes = ((object[])_jsonChunk["nodes"]).Cast<Dictionary<string, object>>().ToArray();
 
-        if (sceneNodesIndices.Length == 1)
+        List<GLBModel> models = [];
+
+        for (int i = 0; i < sceneNodesIndices.Length; i++)
         {
-            var nodes = ((object[])_jsonChunk["nodes"]).Cast<Dictionary<string, object>>().ToArray();
-            var currentNode = nodes[sceneNodesIndices[0]];
-            var currentNodeInfo = new NodeInfo(currentNode);
-            var currentNodeIndex = sceneNodesIndices[0];
-            float[,]? sceneMatrix;
+            ReadSceneRec(sceneNodesIndices[i]);
+        }
 
-            while (currentNodeInfo.Name != "RootNode" && currentNodeInfo.Children?.Length == 1 && currentNodeInfo.Mesh is null)
+        void ReadSceneRec(int nodeIndex, float[,]? sceneMatrix = default)
+        {
+            var currentNodeInfo = new NodeInfo(nodes[nodeIndex]);
+            var nodeGlobalMatrix = CalculateGlobalMatrix(sceneMatrix, currentNodeInfo.ResultMatrix);
+
+            if (currentNodeInfo.Mesh is not null)
             {
-                currentNodeIndex = currentNodeInfo.Children[0];
-
-                //if (currentNodeInfo.Camera is not null)
-                //sceneMatrix = currentNodeInfo.Camera;
-
-                currentNode = nodes[currentNodeIndex];
-                currentNodeInfo = new(currentNode);
+                models.Add(ReadModel(nodes, nodes[nodeIndex], nodeGlobalMatrix));
             }
-
-            if (currentNodeInfo.Children is not null && currentNodeInfo.Mesh is null)
+            else if (currentNodeInfo.Children?.Length > 1)
             {
-                var childrenCount = currentNodeInfo.Children.Length;
-                var sceneModels = new GLBModel[childrenCount];
-
-                for (int i = 0; i < childrenCount; i++)
+                for (int j = 0; j < currentNodeInfo.Children!.Length; j++)
                 {
-                    sceneModels[i] = ReadModel(currentNodeInfo.Children[i]);
+                    models.Add(ReadModel(nodes, nodes[currentNodeInfo.Children[j]], nodeGlobalMatrix));
                 }
-
-                result = new GLBScene(sceneModels);
             }
-            else if (currentNodeInfo.Mesh is not null && currentNodeInfo.Children is null)
+            else if (currentNodeInfo.Children?.Length == 1)
             {
-                result = new GLBScene([ReadModel(currentNodeIndex)]);
+                ReadSceneRec(currentNodeInfo.Children[0], nodeGlobalMatrix);
             }
+        }
+
+        float[,]? CalculateGlobalMatrix(float[,]? m1, float[,]? m2)
+        {
+            if (m1 is null && m2 is not null)
+                return m2;
+            else if (m1 is not null && m2 is null)
+                return m1;
+            else if (m1 is not null && m2 is not null)
+                return Mathematics.MultiplyMatrices(m1, m2);
             else
-            {
-                throw new Exception();
-            }
-        }
-        else if (sceneNodesIndices.Length > 1)
-        {
-            var sceneModels = new GLBModel[sceneNodesIndices.Length];
-
-            for (int i = 0; i < sceneNodesIndices.Length; i++)
-            {
-                sceneModels[i] = ReadModel(sceneNodesIndices[i]);
-            }
-
-            result = new GLBScene(sceneModels);
-        }
-        else
-        {
-            result = new GLBScene([]);
+                return null;
         }
 
-        if (name is not null)
-            result.Name = name;
-
-        return result;
+        return new GLBScene([.. models]) { Name = name ?? "None" };
     }
 
-    private Camera ReadCamera(int cameraIndex, Dictionary<string, object>[] cameras)
-    {
-        return null;
-    }
-
-    private static GLBModel ReadModel(int nodeIndex)
+    private static GLBModel ReadModel(Dictionary<string, object>[] nodes, Dictionary<string, object> obj, float[,]? globalMatrix = default)
     {
         return null;
     }

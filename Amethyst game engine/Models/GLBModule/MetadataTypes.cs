@@ -1,6 +1,6 @@
 ﻿namespace Amethyst_game_engine.Models.GLBModule;
 
-internal enum MetadataTypes : byte
+public enum MetadataTypes : byte
 {
     Author = 0,
     License = 1,

@@ -6,7 +6,6 @@ internal readonly struct NodeInfo
 {
     public string? Name { get; }
     public int[]? Children { get; }
-    public int? Camera { get; }
     public int? Mesh { get; }
     public int? Skin { get; }
     public float[]? Scale { get; }
@@ -22,9 +21,6 @@ internal readonly struct NodeInfo
 
         if (nodePresentation.TryGetValue("children", out object? children))
             Children = ((object[])children).Cast<int>().ToArray();
-
-        if (nodePresentation.TryGetValue("camera", out object? camera))
-            Camera = (int)camera;
 
         if (nodePresentation.TryGetValue("mesh", out object? mesh))
             Mesh = (int)mesh;
