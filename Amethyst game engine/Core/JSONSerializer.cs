@@ -123,9 +123,8 @@ public static class JSONSerializer
 
     private static object?[] ReadArray(char[] data, ref int symIndex)
     {
-        List<object?> elements = [];
         var isElementItitialized = false;
-
+        List<object?> elements = [];
         do
         {
             symIndex++;
@@ -173,7 +172,7 @@ public static class JSONSerializer
         }
         while (symIndex < data.Length - 1);
 
-        throw new ArgumentException("Syntax error. JSON file is invalid");
+            throw new ArgumentException("Syntax error. JSON file is invalid");
     }
     
     private static object? ReadLiteral(char[] data, ref int symIndex)
