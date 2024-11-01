@@ -152,15 +152,15 @@ public static class JSONSerializer
                 elements.Add(ReadArray(data, ref symIndex));
                 isElementItitialized = true;
             }
-            else if (data[symIndex] == ']')
-            {
-                return [.. elements];
-            }
             else if ((char.IsAsciiLetter(data[symIndex]) || char.IsDigit(data[symIndex]) || data[symIndex] == '-')
                     && isElementItitialized == false)
             {
                 elements.Add(ReadLiteral(data, ref symIndex));
                 isElementItitialized = true;
+            }
+            else if (data[symIndex] == ']')
+            {
+                return [.. elements];
             }
             else if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
             {

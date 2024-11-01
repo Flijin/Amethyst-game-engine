@@ -1,6 +1,8 @@
-﻿namespace Amethyst_game_engine.Core;
+﻿using System.Numerics;
 
-internal static class Mathematics
+namespace Amethyst_game_engine.Core;
+
+public static class Mathematics
 {
     public static float DegreesToRadians(float degrees) => degrees * (float.Pi / 180);
     public static float RadiansToDegrees(float radians) => radians * 180 / float.Pi;
@@ -16,9 +18,9 @@ internal static class Mathematics
         };
     }
 
-    public static float[,] GetMatrixFromArray(float[] array, int colums, int rows)
+    public static T[,] GetMatrixFromArray<T>(T[] array, int colums, int rows) where T : INumber<T>
     {
-        float[,] result = new float[rows, colums];
+        T[,] result = new T[rows, colums];
 
         if (array.Length == colums * rows)
         {
@@ -40,7 +42,7 @@ internal static class Mathematics
         }
     }
 
-    public static float[,] GetMatrixFromArray(float[] array)
+    public static T[,] GetMatrixFromArray<T>(T[] array) where T : INumber<T>
     {
         var size = MathF.Sqrt(array.Length);
 
@@ -50,17 +52,15 @@ internal static class Mathematics
             throw new ArgumentException("Error. The matrix is not square or the number of elements in the array is incorrect");
     }
 
-    public static float Clamp(float value, float min, float max)
+    public static T Clamp<T>(T value, T min, T max) where T : INumber<T>
     {
         if (value < min) return min;
         else if (value > max) return max;
         else return value;
     }
 
-    public static float[,] MultiplyMatrices(float[,] m1, float[,] m2)
+    public static void MultiplyMatrices<T>(T[,] m1, T[,] m2, T[,] result) where T : INumber<T>
     {
-        var result = new float[m1.GetLength(0), m2.GetLength(1)];
-
         if (m1.GetLength(1) == m2.GetLength(0))
         {
             for (int row = 0; row < m1.GetLength(0); row++)
@@ -73,13 +73,18 @@ internal static class Mathematics
                     }
                 }
             }
-
-            return result;
         }
         else
         {
             throw new ArgumentException("Error. Matrices cannot be multiplied");
         }
+    }
+
+    public static T[,] MultiplyMatrices<T>(T[,] m1, T[,] m2) where T : INumber<T>
+    {
+        var result = new T[m1.GetLength(0), m2.GetLength(1)];
+        MultiplyMatrices(m1, m2, result);
+        return result;
     }
 
     public static float[,] CreateTranslationMatrix(float x, float y, float z)

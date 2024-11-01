@@ -46,8 +46,8 @@ public class StaticGameObject3D(STLModel model) : DrawableObject(model.Vertices)
         {
             _rotation = value;
             _modelMatrix = Mathematics.MultiplyMatrices(_modelMatrix,
-                           Mathematics.CreateRotationXMatrix(
-                           Mathematics.DegreesToRadians(value)));
+            Mathematics.CreateRotationXMatrix(
+            Mathematics.DegreesToRadians(value)));
         }
     }
 

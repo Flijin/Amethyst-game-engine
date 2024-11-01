@@ -1,5 +1,5 @@
 ﻿using Amethyst_game_engine.Core;
-
+using System.Numerics;
 namespace Amethyst_game_engine.Models.GLBModule;
 
 public class GLBImporter
@@ -8,6 +8,28 @@ public class GLBImporter
     private readonly GLBMultiScene _multiScene;
     private readonly Dictionary<string, object> _jsonChunk;
     private readonly BinaryReader _reader;
+    private long _bufferStartPosition;
+
+    private static readonly Dictionary<string, int> _typeCapacity = new()
+    {
+        { "SCALAR", 1 },
+        { "VEC2",   2 },
+        { "VEC3",   3 },
+        { "VEC4",   4 },
+        { "MAT2",   4 },
+        { "MAT3",   9 },
+        { "MAT4",  16 }
+    };
+
+    private static readonly Dictionary<int, int> _componentSize = new()
+    {
+        { 5120, 1 },
+        { 5121, 1 },
+        { 5122, 2 },
+        { 5123, 2 },
+        { 5125, 4 },
+        { 5126, 4 }
+    };
 
     public uint FileSize { get; private set; }
 
@@ -94,7 +116,9 @@ public class GLBImporter
         void ReadSceneRec(int nodeIndex, float[,]? sceneMatrix = default)
         {
             var currentNodeInfo = new NodeInfo(nodes[nodeIndex]);
-            var nodeGlobalMatrix = CalculateGlobalMatrix(sceneMatrix, currentNodeInfo.ResultMatrix);
+            float[,]? nodeGlobalMatrix = null;
+            
+            CalculateGlobalMatrix(sceneMatrix, currentNodeInfo.ResultMatrix, ref nodeGlobalMatrix);
 
             if (currentNodeInfo.Mesh is not null)
             {
@@ -102,7 +126,7 @@ public class GLBImporter
             }
             else if (currentNodeInfo.Children?.Length > 1)
             {
-                for (int j = 0; j < currentNodeInfo.Children!.Length; j++)
+                for (int j = 0; j < currentNodeInfo.Children.Length; j++)
                 {
                     models.Add(ReadModel(nodes, nodes[currentNodeInfo.Children[j]], nodeGlobalMatrix));
                 }
@@ -113,16 +137,17 @@ public class GLBImporter
             }
         }
 
-        float[,]? CalculateGlobalMatrix(float[,]? m1, float[,]? m2)
+        void CalculateGlobalMatrix(float[,]? m1, float[,]? m2, ref float[,]? result)
         {
             if (m1 is null && m2 is not null)
-                return m2;
+                result = m2;
             else if (m1 is not null && m2 is null)
-                return m1;
+                result = m1;
             else if (m1 is not null && m2 is not null)
-                return Mathematics.MultiplyMatrices(m1, m2);
-            else
-                return null;
+            {
+                result = new float[4, 4];
+                Mathematics.MultiplyMatrices(m1, m2, result);
+            }
         }
 
         return new GLBScene([.. models]) { Name = name ?? "None" };
@@ -130,7 +155,60 @@ public class GLBImporter
 
     private static GLBModel ReadModel(Dictionary<string, object>[] nodes, Dictionary<string, object> obj, float[,]? globalMatrix = default)
     {
+        GLBModel model = new();
+
         return null;
+    }
+
+    private (T[] data, string layout) ReadAccessor<T>(Dictionary<string, object> accessor, Dictionary<string, object>[] bufferViews)
+        where T : INumber<T>
+    {
+        var offset = 0;
+        var stride = 0;
+
+        var bufferView = bufferViews[(int)accessor["bufferView"]];
+        var type = (string)accessor["type"];
+        var typeCapacity = _typeCapacity[type];
+        var componentType = (int)accessor["componentType"];
+        var componentSize = _componentSize[componentType];
+        var count = (int)accessor["count"];
+
+        if (accessor.TryGetValue("byteOffset", out object? offset1))
+            offset += (int)offset1;
+
+        if (bufferView.TryGetValue("byteOffset", out object? offset2))
+            offset += (int)offset2;
+
+        if (bufferView.TryGetValue("byteStride", out object? bStride))
+            stride = (int)bStride - typeCapacity * componentSize;
+
+        var data = new T[count * typeCapacity];
+        _reader.BaseStream.Position = _bufferStartPosition + offset;
+
+        var ReadFunc = GetReaderMethod(componentType);
+
+        for (int i = 0; i < count; i++)
+        {
+            for (int j = 0; j < typeCapacity; j++)
+            {
+                data[i] = ReadFunc();
+            }
+            _reader.BaseStream.Position += stride;
+        }
+
+        Func<T> GetReaderMethod(int codeType) => codeType switch
+        {
+            5120 => () => T.CreateChecked(_reader.ReadSByte()),
+            5121 => () => T.CreateChecked(_reader.ReadByte()),
+            5122 => () => T.CreateChecked(_reader.ReadInt16()),
+            5123 => () => T.CreateChecked(_reader.ReadUInt16()),
+            5125 => () => T.CreateChecked(_reader.ReadUInt32()),
+            5126 => () => T.CreateChecked(_reader.ReadSingle()),
+
+            _ => throw new Exception()
+        };
+
+        return (data, type);
     }
 
     private Dictionary<string, object> ReadJsonChunk()
@@ -144,16 +222,15 @@ public class GLBImporter
             throw new FileLoadException($"Error. Unsupported GLB-file version: ({version}). Only version 2.0 is currently supported");
 
         FileSize = _reader.ReadUInt32();
-
         var chunkLength = _reader.ReadUInt32();
         Dictionary<string, object?> chunkData;
 
         if (new string(_reader.ReadChars(4)) == "JSON")
-        {
             chunkData = JSONSerializer.JsonToObj(_reader.ReadBytes((int)chunkLength));
-        }
         else
             throw new FileLoadException("Error. GLB-file is invalid");
+
+        _bufferStartPosition = _reader.BaseStream.Position;
 
         if (chunkData.ContainsValue(null) == false)
             return chunkData!;
