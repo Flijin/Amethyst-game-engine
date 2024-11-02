@@ -8,7 +8,7 @@ namespace Amethyst_game_engine.Core;
 
 public class Window : GameWindow
 {
-    private BaseScene? _scene;
+    private static BaseScene? _scene;
     private static float _aspectRatio;
 
     private static Action<KeyboardState, float>? _keyPressedHandler;
@@ -34,7 +34,7 @@ public class Window : GameWindow
 
     internal static new float AspectRatio => _aspectRatio;
 
-    public BaseScene? Scene
+    public static BaseScene? Scene
     {
         set
         {

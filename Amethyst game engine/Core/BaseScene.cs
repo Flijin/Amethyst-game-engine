@@ -108,11 +108,11 @@ public abstract class BaseScene : IDisposable
         _objects.Add(obj);
     }
 
-    protected void RemoveGameObject(Predicate<DrawableObject> obj)
+    protected void RemoveGameObjects(Predicate<DrawableObject> predicate)
     {
         foreach (var item in _objects)
         {
-            if (obj(item))
+            if (predicate(item))
             {
                 _objects.Remove(item);
                 item.Dispose();
@@ -120,13 +120,13 @@ public abstract class BaseScene : IDisposable
         }
     }
 
-    protected DrawableObject[] GetGameObject(Predicate<DrawableObject> obj)
+    protected DrawableObject[] GetGameObject(Predicate<DrawableObject> predicate)
     {
         List<DrawableObject> result = [];
 
         foreach (var item in _objects)
         {
-            if (obj(item))
+            if (predicate(item))
             {
                 result.Add(item);
             }

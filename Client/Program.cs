@@ -30,7 +30,7 @@ internal class Program
         Console.WriteLine("Время выполнения: " + sw.ElapsedMilliseconds + " ms");
         //Console.WriteLine($"Data length: {test.data.Length}");
 
-        //Window appWindow = new("Тестовый проект") { Scene = new TestScene() };
-        //appWindow.Run();
+        Window appWindow = new("Тестовый проект") { Scene = new ExampleScene() };
+        appWindow.Run();
     }
 }
