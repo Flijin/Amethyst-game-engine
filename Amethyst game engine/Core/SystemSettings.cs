@@ -10,6 +10,9 @@ public static partial class SystemSettings
     private static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
     private static Vector2i _screenResolution;
 
+    internal static Architecture _architecture = RuntimeInformation.OSArchitecture;
+    internal static string _osDescription = RuntimeInformation.OSDescription;
+
     private static bool _wasInitiated = false;
 
     #region Window libs
@@ -92,6 +95,12 @@ public static partial class SystemSettings
             return ShowWindow(WINDOW_DESCRIPTOR, nCmdShow);
         else
             return false;
+    }
+
+    public static void GetInfo()
+    {
+        Console.WriteLine(_architecture.ToString());
+        Console.WriteLine(_osDescription);
     }
 
     internal static void Init()

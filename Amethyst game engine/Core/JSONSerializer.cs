@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Amethyst_game_engine.Core;
@@ -11,7 +12,7 @@ public static class JSONSerializer
 
     public static Dictionary<string, object?> JsonToObj(byte[] data, int codepage = 0)
     {
-        return JsonToObj(Encoding.GetEncoding(codepage).GetString(data));
+        return JsonToObj(Encoding.GetEncoding(codepage).GetChars(data));
     }
 
     public static Dictionary<string, object?> JsonToObj(char[] data)
@@ -19,14 +20,21 @@ public static class JSONSerializer
         Dictionary<string, object?>? result = null;
         var symIndex = 0;
 
-        while (symIndex < data.Length)
+        try
         {
-            if (data[symIndex] == '{' && result is null)
-                result = ReadObject(data, ref symIndex);
-            else if ((char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex])) == false)
-                throw new ArgumentException("Syntax error. JSON file is invalid");
+            while (symIndex < data.Length)
+            {
+                if (data[symIndex] == '{' && result is null)
+                    result = ReadObject(data, ref symIndex);
+                else if ((char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex])) == false)
+                    throw new Exception();
 
-            symIndex++;
+                symIndex++;
+            }
+        }
+        catch (Exception)
+        {
+            throw new ArgumentException("Syntax error. JSON file is invalid");
         }
 
         return result ?? [];
@@ -39,102 +47,88 @@ public static class JSONSerializer
         string currentKey = string.Empty;
         object? currentValue = null;
 
-        var isKeyInitialized = false;
-        var isValueInitialized = false;
-        var wasThereColon = false;
-
-        var numberOfCommas = 0;
+        byte flags = 0;
 
         do
         {
             symIndex++;
 
-            if (data[symIndex] == '"' && ((isKeyInitialized == false) || (isValueInitialized == false)))
+            if (data[symIndex] == '"' && (flags & 0b_110) < 6)
             {
-                if (isKeyInitialized == false)
+                if ((flags & 0b_100) == 0)
                 {
                     currentKey = ReadString(data, ref symIndex);
-                    isKeyInitialized = true;
+                    flags |= 0b_100;
                 }
-                else if (wasThereColon)
+                else if ((flags & 0b_001) == 1)
                 {
                     currentValue = ReadString(data, ref symIndex);
-                    isValueInitialized = true;
+                    flags |= 0b_010;
                 }
             }
-            else if (data[symIndex] == ':' && (wasThereColon == false) && isKeyInitialized)
+            else if (data[symIndex] == ':' && (flags & 0b_101) == 4)
             {
-                wasThereColon = true;
+                flags |= 0b_001;
             }
-            else if (data[symIndex] == ',' && isKeyInitialized && isValueInitialized)
+            else if (data[symIndex] == ',' && (flags & 0b_110) == 6)
             {
-                if (result.TryAdd(currentKey, currentValue))
-                {
-                    isKeyInitialized = false;
-                    isValueInitialized = false;
-                    wasThereColon = false;
-                    numberOfCommas++;
-                }
-                else
-                    throw new ArgumentException("Error. JSON file is invalid, there are pairs with matching keys");
+                result.Add(currentKey, currentValue);
+                flags = 0;
             }
-            else if (data[symIndex] == '{' && wasThereColon && (isValueInitialized == false))
+            else if (data[symIndex] == '{' && (flags & 0b_011) == 1)
             {
                 currentValue = ReadObject(data, ref symIndex);
-                isValueInitialized = true;
+                flags |= 0b_010;
             }
-            else if (data[symIndex] == '}' && (isKeyInitialized == isValueInitialized))
+            else if (data[symIndex] == '}' && (flags & 0b_110) is 0 or 6)
             {
-                if (isKeyInitialized)
+                if ((flags & 0b_100) == 4)
                 {
-                    if (result.TryAdd(currentKey, currentValue))
-                        return result;
-                    else
-                        throw new ArgumentException("Error. JSON file is invalid, there are pairs with matching keys");
+                    result.Add(currentKey, currentValue);
+                    return result;
                 }
 
                 return result;
 
             }
-            else if (data[symIndex] == '[' && wasThereColon && (isValueInitialized == false))
+            else if (data[symIndex] == '[' && (flags & 0b_011) == 1)
             {
                 currentValue = ReadArray(data, ref symIndex);
-                isValueInitialized = true;
+                flags |= 0b_010;
             }
             else if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
             {
                 continue;
             }
-            else if ((char.IsAsciiLetter(data[symIndex]) || char.IsDigit(data[symIndex]) || data[symIndex] == '-')
-                      && wasThereColon && (isValueInitialized == false))
+            else if ((char.IsAsciiLetter(data[symIndex]) || char.IsDigit(data[symIndex]) || data[symIndex] == '-') && (flags & 0b_011) == 1)
             {
                 currentValue = ReadLiteral(data, ref symIndex);
-                isValueInitialized = true;
+                flags |= 0b_010;
             }
             else
             {
-                throw new ArgumentException("Syntax error. JSON file is invalid");
+                throw new Exception();
             }
         }
-        while (symIndex < data.Length - 1);
-
-        throw new ArgumentException("Syntax error. JSON file is invalid");
+        while (true);
     }
 
     private static object?[] ReadArray(char[] data, ref int symIndex)
     {
         var isElementItitialized = false;
         List<object?> elements = [];
+
         do
         {
             symIndex++;
 
-            if (data[symIndex] == ',')
+            if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
             {
-                if (isElementItitialized)
-                    isElementItitialized = false;
-                else
-                    throw new ArgumentException("Syntax error. JSON file is invalid");
+                continue;
+            }
+            else if (data[symIndex] == ',' && isElementItitialized)
+            {
+                isElementItitialized = false;
             }
             else if (data[symIndex] == '"' && isElementItitialized == false)
             {
@@ -161,26 +155,22 @@ public static class JSONSerializer
             {
                 return [.. elements];
             }
-            else if (char.IsSeparator(data[symIndex]) || char.IsControl(data[symIndex]))
-            {
-                continue;
-            }
             else
             {
-                throw new ArgumentException("Syntax error. JSON file is invalid");
+                throw new Exception();
             }
         }
-        while (symIndex < data.Length - 1);
-
-            throw new ArgumentException("Syntax error. JSON file is invalid");
+        while (true);
     }
-    
+
     private static object? ReadLiteral(char[] data, ref int symIndex)
     {
         var startIndex = symIndex;
 
-        while ((char.IsAsciiLetter(data[symIndex]) || char.IsDigit(data[symIndex]) || data[symIndex] is '.' or '-' or '+')
-                && symIndex < data.Length) { symIndex++; }
+        while (char.IsAsciiLetter(data[symIndex]) || char.IsDigit(data[symIndex]) || data[symIndex] is '.' or '-' or '+')
+        {
+            symIndex++;
+        }
 
         var length = symIndex-- - startIndex;
         var resultStr = new string(data[startIndex..(startIndex + length)]);
@@ -197,10 +187,8 @@ public static class JSONSerializer
 
         if (int.TryParse(resultStr, out int int_result))
             return int_result;
-        else if (float.TryParse(resultStr, _cultureInfo, out float float_result))
-            return float_result;
         else
-            throw new ArgumentException("Syntax error. JSON file is invalid");
+            return float.Parse(resultStr, _cultureInfo);
     }
 
     private static string ReadString(char[] data, ref int symIndex)
@@ -208,15 +196,13 @@ public static class JSONSerializer
         var startIndex = symIndex + 1;
 
         do { symIndex++; }
-        while (symIndex < data.Length && data[symIndex] != '"');
+        while (data[symIndex] != '"');
 
         var length = symIndex - startIndex;
 
-        if (symIndex != data.Length)
+        if (length != 0)
             return new string(data[startIndex..(startIndex + length)]);
-        else if (length == 0)
-            return string.Empty;
         else
-            throw new ArgumentException("Syntax error. JSON file is invalid");
+            return string.Empty;
     }
 }

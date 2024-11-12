@@ -1,6 +1,6 @@
 ﻿namespace Amethyst_game_engine.Models.GLBModule;
 
-public class GLBMultiScene(GLBScene[] scenes, int defaultSceneIndex)
+public readonly struct GLBMultiScene(GLBScene[] scenes, int defaultSceneIndex)
 {
     private readonly int _defaultSceneIndex = defaultSceneIndex;
     private readonly GLBScene[] _scenes = scenes;
