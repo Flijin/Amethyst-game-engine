@@ -2,7 +2,8 @@
 
 internal struct Mesh
 {
-    public float[] Vertices { get; }
+    public int[] VAO { get; }
+    public int[] VBO { get; }
 
     public float[,] Matrix { get; set; } =
     {
@@ -12,8 +13,8 @@ internal struct Mesh
         { 0, 0, 0, 1 }
     };
 
-    internal Mesh(float[] vertices)
+    internal Mesh(Primitive[] primitives)
     {
-        Vertices = vertices;
+        Primitives = primitives;
     }
 }

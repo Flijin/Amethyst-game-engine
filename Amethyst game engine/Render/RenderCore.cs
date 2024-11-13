@@ -29,4 +29,9 @@ internal class RenderCore : IDisposable
             index += 3;
         }
     }
+
+    public void DrawObject()
+    {
+
+    }
 }

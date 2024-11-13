@@ -18,19 +18,33 @@ public static class Mathematics
         };
     }
 
-    public static T[,] GetMatrixFromArray<T>(T[] array, int colums, int rows) where T : INumber<T>
+    public static T[,] CreateMatrixFromArray<T>(T[] array, bool columnForm) where T : INumber<T>
     {
-        T[,] result = new T[rows, colums];
+        var matrixSize = MathF.Sqrt(array.Length);
 
-        if (array.Length == colums * rows)
+        if (float.IsInteger(matrixSize))
         {
+            T[,] result = new T[(int)matrixSize, (int)matrixSize];
             var index = 0;
 
-            for (int row = 0; row < rows; row++)
+            if (columnForm)
             {
-                for (int col = 0; col < colums; col++)
+                for (int row = 0; row < matrixSize; row++)
                 {
-                    result[row, col] = array[index++];
+                    for (int col = 0; col < matrixSize; col++)
+                    {
+                        result[col, row] = array[index++];
+                    }
+                }
+            }
+            else
+            {
+                for (int row = 0; row < matrixSize; row++)
+                {
+                    for (int col = 0; col < matrixSize; col++)
+                    {
+                        result[row, col] = array[index++];
+                    }
                 }
             }
 
@@ -40,16 +54,6 @@ public static class Mathematics
         {
             throw new ArgumentException("Error. The number of elements in the array is less than the size of the matrix");
         }
-    }
-
-    public static T[,] GetMatrixFromArray<T>(T[] array) where T : INumber<T>
-    {
-        var size = MathF.Sqrt(array.Length);
-
-        if (float.IsInteger(size))
-            return GetMatrixFromArray(array, (int)size, (int)size);
-        else
-            throw new ArgumentException("Error. The matrix is not square or the number of elements in the array is incorrect");
     }
 
     public static T Clamp<T>(T value, T min, T max) where T : INumber<T>

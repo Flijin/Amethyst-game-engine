@@ -37,7 +37,7 @@ internal struct NodeInfo
 
         if (nodePresentation.TryGetValue("matrix", out object? matrix))
         {
-            LocalMatrix = Mathematics.GetMatrixFromArray(((object[])matrix).Cast<float>().ToArray());
+            LocalMatrix = Mathematics.CreateMatrixFromArray(((object[])matrix).Cast<float>().ToArray(), true);
             return;
         }
 
