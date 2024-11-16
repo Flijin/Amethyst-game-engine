@@ -52,6 +52,7 @@ public class Window : GameWindow
         })
     {
         SystemSettings.ShowWindow(SystemSettings.SW_HIDE);
+        GL.Enable(EnableCap.DepthTest);
 
         _aspectRatio = (float)width / height;
         CursorState = CursorState.Grabbed;
@@ -77,7 +78,7 @@ public class Window : GameWindow
     {
         base.OnRenderFrame(args);
 
-        GL.Clear(ClearBufferMask.ColorBufferBit);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         _scene?.DrawScene();
 
         SwapBuffers();

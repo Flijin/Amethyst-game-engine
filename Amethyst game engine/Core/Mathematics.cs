@@ -63,8 +63,10 @@ public static class Mathematics
         else return value;
     }
 
-    public static void MultiplyMatrices<T>(T[,] m1, T[,] m2, T[,] result) where T : INumber<T>
+    public static T[,] MultiplyMatrices<T>(T[,] m1, T[,] m2) where T : INumber<T>
     {
+        var result = new T[m1.GetLength(0), m2.GetLength(1)];
+
         if (m1.GetLength(1) == m2.GetLength(0))
         {
             for (int row = 0; row < m1.GetLength(0); row++)
@@ -82,12 +84,7 @@ public static class Mathematics
         {
             throw new ArgumentException("Error. Matrices cannot be multiplied");
         }
-    }
 
-    public static T[,] MultiplyMatrices<T>(T[,] m1, T[,] m2) where T : INumber<T>
-    {
-        var result = new T[m1.GetLength(0), m2.GetLength(1)];
-        MultiplyMatrices(m1, m2, result);
         return result;
     }
 

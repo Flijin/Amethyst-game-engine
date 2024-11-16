@@ -1,5 +1,6 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Models.GLBModule;
 using Amethyst_game_engine.Models.STLModule;
 using OpenTK.Graphics.OpenGL4;
 
@@ -30,8 +31,26 @@ internal class RenderCore : IDisposable
         }
     }
 
-    public void DrawObject()
+    public void DrawObject(Mesh mesh, Camera cam)
     {
+        foreach (var primitive in mesh.primitives)
+        {
+            GL.BindVertexArray(primitive.vao);
 
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, primitive.textureHandle);
+
+            _shader.Use();
+
+            _shader.SetMatrix4("model", mesh.matrix);
+            _shader.SetMatrix4("view", cam.ViewMatrix);
+            _shader.SetMatrix4("projection", cam.ProjectionMatrix);
+            //_shader.SetVector3("aColor", new OpenTK.Mathematics.Vector3(0.5f));
+
+            if (primitive.isIndexedGeometry)
+                GL.DrawElements((PrimitiveType)primitive.mode, primitive.count, (DrawElementsType)primitive.componentType, 0);
+            else
+                GL.DrawArrays((PrimitiveType)primitive.mode, 0, primitive.count);
+        }
     }
 }

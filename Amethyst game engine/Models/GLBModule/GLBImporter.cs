@@ -1,5 +1,6 @@
 ﻿using Amethyst_game_engine.Core;
-using System.Numerics;
+using OpenTK.Graphics.OpenGL4;
+using StbImageSharp;
 namespace Amethyst_game_engine.Models.GLBModule;
 
 public class GLBImporter
@@ -22,7 +23,10 @@ public class GLBImporter
     private Dictionary<string, object>[] _skins = [];
     private Dictionary<string, object>[] _textures = [];
 
-    private static readonly Dictionary<string, int> _typeCapacity = new()
+    private GLBufferInfo[] _glBuffers = [];
+    private int[] _glTextures = [];
+
+    private static readonly Dictionary<string, int> _countOfComponents = new()
     {
         { "SCALAR", 1 },
         { "VEC2",   2 },
@@ -47,19 +51,24 @@ public class GLBImporter
     {
         BinaryReader reader = new(new FileStream(path, FileMode.Open));
 
+        //Task.Factory.StartNew(ReadChunkObjects);
+        //Task.Factory.StartNew(() => ReadBinaryChunk(reader));
+
         ReadFile(reader);
         _jsonChunk = ReadJsonChunk(reader);
 
-        Task.Factory.StartNew(ReadChunkObjects);
-        Task.Factory.StartNew(() => ReadBinaryChunk(reader));
+        ReadBinaryChunk(reader);
+        ReadChunkObjects();
+        ReadAccessors();
+        ReadTextures();
 
         var t1 = Task.Factory.StartNew(ReadMetadata);
-        var t2 = Task.Factory.StartNew(ReadMultiScene);
+        //var t2 = Task.Factory.StartNew(ReadMultiScene);
 
-        Task.WaitAll(t1, t2);
+        Task.WaitAll(t1);
 
         _metadata = t1.Result;
-        _multiScene = t2.Result;
+        _multiScene = ReadMultiScene();
     }
 
     public GLBMultiScene GetMultiScene() => _multiScene;
@@ -128,7 +137,7 @@ public class GLBImporter
 
     private GLBScene ReadScene(int[] sceneNodesIndices, string? name = default)
     {
-        lock (_nodes) { };
+        lock (_nodes) { }
 
         List<GLBModel> models = [];
 
@@ -139,7 +148,7 @@ public class GLBImporter
 
         void ReadSceneRec(int nodeIndex, float[,]? previousNodeMatrix = default)
         {
-            var currentNodeInfo = new NodeInfo(_nodes![nodeIndex], nodeIndex);
+            var currentNodeInfo = new NodeInfo(_nodes[nodeIndex], nodeIndex);
             float[,]? globalNodeMatrix = null;
 
             CalculateGlobalMatrix(previousNodeMatrix, currentNodeInfo.LocalMatrix, ref globalNodeMatrix);
@@ -199,7 +208,7 @@ public class GLBImporter
         {
             node.CalculateGlobalMatrix(matrix);
 
-            for (int i = 0; i < node.Children?.Length; i++)
+            for (int i = 0; i < node.Children!.Length; i++)
             {
                 CalculateMatricesAndAddMeshes((NodeInfo)modelNodes[node.Children[i]]!, node.GlobalMatrix);
             }
@@ -254,35 +263,174 @@ public class GLBImporter
 
     private Mesh ReadMesh(int index, float[,]? matrix)
     {
-        lock (_meshes) { };
+        lock (_meshes) { }
 
-        var primitives = ((object[])_meshes[index]["primitives"]).Cast<Dictionary<string, object>>().ToArray();
-        var primitivesData = new Primitive[primitives.Length];
+        Dictionary<string, object>[] primitives = ((object[])_meshes[index]["primitives"]).Cast<Dictionary<string, object>>().ToArray();
+        var primitivesObj = new Primitive[primitives.Length];
 
-        lock (_accessors) { };
+        List<int> buffers = [];
+
+        lock (_glBuffers) { }
 
         for (int i = 0; i < primitives.Length; i++)
         {
+            var vertexArrayObject = GL.GenVertexArray();
+            GL.BindVertexArray(vertexArrayObject);
+
             var attributes = (Dictionary<string, object>)primitives[i]["attributes"];
-            var position = (int)attributes["POSITION"];
-            primitivesData[i] =  new Primitive(ReadAccessor<float>(position).data);
+
+            var currentGlBuffer = _glBuffers[(int)attributes["POSITION"]];
+            var count = currentGlBuffer.count;
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, currentGlBuffer.buffer);
+            GL.VertexAttribPointer(0, 3, (VertexAttribPointerType)currentGlBuffer.componentType,
+                                         currentGlBuffer.normalized,
+                                         currentGlBuffer.stride, 0);
+
+            GL.EnableVertexAttribArray(0);
+            buffers.Add(currentGlBuffer.buffer);
+
+            var currentGlBuffer2 = _glBuffers[(int)attributes["TEXCOORD_0"]];
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, currentGlBuffer2.buffer);
+            GL.VertexAttribPointer(1, 2, (VertexAttribPointerType)currentGlBuffer2.componentType,
+                                         currentGlBuffer2.normalized,
+                                         currentGlBuffer2.stride, 0);
+
+            GL.EnableVertexAttribArray(1);
+            buffers.Add(currentGlBuffer.buffer);
+
+            var isIndexedGeometry = false;
+            var mode = primitives[i].TryGetValue("mode", out object? modeRes) ? (int)modeRes : 4;
+
+            if (primitives[i].TryGetValue("indices", out object? indicesRes))
+            {
+                isIndexedGeometry = true;
+                currentGlBuffer = _glBuffers[(int)indicesRes];
+                count = currentGlBuffer.count;
+
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, currentGlBuffer.buffer);
+                buffers.Add(currentGlBuffer.buffer);
+            }
+
+            var material = (int)primitives[i]["material"];
+            primitivesObj[i] = new Primitive(vertexArrayObject, currentGlBuffer.componentType, count, mode, ReadMaterial(material), isIndexedGeometry);
         }
 
-        var result = new Mesh(primitivesData);
-
-        if (matrix is not null)
-            result.Matrix = matrix;
-
-        return result;
+        return new Mesh(primitivesObj, [..buffers], matrix);
     }
 
-    private int ReadAccessor(int index)
+    private GLBufferInfo ReadAccessor(int index)
     {
-        lock (_accessors) { };
-
         var accessor = _accessors[index];
+        var accessorOffset = accessor.TryGetValue("byteOffset", out object? aOffset) ? (int)aOffset : 0;
+        var normalized = accessor.TryGetValue("normalized", out object? aNormalized) && (bool)aNormalized;
+        var count = (int)accessor["count"];
 
-        if (typeof(T) is float)
+        var glBuffer = GL.GenBuffer();
+        var type = (string)accessor["type"];
+        var componentType = (int)accessor["componentType"];
+
+        var bufferView = _bufferViews[(int)accessor["bufferView"]];
+        var byteLength = (int)bufferView["byteLength"];
+        var bufferViewOffset = bufferView.TryGetValue("byteOffset", out object? bOffset) ? (int)bOffset : 0;
+
+        var typeLength = _countOfComponents[type] * _componentSize[componentType];
+        var stride = bufferView.TryGetValue("byteStride", out object? byteStride) ? (int)byteStride : typeLength;
+        int target = bufferView.TryGetValue("target", out object? targetResult) ? (int)targetResult : 34962;
+
+        var bufferSlice = _binChunk[(accessorOffset + bufferViewOffset)..(bufferViewOffset + byteLength)];
+
+        GL.BindBuffer((BufferTarget)target, glBuffer);
+
+        GL.BufferData((BufferTarget)target,
+                       bufferSlice.Length, bufferSlice,
+                       BufferUsageHint.DynamicDraw);
+
+        return new GLBufferInfo(glBuffer, stride, componentType, count, normalized);
+    }
+
+    private int ReadMaterial(int index)
+    {
+        var material = _materials[index];
+        var attrib = (Dictionary<string, object>)material["pbrMetallicRoughness"];
+        var texture = (Dictionary<string, object>)attrib["baseColorTexture"];
+
+        return _glTextures[(int)texture["index"]];
+    }
+
+    private void ReadTextures()
+    {
+        lock (_textures) { }
+        lock (_samplers) { }
+        lock (_images) { }
+        lock (_bufferViews) { }
+        lock (_binChunk) { }
+
+        lock (_glTextures)
+        {
+            _glTextures = new int[_textures.Length];
+
+            for (int i = 0; i < _glTextures.Length; i++)
+            {
+                var handle = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, handle);
+
+                var source = _images[(int)_textures[i]["source"]];
+                var sampler = _samplers[(int)_textures[i]["sampler"]];
+
+                var mimeType = (string)source["mimeType"] == "image/png" ? 1 : 0;
+                var bufferView = _bufferViews[(int)source["bufferView"]];
+
+                var length = (int)bufferView["byteLength"];
+                var offset = bufferView.TryGetValue("byteOffset", out object? offsetRes) ? (int)offsetRes : 0;
+
+                byte[] data = _binChunk[offset..(offset + length)];
+
+                var components = (ColorComponents)(3 + mimeType);
+                var pixelInternalFormat = (PixelInternalFormat)(6407 + mimeType);
+                var pixelFormat = (PixelFormat)(6407 + mimeType);
+
+                var wrapS = sampler.TryGetValue("wrapS", out object? wrapSRes) ? (int)wrapSRes : 10497;
+                var wrapT = sampler.TryGetValue("wrapT", out object? wrapTRes) ? (int)wrapTRes : 10497;
+                var magFilter = sampler.TryGetValue("magFilter", out object? magFilterRes) ? (int)magFilterRes : 9729;
+                var minFilter = sampler.TryGetValue("minFilter", out object? minFilterRes) ? (int)minFilterRes : 9984;
+
+                //if ((minFilter >> 8) == 0b_00100111)
+                //    GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+                ImageResult image = ImageResult.FromMemory(data, components);
+
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, wrapS);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, wrapT);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, magFilter);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 9729);
+
+                GL.TexImage2D(TextureTarget.Texture2D, 0,
+                              pixelInternalFormat,
+                              image.Width, image.Height, 0,
+                              pixelFormat, PixelType.UnsignedByte,
+                              image.Data);
+
+                _glTextures[i] = handle;
+            }
+        }
+    }
+
+    private void ReadAccessors()
+    {
+        lock (_accessors) { }
+        lock (_bufferViews) { }
+
+        lock (_glBuffers)
+        {
+            _glBuffers = new GLBufferInfo[_accessors.Length];
+
+            for (int i = 0; i < _accessors.Length; i++)
+            {
+                _glBuffers[i] = ReadAccessor(i);
+            }
+        }
     }
 
     private void ReadChunkObjects()
@@ -364,7 +512,7 @@ public class GLBImporter
 
         var readerPos = reader.BaseStream.Position;
 
-        if (readerPos % 4 != 0)
+        if ((readerPos & 3) != 0)
             reader.BaseStream.Position += 4 - (readerPos % 4);
 
         if (chunkData.ContainsValue(null) == false)
@@ -388,7 +536,7 @@ public class GLBImporter
 
         if (reader.ReadUInt32() == 0x004E4942)
         {
-            lock (_binChunk) _binChunk = reader.ReadBytes((int)chunkLength);
+            _binChunk = reader.ReadBytes((int)chunkLength);
             reader.Dispose();
         }
         else
