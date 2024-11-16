@@ -1,10 +1,11 @@
 ﻿namespace Amethyst_game_engine.Models.GLBModule;
 
-internal struct Mesh
+internal readonly struct Mesh
 {
-    public float[] Vertices { get; }
+    public readonly Primitive[] primitives;
+    public readonly int[] buffers;
 
-    public float[,] Matrix { get; set; } =
+    public readonly float[,] matrix =
     {
         { 1, 0, 0, 0 },
         { 0, 1, 0, 0 },
@@ -12,8 +13,12 @@ internal struct Mesh
         { 0, 0, 0, 1 }
     };
 
-    internal Mesh(float[] vertices)
+    public Mesh(Primitive[] primitives, int[] buffers, float[,]? matrix)
     {
-        Vertices = vertices;
+        this.primitives = primitives;
+        this.buffers = buffers;
+
+        if (matrix is not null)
+            this.matrix = matrix;
     }
 }

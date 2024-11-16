@@ -1,4 +1,5 @@
 ﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.Models.GLBModule;
 using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -14,7 +15,7 @@ public abstract class BaseScene : IDisposable
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
     private readonly RenderCore _core = new();
-
+    protected GLBScene _scene;
     private Vector3 _backgroundColor = new(0.3f, 0.3f, 0.3f);
     private bool _disposed;
 
@@ -64,14 +65,28 @@ public abstract class BaseScene : IDisposable
     {
         foreach (var camera in _cameras)
         {
-            foreach (var gameObj in _objects)
+            foreach (var obj in _scene.Models)
             {
-                gameObj.DrawObject(_core, camera.Value);
+                foreach (var mesh in obj._meshes)
+                {
+                    _core.DrawObject(mesh, camera.Value);
+                }
             }
         }
-
-        OnFrameUpdate();
     }
+
+    //internal void DrawScene()
+    //{
+    //    foreach (var camera in _cameras)
+    //    {
+    //        foreach (var gameObj in _objects)
+    //        {
+    //            gameObj.DrawObject(_core, camera.Value);
+    //        }
+    //    }
+
+    //    OnFrameUpdate();
+    //}
 
     #region group of methods with cameras
     protected void AddControllerToCamera(StandartCameraController controller, string cameraName)
