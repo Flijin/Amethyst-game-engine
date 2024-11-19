@@ -1,18 +1,16 @@
-﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Models.STLModule;
-using Amethyst_game_engine.Render;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
+using Amethyst_game_engine.Models.GLBModule;
 
 namespace Amethyst_game_engine.Core;
 
-public class StaticGameObject3D(STLModel model) : DrawableObject(model.Vertices)
+public abstract class GameObject : DrawableObject
 {
     private Vector3 _scale;
     private Vector3 _position;
-    private float _rotation;
+    private Vector3 _rotation;
+    private Quaternion _rotationQuaternion;
 
-    internal float[,] ModelMatrix => _modelMatrix;
-    internal STLModel Model { get; } = model;
+    internal bool useCamera;
 
     public Vector3 Scale
     {
@@ -38,21 +36,20 @@ public class StaticGameObject3D(STLModel model) : DrawableObject(model.Vertices)
         }
     }
 
-    public float Rotation
+    public Vector3 Rotation
     {
         get => _rotation;
 
         set
         {
             _rotation = value;
-            _modelMatrix = Mathematics.MultiplyMatrices(_modelMatrix,
-            Mathematics.CreateRotationXMatrix(
-            Mathematics.DegreesToRadians(value)));
+            _rotationQuaternion = new(value.X, value.Y, value.Z);
+            _modelMatrix = Mathematics.MultiplyMatrices(_modelMatrix, _rotationQuaternion.GetRotationMatrix());
         }
     }
 
-    internal override void DrawObject(RenderCore core, Camera cam)
+    private protected GameObject(Mesh[] meshes, bool useCamera, int shaderID) : base(meshes, shaderID)
     {
-        core.DrawSTLMolel(this, cam);
+        this.useCamera = useCamera;
     }
 }

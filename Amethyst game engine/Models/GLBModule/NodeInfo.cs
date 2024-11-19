@@ -53,7 +53,7 @@ internal struct NodeInfo
         {
             var r = ((object[])rotation).Cast<float>().ToArray();
 
-            _rotationMatrix = Mathematics.ConvertQuaternionToMatrix
+            _rotationMatrix = Quaternion.ConvertQuaternionToMatrix
             (
                 r[0], r[1], r[2], r[3]
             );
@@ -99,7 +99,7 @@ internal struct NodeInfo
         if (t is not null)
             _translationMatrix = Mathematics.CreateTranslationMatrix(t[0], t[1], t[2]);
         if (r is not null)
-            _rotationMatrix = Mathematics.ConvertQuaternionToMatrix(r[0], r[1], r[2], r[3]);
+            _rotationMatrix = Quaternion.ConvertQuaternionToMatrix(r[0], r[1], r[2], r[3]);
         if (s is not null)
             _scaleMatrix = Mathematics.CreateScaleMatrix(s[0], s[1], s[2]);
 

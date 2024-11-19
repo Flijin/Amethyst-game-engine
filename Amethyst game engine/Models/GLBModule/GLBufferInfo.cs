@@ -1,10 +1,12 @@
 ﻿namespace Amethyst_game_engine.Models.GLBModule;
 
-internal readonly struct GLBufferInfo(int buffer, int stride, int componentType, int count, bool normalized)
+internal struct GLBufferInfo(int buffer, int componentType)
 {
     public readonly int buffer = buffer;
-    public readonly int stride = stride;
     public readonly int componentType = componentType;
-    public readonly int count = count;
-    public readonly bool normalized = normalized;
+    
+    public int stride = 0;
+    public int count = 0;
+    public int countOfComponents = 3;
+    public bool normalized = false;
 }

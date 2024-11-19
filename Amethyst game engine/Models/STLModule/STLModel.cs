@@ -1,132 +1,87 @@
-﻿using OpenTK.Mathematics;
+﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Models.GLBModule;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Models.STLModule;
 
 public class STLModel
 {
-    private const int COLOR_OFFSET = 3;
-    private const int STRIDE = 3;
+    internal readonly float[] normals;
+    internal readonly Mesh mesh;
 
-    /// <summary>
-    ///     Structure:
-    ///         <para>Contains vertices of polygons in local space</para>
-    ///         <para>(X1, Y1, Z1, X2 ...)</para>
-    /// </summary>
-    internal float[] Vertices { get; }
-
-    /// <summary>
-    ///     Structure:
-    ///         <para>
-    ///             Contains vertices of normal vector and 5-bit corors in normalized form (0.0 - 1.0)
-    ///         </para>
-    ///         <para>(X1, Y1, Z1, R1, G1, B1, X2 ...)</para>
-    /// </summary>
-    internal float[] RenderData { get; }
-
-    internal string Header { get; }
+    public string Header { get; }
     public uint TrianglesCount { get; }
     public Vector3 DefaultColor { get; init; } = new Vector3(0.5f, 0.5f, 0.5f);
 
     public STLModel(string path)
     {
-        var vIndex = 0;
-        var rIndex = 0;
-
         using BinaryReader br = new(File.OpenRead(path));
 
         Header = new string(br.ReadChars(80)).Trim('\0');
         TrianglesCount = br.ReadUInt32();
-        Vertices = new float[TrianglesCount * 9];
-        RenderData = new float[TrianglesCount * 6];
+
+        var vertexIndex = 0;
+        var normalIndex = 0;
+
+        var bufferHandles = new int[2];
+        var vertexArrayObject = GL.GenVertexArray();
+        var modelPrimitive = new Primitive(vertexArrayObject);
+
+        var vertices = new float[TrianglesCount * 9];
+
+        var colors = new float[vertices.Length];
+        normals = new float[TrianglesCount * 3];
+
+        modelPrimitive.count = normals.Length;
 
         for (int i = 0; i < TrianglesCount; i++)
         {
             for (int vectors = 0; vectors < 3; vectors++)
             {
-                RenderData[rIndex++] = br.ReadSingle();
+                normals[normalIndex++] = br.ReadSingle();
             }
 
             for (int vectors = 0; vectors < 9; vectors++)
             {
-                Vertices[vIndex++] = br.ReadSingle();
+                vertices[vertexIndex++] = br.ReadSingle();
             }
 
             ushort attributeByteCount = br.ReadUInt16();
 
-            Vector3 color;
-            var str = Convert.ToString(attributeByteCount, 2);
-            str = new string('0', sizeof(ushort) * 8 - str.Length) + str;
+            var r = DefaultColor.X;
+            var g = DefaultColor.Y;
+            var b = DefaultColor.Z;
 
-            if (str[^1] != '0')
+            if (attributeByteCount >> 16 != 0)
             {
-                color = new((float)Convert.ToByte(str[..5], 2) / 32,
-                            (float)Convert.ToByte(str[5..10], 2) / 32,
-                            (float)Convert.ToByte(str[10..^1], 2) / 32);
-
-            }
-            else
-            {
-                color = DefaultColor;
+                r = (attributeByteCount & 0b_01111100_00000000) / 32768f;
+                g = (attributeByteCount & 0b_00000011_11100000) / 1024f;
+                b = (attributeByteCount & 0b_00000000_00011111) / 32f;
             }
 
-            for (int colorIndex = 0; colorIndex < 3; colorIndex++)
+            for (int j = 0; j < 3; j++)
             {
-                RenderData[rIndex++] = color[colorIndex];
+                var offset = i * 9 + 3 * j;
+
+                colors[offset] = r;
+                colors[offset + 1] = g;
+                colors[offset + 2] = b;
             }
         }
-    }
 
-    internal Vector3 GetData(AttribTypes type, int index)
-    {
-        Vector3 result = new();
+        AddAttribute(vertices, 0);
+        AddAttribute(colors, 1);
 
-        switch (type)
+        void AddAttribute(float[] buffer, int location)
         {
-            case AttribTypes.Vertex:
-                for (int i = 0; i < 3; i++)
-                {
-                    result[i] = Vertices[STRIDE * index + i];
-                }
-                break;
-            case AttribTypes.Color:
-                for (int i = 0; i < 3; i++)
-                {
-                    result[i] = RenderData[STRIDE * index * 2 + COLOR_OFFSET + i];
-                }
-                break;
-            case AttribTypes.Normal:
-                for (int i = 0; i < 3; i++)
-                {
-                    result[i] = RenderData[STRIDE * index * 2 + i];
-                }
-                break;
+            bufferHandles[location] = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[location]);
+            GL.BufferData(BufferTarget.ArrayBuffer, buffer.Length * sizeof(float), buffer, BufferUsageHint.DynamicDraw);
+            GL.VertexAttribPointer(location, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(location);
         }
 
-        return result;
-    }
-
-    internal void SetData(AttribTypes type, int index, Vector3 vector)
-    {
-        switch (type)
-        {
-            case AttribTypes.Vertex:
-                for (int i = 0; i < 3; i++)
-                {
-                    Vertices[STRIDE * index + i] = vector[i];
-                }
-                break;
-            case AttribTypes.Color:
-                for (int i = 0; i < 3; i++)
-                {
-                    RenderData[STRIDE * index * 2 + COLOR_OFFSET + i] = vector[i];
-                }
-                break;
-            case AttribTypes.Normal:
-                for (int i = 0; i < 3; i++)
-                {
-                    RenderData[STRIDE * index * 2 + i] = vector[i];
-                }
-                break;
-        }
+        mesh = new([modelPrimitive], bufferHandles) { Matrix = Mathematics.UNIT_MATRIX };
     }
 }

@@ -1,21 +1,19 @@
 ﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.Models.GLBModule;
 using Amethyst_game_engine.Render;
-using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Core;
 
 public abstract class DrawableObject : IDisposable
 {
     private protected float[,] _modelMatrix;
-    private protected readonly float[] _vertices;
-    private protected readonly BufferUsageHint _usageHint = BufferUsageHint.StaticDraw;
+    private protected Mesh[] _meshes;
+    private protected Shader _activeShader;
 
-    internal int VAO { get; set; }
-    internal int VBO { get; set; }
-
-    protected DrawableObject(float[] vertices)
+    private protected DrawableObject(Mesh[] meshes, int shaderID)
     {
-        _vertices = vertices;
+        _meshes = meshes;
+        _activeShader = ShadersCollection.shaders[shaderID];
 
         _modelMatrix =
             new float[4, 4]
@@ -25,33 +23,19 @@ public abstract class DrawableObject : IDisposable
                 { 0, 0, 1, 0 },
                 { 0, 0, 0, 1 },
             };
-
-        LoadObjectInGPU();
     }
 
-    private protected void UploadObjectFromGPU() => GL.DeleteBuffer(VBO);
-    internal abstract void DrawObject(RenderCore core, Camera cam);
+    internal abstract void DrawObject(Camera? cam);
 
-    private protected void LoadObjectInGPU()
-    {
-        var vertexBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float),
-                                                _vertices, _usageHint);
-
-        var vertexArrayObject = GL.GenVertexArray();
-        GL.BindVertexArray(vertexArrayObject);
-
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-        GL.EnableVertexAttribArray(0);
-
-        VAO = vertexArrayObject;
-        VBO = vertexBufferObject;
-    }
+    internal void UploadFromMemory() => Dispose();
 
     public void Dispose()
     {
-        UploadObjectFromGPU();
         GC.SuppressFinalize(this);
+
+        foreach (var mesh in _meshes)
+        {
+            mesh.Dispose();
+        }
     }
 }

@@ -4,19 +4,16 @@ namespace Amethyst_game_engine.Core;
 
 public static class Mathematics
 {
+    public static readonly float[,] UNIT_MATRIX =
+    {
+        { 1, 0, 0, 0 },
+        { 0, 1, 0, 0 },
+        { 0, 0, 1, 0 },
+        { 0, 0, 0, 1 }
+    };
+
     public static float DegreesToRadians(float degrees) => degrees * (float.Pi / 180);
     public static float RadiansToDegrees(float radians) => radians * 180 / float.Pi;
-
-    public static float[,] ConvertQuaternionToMatrix(float x, float y, float z, float w)
-    {
-        return new float[4, 4]
-        {
-            { 1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y), 0 },
-            { 2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x), 0 },
-            { 2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y), 0 },
-            { 0,                   0,                       0,                   1 },
-        };
-    }
 
     public static T[,] CreateMatrixFromArray<T>(T[] array, bool columnForm) where T : INumber<T>
     {
@@ -107,19 +104,6 @@ public static class Mathematics
             { 0, y, 0, 0 },
             { 0, 0, z, 0 },
             { 0, 0, 0, 1 },
-        };
-    }
-
-    public static float[,] CreateRotationXMatrix(float angle)
-    {
-        angle = DegreesToRadians(angle);
-
-        return new float[,]
-        {
-            { 1,            0,                       0,           0 },
-            { 0, (float)Math.Cos(angle), -(float)Math.Sin(angle), 0 },
-            { 0, (float)Math.Sin(angle),  (float)Math.Cos(angle), 0 },
-            { 0,            0,                       0,           1 },
         };
     }
 }

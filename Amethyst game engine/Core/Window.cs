@@ -52,7 +52,11 @@ public class Window : GameWindow
         })
     {
         SystemSettings.ShowWindow(SystemSettings.SW_HIDE);
+        ShadersCollection.InitShaders();
+
         GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         _aspectRatio = (float)width / height;
         CursorState = CursorState.Grabbed;
@@ -87,7 +91,9 @@ public class Window : GameWindow
     protected override void OnUnload()
     {
         base.OnUnload();
+
         _scene?.Dispose();
+        ShadersCollection.Dispose();
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)

@@ -188,7 +188,7 @@ public static class JSONSerializer
         if (int.TryParse(resultStr, out int int_result))
             return int_result;
         else
-            return double.Parse(resultStr, _cultureInfo);
+            return float.Parse(resultStr, _cultureInfo);
     }
 
     private static string ReadString(char[] data, ref int symIndex)

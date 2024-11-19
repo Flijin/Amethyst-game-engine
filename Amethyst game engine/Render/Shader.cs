@@ -9,12 +9,12 @@ internal class Shader : IDisposable
 
     public int Handle { get; private set; }
 
-    public Shader()
+    public Shader(int shaderID)
     {
         Handle = GL.CreateProgram();
 
-        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle);
-        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle);
+        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, shaderID);
+        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, shaderID);
 
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
@@ -35,7 +35,6 @@ internal class Shader : IDisposable
 
     public void Use() => GL.UseProgram(Handle);
     public void Dispose() => GL.DeleteProgram(Handle);
-    public void SetMatrix4(string name, Matrix4 matrix) => GL.UniformMatrix4(_uniformLocations[name], true, ref matrix);
 
     public void SetMatrix4(string name, float[,] matrix)
     {
@@ -70,14 +69,20 @@ internal class Shader : IDisposable
         GL.Uniform1(_uniformLocations[name], value);
     }
 
-    private static int CreateAndAttachShader(ShaderType type, int handle)
+    public void SetInt(string name, int value)
+    {
+        GL.UseProgram(Handle);
+        GL.Uniform1(_uniformLocations[name], value);
+    }
+
+    private static int CreateAndAttachShader(ShaderType type, int handle, int id)
     {
         string shaderSourse;
 
         if (type == ShaderType.VertexShader)
-            shaderSourse = Resources.Vertex_shader;
+            shaderSourse = Resources.ResourceManager.GetString($"VertexShader_{id}")!;
         else
-            shaderSourse = Resources.Fragment_shader;
+            shaderSourse = Resources.ResourceManager.GetString($"FragmentShader_{id}")!;
 
         var shaderDescriptor = GL.CreateShader(type);
 

@@ -1,24 +1,42 @@
-﻿namespace Amethyst_game_engine.Models.GLBModule;
+﻿using OpenTK.Graphics.OpenGL4;
 
-internal readonly struct Mesh
+namespace Amethyst_game_engine.Models.GLBModule;
+
+internal struct Mesh(Primitive[] primitives, int[] buffers) : IDisposable
 {
-    public readonly Primitive[] primitives;
-    public readonly int[] buffers;
+    public readonly Primitive[] primitives = primitives;
+    private readonly int[] _buffers = buffers;
+    private float[,] _matrix;
 
-    public readonly float[,] matrix =
+    public required float[,] Matrix
     {
-        { 1, 0, 0, 0 },
-        { 0, 1, 0, 0 },
-        { 0, 0, 1, 0 },
-        { 0, 0, 0, 1 }
-    };
+        readonly get => _matrix;
 
-    public Mesh(Primitive[] primitives, int[] buffers, float[,]? matrix)
+        set
+        {
+            if (value is not null)
+            {
+                _matrix = value;
+            }
+            else
+            {
+                _matrix = new float[4, 4]
+                {
+                    { 1, 0, 0, 0 },
+                    { 0, 1, 0, 0 },
+                    { 0, 0, 1, 0 },
+                    { 0, 0, 0, 1 }
+                };
+            }
+        }
+    }
+    
+    public readonly void Dispose()
     {
-        this.primitives = primitives;
-        this.buffers = buffers;
+        foreach (var buffer in _buffers)
+            GL.DeleteBuffer(buffer);
 
-        if (matrix is not null)
-            this.matrix = matrix;
+        foreach (var primitive in primitives)
+            GL.DeleteVertexArray(primitive.vao);
     }
 }

@@ -1,6 +1,4 @@
 ﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Models.GLBModule;
-using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -10,12 +8,11 @@ public abstract class BaseScene : IDisposable
 {
     internal event Action<Vector3> ColorUpdate;
 
-    private readonly List<DrawableObject> _objects = [];
+    private readonly List<GameObject> _objects = [];
+    private readonly List<GameObject> _noCameraObjects = [];
     private readonly List<StandartCameraController> _cameraControllers = [];
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
-    private readonly RenderCore _core = new();
-    protected GLBScene _scene;
     private Vector3 _backgroundColor = new(0.3f, 0.3f, 0.3f);
     private bool _disposed;
 
@@ -63,30 +60,21 @@ public abstract class BaseScene : IDisposable
 
     internal void DrawScene()
     {
-        foreach (var camera in _cameras)
+        foreach (var camera in _cameras.Values)
         {
-            foreach (var obj in _scene.Models)
+            foreach (var gameObj in _objects)
             {
-                foreach (var mesh in obj._meshes)
-                {
-                    _core.DrawObject(mesh, camera.Value);
-                }
+                gameObj.DrawObject(camera);
             }
         }
+
+        foreach (var noCameraGameObj in _noCameraObjects)
+        {
+            noCameraGameObj.DrawObject(null);
+        }
+
+        OnFrameUpdate();
     }
-
-    //internal void DrawScene()
-    //{
-    //    foreach (var camera in _cameras)
-    //    {
-    //        foreach (var gameObj in _objects)
-    //        {
-    //            gameObj.DrawObject(_core, camera.Value);
-    //        }
-    //    }
-
-    //    OnFrameUpdate();
-    //}
 
     #region group of methods with cameras
     protected void AddControllerToCamera(StandartCameraController controller, string cameraName)
@@ -118,32 +106,51 @@ public abstract class BaseScene : IDisposable
     #endregion
 
     #region group of methods with game objects
-    protected void AddGameObject(StaticGameObject3D obj)
+    protected void AddGameObject(GameObject obj)
     {
-        _objects.Add(obj);
+        if (obj.useCamera)
+            _objects.Add(obj);
+        else
+            _noCameraObjects.Add(obj);
     }
 
-    protected void RemoveGameObjects(Predicate<DrawableObject> predicate)
+    protected void RemoveGameObjects(Predicate<GameObject> predicate, SceneObjectsTargets target)
     {
-        foreach (var item in _objects)
+        if ((int)target != 1)
+            ApplyPredicate(_objects);
+        if ((int)target != 0)
+            ApplyPredicate(_noCameraObjects);
+
+        void ApplyPredicate(List<GameObject> target)
         {
-            if (predicate(item))
+            foreach (var item in target)
             {
-                _objects.Remove(item);
-                item.Dispose();
+                if (predicate(item))
+                {
+                    target.Remove(item);
+                    item.Dispose();
+                }
             }
         }
     }
 
-    protected DrawableObject[] GetGameObject(Predicate<DrawableObject> predicate)
+    protected GameObject[] GetGameObject(Predicate<GameObject> predicate, SceneObjectsTargets target)
     {
-        List<DrawableObject> result = [];
+        List<GameObject> result = [];
 
-        foreach (var item in _objects)
+        if ((int)target != 1)
+            ApplyPredicate(_objects);
+        if ((int)target != 0)
+            ApplyPredicate(_noCameraObjects);
+
+        void ApplyPredicate(List<GameObject> target)
         {
-            if (predicate(item))
+            foreach (var item in target)
             {
-                result.Add(item);
+                if (predicate(item))
+                {
+                    result.Add(item);
+                }
             }
         }
 
@@ -157,14 +164,15 @@ public abstract class BaseScene : IDisposable
         {
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
-            _core.Dispose();
 
             OnSceneExit();
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
 
             foreach (var obj in _objects)
             {
-                obj.Dispose();
+                obj.UploadFromMemory();
             }
 
             ColorUpdate -= Window.ChangeBackgroundColor;
