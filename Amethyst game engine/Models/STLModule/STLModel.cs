@@ -1,11 +1,10 @@
 ﻿using Amethyst_game_engine.Core;
-using Amethyst_game_engine.Models.GLBModule;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Models.STLModule;
 
-public class STLModel
+public readonly struct STLModel
 {
     internal readonly float[] normals;
     internal readonly Mesh mesh;
@@ -26,6 +25,8 @@ public class STLModel
 
         var bufferHandles = new int[2];
         var vertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(vertexArrayObject);
+
         var modelPrimitive = new Primitive(vertexArrayObject);
 
         var vertices = new float[TrianglesCount * 9];
@@ -53,7 +54,7 @@ public class STLModel
             var g = DefaultColor.Y;
             var b = DefaultColor.Z;
 
-            if (attributeByteCount >> 16 != 0)
+            if (attributeByteCount >> 15 != 0)
             {
                 r = (attributeByteCount & 0b_01111100_00000000) / 32768f;
                 g = (attributeByteCount & 0b_00000011_11100000) / 1024f;
@@ -75,13 +76,12 @@ public class STLModel
 
         void AddAttribute(float[] buffer, int location)
         {
-            bufferHandles[location] = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[location]);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[location] = GL.GenBuffer());
             GL.BufferData(BufferTarget.ArrayBuffer, buffer.Length * sizeof(float), buffer, BufferUsageHint.DynamicDraw);
             GL.VertexAttribPointer(location, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(location);
         }
 
-        mesh = new([modelPrimitive], bufferHandles) { Matrix = Mathematics.UNIT_MATRIX };
+        mesh = new([modelPrimitive], bufferHandles) { Matrix = Mathematics.IDENTITY_MATRIX };
     }
 }

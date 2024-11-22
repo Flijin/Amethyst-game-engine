@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace Amethyst_game_engine.Models.GLBModule;
+namespace Amethyst_game_engine.Models;
 
 internal struct Mesh(Primitive[] primitives, int[] buffers) : IDisposable
 {
@@ -30,7 +30,7 @@ internal struct Mesh(Primitive[] primitives, int[] buffers) : IDisposable
             }
         }
     }
-    
+
     public readonly void Dispose()
     {
         foreach (var buffer in _buffers)

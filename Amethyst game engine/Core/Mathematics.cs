@@ -4,7 +4,7 @@ namespace Amethyst_game_engine.Core;
 
 public static class Mathematics
 {
-    public static readonly float[,] UNIT_MATRIX =
+    public static readonly float[,] IDENTITY_MATRIX =
     {
         { 1, 0, 0, 0 },
         { 0, 1, 0, 0 },

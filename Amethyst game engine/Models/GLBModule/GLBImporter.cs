@@ -1,6 +1,7 @@
 ﻿using Amethyst_game_engine.Core;
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
+
 namespace Amethyst_game_engine.Models.GLBModule;
 
 public class GLBImporter

@@ -1,4 +1,5 @@
 ﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.Core.GameObjects;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -8,8 +9,7 @@ public abstract class BaseScene : IDisposable
 {
     internal event Action<Vector3> ColorUpdate;
 
-    private readonly List<GameObject> _objects = [];
-    private readonly List<GameObject> _noCameraObjects = [];
+    private readonly List<DrawableObject> _objects = [];
     private readonly List<StandartCameraController> _cameraControllers = [];
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
@@ -68,11 +68,6 @@ public abstract class BaseScene : IDisposable
             }
         }
 
-        foreach (var noCameraGameObj in _noCameraObjects)
-        {
-            noCameraGameObj.DrawObject(null);
-        }
-
         OnFrameUpdate();
     }
 
@@ -106,51 +101,32 @@ public abstract class BaseScene : IDisposable
     #endregion
 
     #region group of methods with game objects
-    protected void AddGameObject(GameObject obj)
+    protected void AddGameObject(DrawableObject obj)
     {
-        if (obj.useCamera)
-            _objects.Add(obj);
-        else
-            _noCameraObjects.Add(obj);
+        _objects.Add(obj);;
     }
 
-    protected void RemoveGameObjects(Predicate<GameObject> predicate, SceneObjectsTargets target)
+    protected void RemoveGameObjects(Predicate<DrawableObject> predicate)
     {
-        if ((int)target != 1)
-            ApplyPredicate(_objects);
-        if ((int)target != 0)
-            ApplyPredicate(_noCameraObjects);
-
-        void ApplyPredicate(List<GameObject> target)
+        foreach (var item in _objects)
         {
-            foreach (var item in target)
+            if (predicate(item))
             {
-                if (predicate(item))
-                {
-                    target.Remove(item);
-                    item.Dispose();
-                }
+                _objects.Remove(item);
+                item.UploadFromMemory();
             }
         }
     }
 
-    protected GameObject[] GetGameObject(Predicate<GameObject> predicate, SceneObjectsTargets target)
+    protected DrawableObject[] GetGameObject(Predicate<DrawableObject> predicate)
     {
-        List<GameObject> result = [];
+        List<DrawableObject> result = [];
 
-        if ((int)target != 1)
-            ApplyPredicate(_objects);
-        if ((int)target != 0)
-            ApplyPredicate(_noCameraObjects);
-
-        void ApplyPredicate(List<GameObject> target)
+        foreach (var item in _objects)
         {
-            foreach (var item in target)
+            if (predicate(item))
             {
-                if (predicate(item))
-                {
-                    result.Add(item);
-                }
+                result.Add(item);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿namespace Amethyst_game_engine.Models.GLBModule;
+﻿namespace Amethyst_game_engine.Models;
 
 internal struct Primitive(int vao)
 {

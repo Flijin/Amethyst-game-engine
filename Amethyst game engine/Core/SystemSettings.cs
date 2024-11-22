@@ -9,9 +9,7 @@ public static partial class SystemSettings
     public const int SW_SHOW = 0b_0101;
     private static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
     private static Vector2i _screenResolution;
-
-    internal static Architecture _architecture = RuntimeInformation.OSArchitecture;
-    internal static string _osDescription = RuntimeInformation.OSDescription;
+    private static int _threadsMultiplier = 16;
 
     private static bool _wasInitiated = false;
 
@@ -79,14 +77,28 @@ public static partial class SystemSettings
         public int border_width, depth;
     }
 
-    public static Vector2i ScreenResolution => _screenResolution;
     internal static bool WasInitiated => _wasInitiated;
+    public static Vector2i ScreenResolution => _screenResolution;
+
+    public static int MaxThreads
+    {
+        get => Environment.ProcessorCount * _threadsMultiplier;
+
+        set
+        {
+            if (value > 0)
+            {
+                _threadsMultiplier = value;
+                SetMaxThreads();
+            }
+        }
+    }
 
     public static void PrintErrorMessage(string message)
     {
         ShowWindow(SW_SHOW);
         Console.WriteLine(message);
-        Environment.Exit(0);
+        Environment.Exit(-1);
     }
 
     public static bool ShowWindow(int nCmdShow)
@@ -97,20 +109,27 @@ public static partial class SystemSettings
             return false;
     }
 
-    public static void GetInfo()
-    {
-        Console.WriteLine(_architecture.ToString());
-        Console.WriteLine(_osDescription);
-    }
-
     internal static void Init()
     {
         var (Width, Height) = GetScreenResolution();
         _screenResolution = new Vector2i(Width, Height);
         _wasInitiated = true;
+
+        SetMaxThreads();
     }
 
     private static (int Width, int Height) GetWindowsResolution() => (GetSystemMetrics(0), GetSystemMetrics(1));
+
+    private static void SetMaxThreads()
+    {
+        int count = Environment.ProcessorCount * _threadsMultiplier;
+
+        if (count < 4)
+            count = 4;
+
+        ThreadPool.SetMaxThreads(count,
+                                 count / 4);
+    }
 
     private static (int Width, int Height) GetScreenResolution()
     {
