@@ -1,6 +1,7 @@
 ﻿using Amethyst_game_engine.Core;
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
@@ -147,7 +148,7 @@ public class GLBImporter
         return result;
     }
 
-    private GLBScene ReadScene(int[] sceneNodesIndices, string? name = default)
+    private unsafe GLBScene ReadScene(int[] sceneNodesIndices, string? name = default)
     {
         lock (_nodes) { }
 
@@ -158,10 +159,10 @@ public class GLBImporter
             ReadSceneRec(sceneNodesIndices[i]);
         }
 
-        void ReadSceneRec(int nodeIndex, float[,]? previousNodeMatrix = default)
+        void ReadSceneRec(int nodeIndex, float* previousNodeMatrix = default)
         {
             var currentNodeInfo = new NodeInfo(_nodes[nodeIndex], nodeIndex);
-            float[,]? globalNodeMatrix = null;
+            float* globalNodeMatrix = null;
 
             CalculateGlobalMatrix(previousNodeMatrix, currentNodeInfo.LocalMatrix, ref globalNodeMatrix);
 
@@ -191,22 +192,31 @@ public class GLBImporter
             }
         }
 
-        void CalculateGlobalMatrix(float[,]? m1, float[,]? m2, ref float[,]? result)
+        void CalculateGlobalMatrix(float* m1, float* m2, ref float* result)
         {
             if (m1 is null && m2 is not null)
+            {
                 result = m2;
+            }
             else if (m1 is not null && m2 is null)
+            {
                 result = m1;
+            }
             else if (m1 is not null && m2 is not null)
-                result = Mathematics.MultiplyMatrices(m1, m2);
+            {
+                result = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+                Mathematics.MultiplyMatrices4(m1, m2, result);
+            }
             else
+            {
                 result = null;
+            }
         }
 
         return new GLBScene([.. models]) { Name = name ?? "None" };
     }
 
-    private GLBModel ReadModel(NodeInfo node, float[,]? globalMatrix = default)
+    private unsafe GLBModel ReadModel(NodeInfo node, float* globalMatrix = default)
     {
         NodeInfo?[] modelNodes = new NodeInfo?[_nodes.Length];
         List<Mesh> meshes = [];
@@ -216,7 +226,7 @@ public class GLBImporter
 
         return new GLBModel(modelNodes, [..meshes]) { Name = node.Name ?? "None" };
 
-        void CalculateMatricesAndAddMeshes(NodeInfo node, float[,]? matrix)
+        void CalculateMatricesAndAddMeshes(NodeInfo node, float* matrix)
         {
             node.CalculateGlobalMatrix(matrix);
 
@@ -273,7 +283,7 @@ public class GLBImporter
         }
     }
 
-    private Mesh ReadMesh(int index, float[,]? matrix)
+    private unsafe Mesh ReadMesh(int index, float* matrix)
     {
         lock (_meshes) { }
 
@@ -323,7 +333,7 @@ public class GLBImporter
             primitives[i] = primitive;
         }
         
-        return new Mesh(primitives, [..buffers]) { Matrix = matrix! };
+        return new Mesh(primitives, [..buffers]) { Matrix = matrix };
     }
 
     private GLBufferInfo ReadAccessor(int index)

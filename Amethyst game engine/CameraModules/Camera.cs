@@ -1,16 +1,23 @@
 ﻿using Amethyst_game_engine.Core;
 using OpenTK.Mathematics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.CameraModules;
 
-public class Camera
+public class Camera : IDisposable
 {
+    private bool _disposed = false;
+
     private readonly float _aspectRatio;
     private float _yaw = -float.Pi / 2;
     private float _orthographicBorder;
     private float _fov;
     private float _pitch;
     private readonly CameraTypes _type;
+
+    private unsafe readonly float* _viewMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private unsafe readonly float* _projectionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
     public float Near { get; set; }
     public float Far { get; set; }
@@ -68,7 +75,7 @@ public class Camera
         }
     }
 
-    internal float[,] ProjectionMatrix
+    internal unsafe float* ProjectionMatrix
     {
         get
         {
@@ -80,55 +87,74 @@ public class Camera
                 var item1 = -((Far + Near) / (Far - Near));
                 var item2 = -(2 * Far * Near / (Far - Near));
 
-                return new float[,]
-                {
-                    { scaleX, 0,   0,  0 },
-                    { 0, scaleY,   0,  0 },
-                    { 0, 0, item1, item2 },
-                    { 0, 0,    -1,     0 },
-                };
+                *_projectionMatrix = scaleX;
+                *(_projectionMatrix + 5) = scaleY;
+                *(_projectionMatrix + 10) = item1;
+                *(_projectionMatrix + 11) = item2;
+                *(_projectionMatrix + 14) = -1;
             }
             else
             {
-                return new float[,]
-                {
-                    { 2 / (Right - Left), 0, 0, -((Right + Left) / (Right - Left))},
-                    { 0, 2 / (Top - Bottom), 0, -((Top + Bottom) / (Top - Bottom))},
-                    { 0, 0, -(2 / (Far - Near)),    -((Far + Near) / (Far - Near))},
-                    { 0,                0,                   0,                  1},
-                };
+                *_projectionMatrix = 2 / (Right - Left);
+                *(_projectionMatrix + 3) = -((Right + Left) / (Right - Left));
+                *(_projectionMatrix + 5) = 2 / (Top - Bottom);
+                *(_projectionMatrix + 7) = -((Top + Bottom) / (Top - Bottom));
+                *(_projectionMatrix + 10) = -(2 / (Far - Near));
+                *(_projectionMatrix + 11) = -((Far + Near) / (Far - Near));
+                *(_projectionMatrix + 15) = 1;
             }
+
+            return _projectionMatrix;
         }
     }
 
-    internal float[,] ViewMatrix
+    internal unsafe float* ViewMatrix
     {
         get
         {
-            float[,] matrixA =
+            Vector3 row0 = new(RightVector.X, RightVector.Y, RightVector.Z);
+            Vector3 row1 = new(Up.X, Up.Y, Up.Z);
+            Vector3 row2 = new(-Front.X, -Front.Y, -Front.Z);
+
+            float* matrixA = stackalloc float[16]
             {
-                {  RightVector.X, RightVector.Y, RightVector.Z, 0 },
-                {  Up.X,          Up.Y,          Up.Z,          0 },
-                { -Front.X,      -Front.Y,      -Front.Z,       0 },
-                {  0,             0,             0,             1 },
+                RightVector.X, RightVector.Y, RightVector.Z, 0,
+                Up.X,          Up.Y,          Up.Z,          0,
+               -Front.X,      -Front.Y,      -Front.Z,       0,
+                0,             0,             0,             1
             };
 
-            float[,] matrixB =
+            float* matrixB = stackalloc float[16]
             {
-                { 1, 0, 0, -Position.X },
-                { 0, 1, 0, -Position.Y },
-                { 0, 0, 1, -Position.Z },
-                { 0, 0, 0,  1          },
+                 1, 0, 0, -Position.X,
+                 0, 1, 0, -Position.Y,
+                 0, 0, 1, -Position.Z,
+                 0, 0, 0,  1
             };
 
-            return Mathematics.MultiplyMatrices(matrixA, matrixB);
+            Mathematics.MultiplyMatrices4(matrixA, matrixB, _viewMatrix);
+
+            return _viewMatrix;
         }
+    }
+
+    ~Camera()
+    {
+       if (_disposed == false)
+            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
     }
 
     public Camera(CameraTypes type, Vector3 position, float aspectRatio)
     {
+        unsafe
+        {
+            Unsafe.InitBlock(_viewMatrix, 0, Mathematics.MATRIX_SIZE);
+            Unsafe.InitBlock(_projectionMatrix, 0, Mathematics.MATRIX_SIZE);
+        }
+
         _type = type;
         _aspectRatio = aspectRatio;
+
         Position = position;
         Near = 1f;
         Far = 5000f;
@@ -148,5 +174,21 @@ public class Camera
 
         RightVector = Vector3.Normalize(Vector3.Cross(Front, Vector3.UnitY));
         Up = Vector3.Cross(RightVector, Front);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed == false)
+        {
+            unsafe
+            {
+                Marshal.FreeHGlobal((nint)_viewMatrix);
+                Marshal.FreeHGlobal((nint)_projectionMatrix);
+            }
+            
+            GC.SuppressFinalize(this);
+
+            _disposed = true;
+        }
     }
 }

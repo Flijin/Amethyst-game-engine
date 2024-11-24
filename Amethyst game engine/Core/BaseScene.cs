@@ -50,7 +50,7 @@ public abstract class BaseScene : IDisposable
     ~BaseScene()
     {
         if (_disposed == false)
-            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not Called GPU memory leak");
+            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, GPU memory leak");
     }
 
     protected virtual void OnFrameUpdate() { }
@@ -113,7 +113,7 @@ public abstract class BaseScene : IDisposable
             if (predicate(item))
             {
                 _objects.Remove(item);
-                item.UploadFromMemory();
+                item.Dispose();
             }
         }
     }
@@ -148,15 +148,20 @@ public abstract class BaseScene : IDisposable
 
             foreach (var obj in _objects)
             {
-                obj.UploadFromMemory();
+                obj.Dispose();
+            }
+
+            foreach (var cam in _cameras.Values)
+            {
+                cam.Dispose();
             }
 
             ColorUpdate -= Window.ChangeBackgroundColor;
             Window.ClearInputHandlers();
 
-            _disposed = true;
-
             GC.SuppressFinalize(this);
+
+            _disposed = true;
         }
     }
 }

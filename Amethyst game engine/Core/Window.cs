@@ -3,6 +3,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Diagnostics;
 
 namespace Amethyst_game_engine.Core;
 
@@ -78,14 +79,20 @@ public class Window : GameWindow
         _resetFirstMoveHadler = null;
     }
 
+    Stopwatch sw = new();
+
     protected override void OnRenderFrame(FrameEventArgs args)
     {
+        sw.Restart();
         base.OnRenderFrame(args);
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         _scene?.DrawScene();
 
         SwapBuffers();
+        sw.Stop();
+
+        Debug.WriteLine(1000000 / sw.Elapsed.TotalMicroseconds);
     }
 
     protected override void OnUnload()

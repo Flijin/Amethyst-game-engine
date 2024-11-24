@@ -82,6 +82,9 @@ public readonly struct STLModel
             GL.EnableVertexAttribArray(location);
         }
 
-        mesh = new([modelPrimitive], bufferHandles) { Matrix = Mathematics.IDENTITY_MATRIX };
+        unsafe
+        {
+            mesh = new([modelPrimitive], bufferHandles) { Matrix = null };
+        }
     }
 }

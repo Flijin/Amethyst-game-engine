@@ -1,55 +1,32 @@
 ﻿using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core;
 
 public static class Mathematics
 {
-    public static readonly float[,] IDENTITY_MATRIX =
+    public const int MATRIX_SIZE = sizeof(float) * 16;
+    public static unsafe readonly float* IDENTITY_MATRIX = (float*)Marshal.AllocHGlobal(16 * sizeof(float));
+
+    unsafe static Mathematics()
     {
-        { 1, 0, 0, 0 },
-        { 0, 1, 0, 0 },
-        { 0, 0, 1, 0 },
-        { 0, 0, 0, 1 }
-    };
+        for (int i = 0; i < 4; i++)
+        {
+            IDENTITY_MATRIX[4 * i + i] = 1;
+        }
+    }
 
     public static float DegreesToRadians(float degrees) => degrees * (float.Pi / 180);
     public static float RadiansToDegrees(float radians) => radians * 180 / float.Pi;
 
-    public static T[,] CreateMatrixFromArray<T>(T[] array, bool columnForm) where T : INumber<T>
+    public static unsafe void TransposeMatrix4(float* matrix)
     {
-        var matrixSize = MathF.Sqrt(array.Length);
-
-        if (float.IsInteger(matrixSize))
+        for (int i = 0; i < 4; i++)
         {
-            T[,] result = new T[(int)matrixSize, (int)matrixSize];
-            var index = 0;
-
-            if (columnForm)
-            {
-                for (int row = 0; row < matrixSize; row++)
-                {
-                    for (int col = 0; col < matrixSize; col++)
-                    {
-                        result[col, row] = array[index++];
-                    }
-                }
-            }
-            else
-            {
-                for (int row = 0; row < matrixSize; row++)
-                {
-                    for (int col = 0; col < matrixSize; col++)
-                    {
-                        result[row, col] = array[index++];
-                    }
-                }
-            }
-
-            return result;
-        }
-        else
-        {
-            throw new ArgumentException("Error. The number of elements in the array is less than the size of the matrix");
+            matrix[i * 4] = matrix[i];
+            matrix[i * 4 + 1] = matrix[4 + i];
+            matrix[i * 4 + 2] = matrix[8 + i];
+            matrix[i * 4 + 3] = matrix[12 + i];
         }
     }
 
@@ -60,50 +37,43 @@ public static class Mathematics
         else return value;
     }
 
-    public static T[,] MultiplyMatrices<T>(T[,] m1, T[,] m2) where T : INumber<T>
+    public static unsafe void MultiplyMatrices4(float* m1, float* m2, float* res)
     {
-        var result = new T[m1.GetLength(0), m2.GetLength(1)];
-
-        if (m1.GetLength(1) == m2.GetLength(0))
+        for (int i = 0; i < 4; ++i)
         {
-            for (int row = 0; row < m1.GetLength(0); row++)
+            Vector4 row = new(m1[i * 4], m1[i * 4 + 1], m1[i * 4 + 2], m1[i * 4 + 3]);
+
+            for (int j = 0; j < 4; ++j)
             {
-                for (int col = 0; col < m2.GetLength(1); col++)
-                {
-                    for (int i = 0; i < m1.GetLength(1); i++)
-                    {
-                        result[row, col] += m1[row, i] * m2[i, col];
-                    }
-                }
+                Vector4 col = new(m2[j], m2[4 + j], m2[8 + j], m2[12 + j]);
+                res[i * 4 + j] = Vector4.Dot(row, col);
             }
         }
-        else
-        {
-            throw new ArgumentException("Error. Matrices cannot be multiplied");
-        }
-
-        return result;
     }
 
-    public static float[,] CreateTranslationMatrix(float x, float y, float z)
+    public static unsafe void CreateTranslationMatrix4(float x, float y, float z, float* res)
     {
-        return new float[,]
+        float* temp = stackalloc float[16]
         {
-            { 1, 0, 0, x },
-            { 0, 1, 0, y },
-            { 0, 0, 1, z },
-            { 0, 0, 0, 1 },
+             1, 0, 0, x,
+             0, 1, 0, y,
+             0, 0, 1, z,
+             0, 0, 0, 1,
         };
+
+        Buffer.MemoryCopy(temp, res, MATRIX_SIZE, MATRIX_SIZE);
     }
 
-    public static float[,] CreateScaleMatrix(float x, float y, float z)
+    public static unsafe void CreateScaleMatrix4(float x, float y, float z, float* res)
     {
-        return new float[,]
+        float* temp = stackalloc float[16]
         {
-            { x, 0, 0, 0 },
-            { 0, y, 0, 0 },
-            { 0, 0, z, 0 },
-            { 0, 0, 0, 1 },
+            x, 0, 0, 0,
+            0, y, 0, 0,
+            0, 0, z, 0,
+            0, 0, 0, 1,
         };
+
+        Buffer.MemoryCopy(temp, res, MATRIX_SIZE, MATRIX_SIZE);
     }
 }

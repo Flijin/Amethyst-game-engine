@@ -3,8 +3,9 @@ using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 
-public class GroupOfObjects(DrawableObject[] objects) : DrawableObject
+public class GroupOfObjects(DrawableObject[] objects) : DrawableObject, IDisposable
 {
+    private bool _disposed = false;
     private readonly DrawableObject[] _gameObjects = objects;
 
     public override sealed Vector3 Position
@@ -43,7 +44,7 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject
         }
     }
 
-    public sealed override Vector3 Scale
+    public override sealed Vector3 Scale
     {
         get => base.Scale;
 
@@ -61,6 +62,12 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject
         }
     }
 
+    ~GroupOfObjects()
+    {
+        if (_disposed == false)
+            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
+    }
+
     internal override sealed void DrawObject(Camera? cam)
     {
         foreach (var gameObject in _gameObjects)
@@ -69,21 +76,29 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject
         }
     }
 
-    internal override sealed void UploadFromMemory()
-    {
-        foreach (var gameObject in _gameObjects)
-        {
-            gameObject.UploadFromMemory();
-        }
-    }
-
-    public sealed override void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
+    public override sealed void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
     {
         base.ModifyObject(position + base.Position, rotation + base.Rotation, scale + base.Scale);
 
         foreach (var item in _gameObjects)
         {
             item.ModifyObject(position + item.Position, rotation + item.Rotation, scale + item.Scale);
+        }
+    }
+
+    public override sealed void Dispose()
+    {
+        if (_disposed == false)
+        {
+            base.Dispose();
+
+            foreach (var gameObject in _gameObjects)
+            {
+                gameObject.Dispose();
+            }
+
+            GC.SuppressFinalize(this);
+            _disposed = true;
         }
     }
 }

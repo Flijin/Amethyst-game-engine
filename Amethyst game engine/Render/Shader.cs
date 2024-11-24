@@ -38,9 +38,6 @@ internal class Shader : IDisposable
 
     public void SetMatrix4(string name, float[,] matrix)
     {
-        if (matrix.GetLength(0) != 4 && matrix.GetLength(1) != 4)
-            throw new ArgumentException("Error. The size of the matrix should be 4x4");
-
         GL.UseProgram(Handle);
 
         var arr1D = new float[matrix.Length];
@@ -55,6 +52,12 @@ internal class Shader : IDisposable
         }
 
         GL.UniformMatrix4(_uniformLocations[name], 1, false, arr1D);
+    }
+
+    public unsafe void SetMatrix4(string name, float* matrixP)
+    {
+        GL.UseProgram(Handle);
+        GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixP);
     }
 
     public void SetVector3(string name, Vector3 vec)

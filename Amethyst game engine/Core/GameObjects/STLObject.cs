@@ -11,11 +11,10 @@ public class STLObject : GameObject
 
     }
 
-    internal override sealed void DrawObject(Camera? cam)
+    internal override unsafe sealed void DrawObject(Camera? cam)
     {
-        float[,] viewMatrix;
-        float[,] projectionMatrix;
-        var modelMatrix = ModelMatrix;
+        float* viewMatrix;
+        float* projectionMatrix;
 
         if (cam is null || _useCamera == false)
         {
@@ -37,7 +36,7 @@ public class STLObject : GameObject
                 _activeShader.Use();
 
                 _activeShader.SetMatrix4("mesh", mesh.Matrix);
-                _activeShader.SetMatrix4("model", modelMatrix);
+                _activeShader.SetMatrix4("model", ModelMatrix);
                 _activeShader.SetMatrix4("view", viewMatrix);
                 _activeShader.SetMatrix4("projection", projectionMatrix);
 

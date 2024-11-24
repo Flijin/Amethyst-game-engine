@@ -36,17 +36,19 @@ internal readonly struct Quaternion
         w = cr * cp * cy + sr * sp * sy;
     }
 
-    public float[,] GetRotationMatrix() => ConvertQuaternionToMatrix(x, y, z, w);
-    public static float[,] ConvertQuaternionToMatrix(Quaternion q) => ConvertQuaternionToMatrix(q.x, q.y, q.z, q.w);
+    public unsafe void GetRotationMatrix(float* res) => ConvertQuaternionToMatrix(x, y, z, w, res);
+    public static unsafe void ConvertQuaternionToMatrix(Quaternion q, float* res) => ConvertQuaternionToMatrix(q.x, q.y, q.z, q.w, res);
 
-    public static float[,] ConvertQuaternionToMatrix(float x, float y, float z, float w)
+    public static unsafe void ConvertQuaternionToMatrix(float x, float y, float z, float w, float* res)
     {
-        return new float[4, 4]
+        float* temp = stackalloc float[16]
         {
-            { 1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y), 0 },
-            { 2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x), 0 },
-            { 2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y), 0 },
-            { 0,                   0,                       0,                   1 },
+            1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y), 0,
+            2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x), 0,
+            2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y), 0,
+            0,                   0,                       0,                   1
         };
+
+        Buffer.MemoryCopy(temp, res, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
     }
 }

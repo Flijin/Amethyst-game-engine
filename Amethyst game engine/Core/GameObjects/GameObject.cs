@@ -3,8 +3,10 @@ using Amethyst_game_engine.Render;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 
-public abstract class GameObject : DrawableObject
+public abstract class GameObject : DrawableObject, IDisposable
 {
+    private bool _disposed = false;
+
     private protected readonly Mesh[] _meshes;
     private protected readonly Shader _activeShader;
     private protected bool _useCamera;
@@ -16,11 +18,26 @@ public abstract class GameObject : DrawableObject
         _useCamera = useCamera;
     }
 
-    internal sealed override void UploadFromMemory()
+    ~GameObject()
     {
-        foreach (var mesh in _meshes)
+        if (_disposed == false)
+            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
+    }
+
+    public override sealed void Dispose()
+    {
+        if (_disposed == false)
         {
-            mesh.Dispose();
+            base.Dispose();
+
+            foreach (var mesh in _meshes)
+            {
+                mesh.Dispose();
+            }
+
+            GC.SuppressFinalize(this);
+
+            _disposed = true;
         }
     }
 }
