@@ -1,14 +1,13 @@
 ﻿using Amethyst_game_engine.Core;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
-internal unsafe struct NodeInfo
+internal unsafe struct NodeInfo : IDisposable
 {
-    private float* _translationMatrix;
-    private float* _rotationMatrix;
-    private float* _scaleMatrix;
+    private float* _translationMatrix = null;
+    private float* _rotationMatrix = null;
+    private float* _scaleMatrix = null;
     private readonly int _index;
 
     public readonly int Index => _index;
@@ -16,10 +15,10 @@ internal unsafe struct NodeInfo
     public string? Name { get; }
     public int? Mesh { get; }
     public int? Skin { get; }
-    public int[]? Children { get; set; }
-    public float* LocalMatrix { get; private set; }
-    public float* GlobalMatrix { get; private set; }
-    private float* PreviousMatrix { get; set; }
+    public int[]? Children { readonly get; set; }
+    public float* LocalMatrix { readonly get; private set; }
+    private float* PreviousMatrix { readonly get; set; }
+    public float* GlobalMatrix { readonly get; private set; }
 
     public NodeInfo(Dictionary<string, object> nodePresentation, int index)
     {
@@ -41,7 +40,6 @@ internal unsafe struct NodeInfo
         {
             float[] temp = ((object[])matrix).Cast<float>().ToArray();
             LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-            Unsafe.InitBlock(LocalMatrix, 0, Mathematics.MATRIX_SIZE);
 
             fixed (float* ptr = temp)
             {
@@ -57,7 +55,6 @@ internal unsafe struct NodeInfo
         {
             var t = ((object[])translation).Cast<float>().ToArray();
             _translationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-            Unsafe.InitBlock(_translationMatrix, 0, Mathematics.MATRIX_SIZE);
 
             Mathematics.CreateTranslationMatrix4(t[0], t[1], t[2], _translationMatrix);
 
@@ -68,7 +65,6 @@ internal unsafe struct NodeInfo
         {
             var r = ((object[])rotation).Cast<float>().ToArray();
             _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-            Unsafe.InitBlock(_rotationMatrix, 0, Mathematics.MATRIX_SIZE);
 
             Quaternion.ConvertQuaternionToMatrix
             (
@@ -90,7 +86,6 @@ internal unsafe struct NodeInfo
         {
             var s = ((object[])scale).Cast<float>().ToArray();
             _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-            Unsafe.InitBlock(_scaleMatrix, 0, Mathematics.MATRIX_SIZE);
 
             Mathematics.CreateScaleMatrix4
             (
@@ -114,11 +109,18 @@ internal unsafe struct NodeInfo
         PreviousMatrix = matrix;
 
         if (matrix is not null && LocalMatrix is not null)
+        {
+            GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
             Mathematics.MultiplyMatrices4(matrix, LocalMatrix, GlobalMatrix);
+        }
         else if (matrix is not null && LocalMatrix is null)
+        {
             GlobalMatrix = matrix;
+        }
         else
+        {
             GlobalMatrix = LocalMatrix;
+        }
     }
 
     public void CalculateTRS(float* t, float* r, float* s)
@@ -126,11 +128,26 @@ internal unsafe struct NodeInfo
         float* resultMatrix = null;
 
         if (t is not null)
+        {
+            if (_translationMatrix is null)
+                _translationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+
             Mathematics.CreateTranslationMatrix4(t[0], t[1], t[2], _translationMatrix);
+        }
         if (r is not null)
+        {
+            if (_rotationMatrix is null)
+                _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+
             Quaternion.ConvertQuaternionToMatrix(r[0], r[1], r[2], r[3], _rotationMatrix);
+        }
         if (s is not null)
+        {
+            if (_scaleMatrix is null)
+                _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+
             Mathematics.CreateScaleMatrix4(s[0], s[1], s[2], _scaleMatrix);
+        }
 
         if (_translationMatrix is not null)
         {
@@ -163,7 +180,9 @@ internal unsafe struct NodeInfo
 
         if (resultMatrix is not null && PreviousMatrix is not null)
         {
-            GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+            if (GlobalMatrix is null)
+                GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+
             Mathematics.MultiplyMatrices4(PreviousMatrix, resultMatrix, GlobalMatrix);
         }
         else if (resultMatrix is null && PreviousMatrix is not null)
@@ -174,7 +193,23 @@ internal unsafe struct NodeInfo
         {
             GlobalMatrix = resultMatrix;
         }
-        else
-            GlobalMatrix = null;
+    }
+
+    public readonly void Dispose()
+    {
+        if (_translationMatrix is not null)
+            Marshal.FreeHGlobal((nint)_translationMatrix);
+
+        if (_rotationMatrix is not null)
+            Marshal.FreeHGlobal((nint)_rotationMatrix);
+
+        if (_scaleMatrix is not null)
+            Marshal.FreeHGlobal((nint)_scaleMatrix);
+
+        if (LocalMatrix is not null)
+            Marshal.FreeHGlobal((nint)LocalMatrix);
+
+        if (GlobalMatrix is not null)
+            Marshal.FreeHGlobal((nint)GlobalMatrix);
     }
 }

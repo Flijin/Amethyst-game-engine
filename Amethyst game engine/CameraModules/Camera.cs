@@ -9,15 +9,16 @@ public class Camera : IDisposable
 {
     private bool _disposed = false;
 
-    private readonly float _aspectRatio;
     private float _yaw = -float.Pi / 2;
     private float _orthographicBorder;
     private float _fov;
     private float _pitch;
+
+    private readonly float _aspectRatio;
     private readonly CameraTypes _type;
 
-    private unsafe readonly float* _viewMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private unsafe readonly float* _projectionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private readonly unsafe float* _viewMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private readonly unsafe float* _projectionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
     public float Near { get; set; }
     public float Far { get; set; }
@@ -138,12 +139,6 @@ public class Camera : IDisposable
         }
     }
 
-    ~Camera()
-    {
-       if (_disposed == false)
-            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
-    }
-
     public Camera(CameraTypes type, Vector3 position, float aspectRatio)
     {
         unsafe
@@ -163,6 +158,12 @@ public class Camera : IDisposable
             OrthographicBorders = 500f;
         else
             _fov = 0.7854f;
+    }
+
+    ~Camera()
+    {
+        if (_disposed == false)
+            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
     }
 
     private void CalculateVectors()

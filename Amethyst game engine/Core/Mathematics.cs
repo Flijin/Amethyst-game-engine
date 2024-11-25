@@ -6,10 +6,12 @@ namespace Amethyst_game_engine.Core;
 public static class Mathematics
 {
     public const int MATRIX_SIZE = sizeof(float) * 16;
-    public static unsafe readonly float* IDENTITY_MATRIX = (float*)Marshal.AllocHGlobal(16 * sizeof(float));
+    public static unsafe readonly float* IDENTITY_MATRIX;
 
     unsafe static Mathematics()
     {
+        IDENTITY_MATRIX = (float*)Marshal.AllocHGlobal(16 * sizeof(float));
+
         for (int i = 0; i < 4; i++)
         {
             IDENTITY_MATRIX[4 * i + i] = 1;

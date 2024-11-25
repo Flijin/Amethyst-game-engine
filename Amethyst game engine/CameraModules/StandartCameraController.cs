@@ -7,11 +7,36 @@ namespace Amethyst_game_engine.CameraModules;
 public class StandartCameraController
 {
     private Camera? _camera;
-    private bool _isFirstMove = true;
     private Vector2 _lastMousePosition;
+    private bool _isFirstMove = true;
+    private float _speed;
+    private float _sensivity;
 
-    public float Speed { get; set; }
-    public float Sensivity { get; set; }
+    public float Speed
+    {
+        get => _speed;
+
+        set
+        {
+            if (value >= 0)
+                _speed = value;
+            else
+                _speed = 0;
+        }
+    }
+
+    public float Sensivity
+    {
+        get => _sensivity;
+
+        set
+        {
+            if (value >= 0)
+                _sensivity = value;
+            else
+                _sensivity = 0;
+        }
+    }
 
     public StandartCameraController(float speed, float sensivity)
     {

@@ -6,12 +6,14 @@ namespace Amethyst_game_engine.Core.GameObjects;
 
 public class STLObject : GameObject
 {
+    private readonly STLModel _model;
+
     public STLObject(STLModel model, bool useCamera) : base([model.mesh], useCamera, 0)
     {
-
+        _model = model;
     }
 
-    internal override unsafe sealed void DrawObject(Camera? cam)
+    internal override sealed unsafe void DrawObject(Camera? cam)
     {
         float* viewMatrix;
         float* projectionMatrix;
@@ -27,21 +29,15 @@ public class STLObject : GameObject
             projectionMatrix = cam.ProjectionMatrix;
         }
 
-        foreach (var mesh in _meshes)
-        {
-            foreach (var primitive in mesh.primitives)
-            {
-                GL.BindVertexArray(primitive.vao);
+        var primitive = _meshes[0].primitives[0];
 
-                _activeShader.Use();
+        GL.BindVertexArray(primitive.vao);
+        _activeShader.Use();
 
-                _activeShader.SetMatrix4("mesh", mesh.Matrix);
-                _activeShader.SetMatrix4("model", ModelMatrix);
-                _activeShader.SetMatrix4("view", viewMatrix);
-                _activeShader.SetMatrix4("projection", projectionMatrix);
+        _activeShader.SetMatrix4("model", ModelMatrix);
+        _activeShader.SetMatrix4("view", viewMatrix);
+        _activeShader.SetMatrix4("projection", projectionMatrix);
 
-                GL.DrawArrays((PrimitiveType)primitive.mode, 0, primitive.count);
-            }
-        }
+        GL.DrawArrays((PrimitiveType)primitive.mode, 0, primitive.count);
     }
 }

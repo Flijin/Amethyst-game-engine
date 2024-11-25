@@ -63,6 +63,25 @@ namespace Amethyst_game_engine {
         /// <summary>
         ///   Ищет локализованную строку, похожую на #version 330 core
         ///
+        ///uniform vec3 color;
+        ///
+        ///out vec4 FragColor;
+        ///
+        ///void main()
+        ///{
+        ///    FragColor = vec4(color, 1.0);
+        ///}
+        ///.
+        /// </summary>
+        internal static string FragmentShader_0 {
+            get {
+                return ResourceManager.GetString("FragmentShader_0", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на #version 330 core
+        ///
         ///in vec4 color;
         ///
         ///out vec4 FragColor;
@@ -73,9 +92,31 @@ namespace Amethyst_game_engine {
         ///}
         ///.
         /// </summary>
-        internal static string FragmentShader_0 {
+        internal static string FragmentShader_1 {
             get {
-                return ResourceManager.GetString("FragmentShader_0", resourceCulture);
+                return ResourceManager.GetString("FragmentShader_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на #version 330 core
+        ///
+        ///layout (location = 0) in vec3 _position;
+        ///
+        ///uniform mat4 mesh;
+        ///uniform mat4 model;
+        ///uniform mat4 view;
+        ///uniform mat4 projection;
+        ///
+        ///void main()
+        ///{
+        ///    gl_Position = vec4(_position, 1.0) * mesh * model * view * projection;
+        ///}
+        ///.
+        /// </summary>
+        internal static string VertexShader_0 {
+            get {
+                return ResourceManager.GetString("VertexShader_0", resourceCulture);
             }
         }
         
@@ -98,16 +139,16 @@ namespace Amethyst_game_engine {
         ///{
         ///    color = _color;
         ///
-        ///    if (length(color) == 0)
-        ///        color = defaultVertexColor;
+        /////    if (length(color) == 0)
+        /////        color = defaultVertexColor;
         ///
         ///    gl_Position = vec4(_position, 1.0) * mesh * model * view * projection;
         ///}
         ///.
         /// </summary>
-        internal static string VertexShader_0 {
+        internal static string VertexShader_1 {
             get {
-                return ResourceManager.GetString("VertexShader_0", resourceCulture);
+                return ResourceManager.GetString("VertexShader_1", resourceCulture);
             }
         }
     }

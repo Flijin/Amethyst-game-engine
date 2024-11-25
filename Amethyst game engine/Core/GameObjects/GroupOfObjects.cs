@@ -16,13 +16,13 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject, IDisposa
         {
             _position += value;
 
-            Parallel.ForEach(_gameObjects, (item) =>
+            foreach (var item in _gameObjects)
             {
                 if (item is GameObject)
                     item.Position += value;
                 else
                     item.Position = value;
-            });
+            }
         }
     }
 
@@ -68,14 +68,6 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject, IDisposa
             SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
     }
 
-    internal override sealed void DrawObject(Camera? cam)
-    {
-        foreach (var gameObject in _gameObjects)
-        {
-            gameObject.DrawObject(cam);
-        }
-    }
-
     public override sealed void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
     {
         base.ModifyObject(position + base.Position, rotation + base.Rotation, scale + base.Scale);
@@ -83,6 +75,14 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject, IDisposa
         foreach (var item in _gameObjects)
         {
             item.ModifyObject(position + item.Position, rotation + item.Rotation, scale + item.Scale);
+        }
+    }
+
+    internal override sealed void DrawObject(Camera? cam)
+    {
+        foreach (var gameObject in _gameObjects)
+        {
+            gameObject.DrawObject(cam);
         }
     }
 

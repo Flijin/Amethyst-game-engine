@@ -94,6 +94,8 @@ public static partial class SystemSettings
         }
     }
 
+    private static (int Width, int Height) GetWindowsResolution() => (GetSystemMetrics(0), GetSystemMetrics(1));
+
     public static void PrintErrorMessage(string message)
     {
         ShowWindow(SW_SHOW);
@@ -117,8 +119,6 @@ public static partial class SystemSettings
 
         SetMaxThreads();
     }
-
-    private static (int Width, int Height) GetWindowsResolution() => (GetSystemMetrics(0), GetSystemMetrics(1));
 
     private static void SetMaxThreads()
     {

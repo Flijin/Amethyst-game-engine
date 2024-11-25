@@ -7,17 +7,16 @@ namespace Amethyst_game_engine.Core.GameObjects;
 public abstract class DrawableObject : IDisposable
 {
     private bool _disposed = false;
+    private Quaternion _rotationQuaternion;
 
     private protected Vector3 _position;
     private protected Vector3 _rotation;
     private protected Vector3 _scale;
 
-    private unsafe readonly float* _positionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private unsafe readonly float* _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private unsafe readonly float* _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private unsafe readonly float* _resultMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-
-    private Quaternion _rotationQuaternion;
+    private readonly unsafe float* _positionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private readonly unsafe float* _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private readonly unsafe float* _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private readonly unsafe float* _resultMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
     public virtual unsafe float* ModelMatrix
     {

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models;
 
-internal unsafe struct Mesh(Primitive[] primitives, int[] buffers) : IDisposable
+internal struct Mesh(Primitive[] primitives, int[] buffers) : IDisposable
 {
     public readonly Primitive[] primitives = primitives;
     private readonly int[] _buffers = buffers;
-    private float* _matrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    private unsafe float* _matrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
     public required unsafe float* Matrix
     {
@@ -41,6 +41,6 @@ internal unsafe struct Mesh(Primitive[] primitives, int[] buffers) : IDisposable
         foreach (var primitive in primitives)
             GL.DeleteVertexArray(primitive.vao);
 
-        Marshal.FreeHGlobal((nint)_matrix);
+        unsafe { Marshal.FreeHGlobal((nint)_matrix); }
     }
 }
