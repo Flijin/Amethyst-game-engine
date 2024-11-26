@@ -217,7 +217,6 @@ public class GLBImporter
             }
 
             currentNodeInfo.Dispose();
-
         }
 
         return new GLBScene([.. models]) { Name = name ?? "None" };
@@ -237,7 +236,7 @@ public class GLBImporter
         {
             float* matrixPtr = null;
             
-            if (matrix is not null)
+            if (matrix is not null) //Вот тут можно оптимизировать
             {
                 matrixPtr = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
                 System.Buffer.MemoryCopy(matrix, matrixPtr, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
@@ -322,7 +321,7 @@ public class GLBImporter
             if (attributes.TryGetValue("COLOR_0", out object? color))
                 AddAttribute(buffers, _glBuffers[(int)color], 1);
 
-            if(attributes.TryGetValue("TEXCOORD_0", out object? textCoord))
+            if (attributes.TryGetValue("TEXCOORD_0", out object? textCoord))
                 AddAttribute(buffers, _glBuffers[(int)textCoord], 2);
 
             var primitive = new Primitive(vertexArrayObject)

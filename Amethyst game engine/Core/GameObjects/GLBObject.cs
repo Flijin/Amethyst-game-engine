@@ -6,7 +6,7 @@ namespace Amethyst_game_engine.Core.GameObjects;
 
 public class GLBObject : GameObject
 {
-    public GLBObject(GLBModel model, bool useCamera) : base(model.meshes, useCamera, 0b_0000, 256)
+    public GLBObject(GLBModel model, bool useCamera) : base(model.meshes, useCamera, 0b_0010, 256)
     {
         
     }
@@ -34,7 +34,7 @@ public class GLBObject : GameObject
                 GL.BindVertexArray(primitive.vao);
 
                 _activeShader.Use();
-                //_activeShader.SetInt("albeloTextute", 0);
+                _activeShader.SetInt("albeloTextute", 0);
                 _activeShader.SetMatrix4("mesh", mesh.Matrix);
                 _activeShader.SetMatrix4("model", ModelMatrix);
                 _activeShader.SetMatrix4("view", viewMatrix);
