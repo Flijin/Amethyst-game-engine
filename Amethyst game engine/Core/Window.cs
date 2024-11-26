@@ -99,10 +99,10 @@ public class Window : GameWindow
 
     protected override void OnUnload()
     {
-        base.OnUnload();
-
         _scene?.Dispose();
         ShadersCollection.Dispose();
+
+        base.OnUnload();
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)

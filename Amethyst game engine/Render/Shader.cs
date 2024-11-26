@@ -115,6 +115,9 @@ internal class Shader : IDisposable
                 target.AppendLine("#define USE_COLOR");
         }
 
+        if ((shaderFlags & 0b_0010) != 0)
+            target.AppendLine("#define USE_ALBEDO");
+
         return target;
     }
 

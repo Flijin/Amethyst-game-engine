@@ -16,9 +16,9 @@ internal unsafe struct NodeInfo : IDisposable
     public int? Mesh { get; }
     public int? Skin { get; }
     public int[]? Children { readonly get; set; }
-    public float* LocalMatrix { readonly get; private set; }
-    private float* PreviousMatrix { readonly get; set; }
-    public float* GlobalMatrix { readonly get; private set; }
+    public float* LocalMatrix { readonly get; private set; } = null;
+    private float* PreviousMatrix { readonly get; set; } = null;
+    public float* GlobalMatrix { readonly get; private set; } = null;
 
     public NodeInfo(Dictionary<string, object> nodePresentation, int index)
     {
@@ -108,14 +108,17 @@ internal unsafe struct NodeInfo : IDisposable
     {
         PreviousMatrix = matrix;
 
-        if (matrix is not null && LocalMatrix is not null)
+        if (matrix is not null)
         {
-            GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-            Mathematics.MultiplyMatrices4(matrix, LocalMatrix, GlobalMatrix);
-        }
-        else if (matrix is not null && LocalMatrix is null)
-        {
-            GlobalMatrix = matrix;
+            if (LocalMatrix is null)
+            {
+                GlobalMatrix = matrix;
+            }
+            else
+            {
+                GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+                Mathematics.MultiplyMatrices4(matrix, LocalMatrix, GlobalMatrix);
+            }
         }
         else
         {
@@ -211,5 +214,8 @@ internal unsafe struct NodeInfo : IDisposable
 
         if (GlobalMatrix is not null)
             Marshal.FreeHGlobal((nint)GlobalMatrix);
+
+        if (PreviousMatrix is not null)
+            Marshal.FreeHGlobal((nint)PreviousMatrix);
     }
 }

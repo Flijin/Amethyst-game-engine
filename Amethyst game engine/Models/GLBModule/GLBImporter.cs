@@ -1,6 +1,7 @@
 ﻿using Amethyst_game_engine.Core;
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.GLBModule;
@@ -162,55 +163,61 @@ public class GLBImporter
         void ReadSceneRec(int nodeIndex, float* previousNodeMatrix = default)
         {
             var currentNodeInfo = new NodeInfo(_nodes[nodeIndex], nodeIndex);
-            float* globalNodeMatrix = null;
+            Span<float> globalNodeMatrix = null;
 
-            CalculateGlobalMatrix(previousNodeMatrix, currentNodeInfo.LocalMatrix, ref globalNodeMatrix);
+            //CalculateGlobalMatrix(previousNodeMatrix, currentNodeInfo.LocalMatrix, globalNodeMatrix);
 
-            if (currentNodeInfo.Mesh is not null)
+            if (previousNodeMatrix is null && currentNodeInfo.LocalMatrix is not null)
             {
-                models.Add(ReadModel(new NodeInfo(_nodes[nodeIndex], nodeIndex), globalNodeMatrix));
+                globalNodeMatrix = new Span<float>(currentNodeInfo.LocalMatrix, 16);
             }
-            else if (currentNodeInfo.Name == "RootNode")
+            else if (previousNodeMatrix is not null && currentNodeInfo.LocalMatrix is null)
             {
-                for (int i = 0; i < currentNodeInfo.Children!.Length; i++)
+                globalNodeMatrix = new Span<float>(previousNodeMatrix, 16);
+            }
+            else if (previousNodeMatrix is not null && currentNodeInfo.LocalMatrix is not null)
+            {
+
+#pragma warning disable CS9081
+                globalNodeMatrix = stackalloc float[16];
+#pragma warning restore
+
+                fixed (float* ptr = globalNodeMatrix)
                 {
-                    var index = currentNodeInfo.Children[i];
-                    models.Add(ReadModel(new NodeInfo(_nodes[index], index), globalNodeMatrix));
+                    Mathematics.MultiplyMatrices4(previousNodeMatrix, currentNodeInfo.LocalMatrix, ptr);
                 }
             }
-            else if (currentNodeInfo.Children?.Length > 1)
+
+            fixed (float* ptr = globalNodeMatrix)
             {
-                for (int i = 0; i < currentNodeInfo.Children.Length; i++)
+                if (currentNodeInfo.Mesh is not null)
                 {
-                    var index = currentNodeInfo.Children[i];
-                    models.Add(ReadModel(new NodeInfo(_nodes[index], index), globalNodeMatrix));
+                    models.Add(ReadModel(new NodeInfo(_nodes[nodeIndex], nodeIndex), ptr));
+                }
+                else if (currentNodeInfo.Name == "RootNode")
+                {
+                    for (int i = 0; i < currentNodeInfo.Children!.Length; i++)
+                    {
+                        var index = currentNodeInfo.Children[i];
+                        models.Add(ReadModel(new NodeInfo(_nodes[index], index), ptr));
+                    }
+                }
+                else if (currentNodeInfo.Children?.Length > 1)
+                {
+                    for (int i = 0; i < currentNodeInfo.Children.Length; i++)
+                    {
+                        var index = currentNodeInfo.Children[i];
+                        models.Add(ReadModel(new NodeInfo(_nodes[index], index), ptr));
+                    }
+                }
+                else if (currentNodeInfo.Children?.Length == 1)
+                {
+                    ReadSceneRec(currentNodeInfo.Children[0], ptr);
                 }
             }
-            else if (currentNodeInfo.Children?.Length == 1)
-            {
-                ReadSceneRec(currentNodeInfo.Children[0], globalNodeMatrix);
-            }
-        }
 
-        void CalculateGlobalMatrix(float* m1, float* m2, ref float* result)
-        {
-            if (m1 is null && m2 is not null)
-            {
-                result = m2;
-            }
-            else if (m1 is not null && m2 is null)
-            {
-                result = m1;
-            }
-            else if (m1 is not null && m2 is not null)
-            {
-                result = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-                Mathematics.MultiplyMatrices4(m1, m2, result);
-            }
-            else
-            {
-                result = null;
-            }
+            currentNodeInfo.Dispose();
+
         }
 
         return new GLBScene([.. models]) { Name = name ?? "None" };
@@ -228,7 +235,15 @@ public class GLBImporter
 
         void CalculateMatricesAndAddMeshes(NodeInfo node, float* matrix)
         {
-            node.CalculateGlobalMatrix(matrix);
+            float* matrixPtr = null;
+            
+            if (matrix is not null)
+            {
+                matrixPtr = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+                System.Buffer.MemoryCopy(matrix, matrixPtr, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
+            }
+
+            node.CalculateGlobalMatrix(matrixPtr);
 
             for (int i = 0; i < node.Children!.Length; i++)
             {
@@ -420,7 +435,7 @@ public class GLBImporter
             primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
             primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
             
-            primitive.materialsUsed[0] = 1;
+            primitive.materialsUsed[0] = 1; // ? 0_o
             primitive.materialsUsed[1] = 1;
 
             primitive.textureHandles[0] = albedoHandle;
@@ -456,6 +471,7 @@ public class GLBImporter
             for (int i = 0; i < _glTextures.Length; i++)
             {
                 var handle = GL.GenTexture();
+                GL.ActiveTexture(0);
                 GL.BindTexture(TextureTarget.Texture2D, handle);
 
                 var source = _images[(int)_textures[i]["source"]];
