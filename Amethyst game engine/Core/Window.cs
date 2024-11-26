@@ -3,7 +3,6 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using System.Diagnostics;
 using Amethyst_game_engine.Render;
 
 namespace Amethyst_game_engine.Core;
@@ -36,6 +35,15 @@ public class Window : GameWindow
 
     internal static new float AspectRatio => _aspectRatio;
 
+    public static RenderSettings RenderProps { get; set; } =
+        RenderSettings.UseColors |
+        RenderSettings.UseAlbedoMap |
+        RenderSettings.UseMetallicRoughness |
+        RenderSettings.UseNormalMap |
+        RenderSettings.UseNormals |
+        RenderSettings.UseOcclusionMap |
+        RenderSettings.UseEmissiveMap;
+
     public static BaseScene? Scene
     {
         set
@@ -54,7 +62,6 @@ public class Window : GameWindow
         })
     {
         SystemSettings.ShowWindow(SystemSettings.SW_HIDE);
-        ShadersCollection.InitShaders();
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);

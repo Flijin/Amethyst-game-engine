@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using System.Text;
 
 namespace Amethyst_game_engine.Render;
 
@@ -9,12 +10,12 @@ internal class Shader : IDisposable
 
     public int Handle { get; private set; }
 
-    public Shader(int shaderID)
+    public Shader(int shaderFlags)
     {
         Handle = GL.CreateProgram();
 
-        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, shaderID);
-        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, shaderID);
+        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, shaderFlags);
+        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, shaderFlags);
 
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
@@ -78,22 +79,43 @@ internal class Shader : IDisposable
         GL.Uniform1(_uniformLocations[name], value);
     }
 
-    private static int CreateAndAttachShader(ShaderType type, int handle, int id)
+    private static int CreateAndAttachShader(ShaderType type, int handle, int shaderFlags)
     {
-        string shaderSourse;
+        StringBuilder defines = ValidateFlags(shaderFlags);
+        StringBuilder sourse;
 
         if (type == ShaderType.VertexShader)
-            shaderSourse = Resources.ResourceManager.GetString($"VertexShader_{id}")!;
+            sourse = new(Resources.UniversalVertexShader);
         else
-            shaderSourse = Resources.ResourceManager.GetString($"FragmentShader_{id}")!;
+            sourse = new(Resources.UniversalFragmentShader);
 
+        sourse.Insert(19, defines.ToString());
+        
         var shaderDescriptor = GL.CreateShader(type);
 
-        GL.ShaderSource(shaderDescriptor, shaderSourse);
+        GL.ShaderSource(shaderDescriptor, sourse.ToString());
         CompileShader(shaderDescriptor);
         GL.AttachShader(handle, shaderDescriptor);
 
         return shaderDescriptor;
+    }
+
+    private static StringBuilder ValidateFlags(int shaderFlags)
+    {
+        StringBuilder target = new();
+
+        if ((shaderFlags & 0b_0001_00000000) != 0)
+            target.AppendLine("#define USE_MESH_MATRIX");
+
+        if ((shaderFlags & 0b_0001) != 0)
+        {
+            if ((shaderFlags & 0b_0010_00000000) != 0)
+                target.AppendLine("#define USE_COLOR_5_BITS");
+            else
+                target.AppendLine("#define USE_COLOR");
+        }
+
+        return target;
     }
 
     private static void CompileShader(int descriptor)

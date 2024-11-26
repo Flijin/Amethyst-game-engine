@@ -63,38 +63,27 @@ namespace Amethyst_game_engine {
         /// <summary>
         ///   Ищет локализованную строку, похожую на #version 330 core
         ///
-        ///uniform vec3 color;
-        ///
-        ///out vec4 FragColor;
-        ///
-        ///void main()
-        ///{
-        ///    FragColor = vec4(color, 1.0);
-        ///}
-        ///.
-        /// </summary>
-        internal static string FragmentShader_0 {
-            get {
-                return ResourceManager.GetString("FragmentShader_0", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на #version 330 core
-        ///
+        ///#ifdef USE_COLOR
         ///in vec4 color;
+        ///#endif
         ///
         ///out vec4 FragColor;
         ///
         ///void main()
         ///{
+        ///#ifdef USE_COLOR
         ///    FragColor = color;
+        ///#endif
+        ///
+        ///#ifndef USE_COLOR
+        ///    FragColor = vec4(0.5, 0.5, 0.5, 1);
+        ///#endif
         ///}
         ///.
         /// </summary>
-        internal static string FragmentShader_1 {
+        internal static string UniversalFragmentShader {
             get {
-                return ResourceManager.GetString("FragmentShader_1", resourceCulture);
+                return ResourceManager.GetString("UniversalFragmentShader", resourceCulture);
             }
         }
         
@@ -103,52 +92,36 @@ namespace Amethyst_game_engine {
         ///
         ///layout (location = 0) in vec3 _position;
         ///
-        ///uniform mat4 mesh;
-        ///uniform mat4 model;
-        ///uniform mat4 view;
-        ///uniform mat4 projection;
-        ///
-        ///void main()
-        ///{
-        ///    gl_Position = vec4(_position, 1.0) * mesh * model * view * projection;
-        ///}
-        ///.
-        /// </summary>
-        internal static string VertexShader_0 {
-            get {
-                return ResourceManager.GetString("VertexShader_0", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на #version 330 core
-        ///
-        ///layout (location = 0) in vec3 _position;
+        ///#ifdef USE_COLOR
         ///layout (location = 1) in vec4 _color;
+        ///#endif
         ///
-        ///const vec4 defaultVertexColor = vec4(1.0);
-        ///
-        ///out vec4 color;
-        ///
+        ///#ifdef USE_MESH_MATRIX
         ///uniform mat4 mesh;
+        ///#endif
+        ///
         ///uniform mat4 model;
         ///uniform mat4 view;
         ///uniform mat4 projection;
         ///
+        ///#ifdef USE_COLOR
+        ///out vec4 color;
+        ///#endif
+        ///
         ///void main()
         ///{
+        ///#ifdef USE_COLOR
         ///    color = _color;
+        ///#endif
         ///
-        /////    if (length(color) == 0)
-        /////        color = defaultVertexColor;
-        ///
+        ///#ifdef USE_MESH_MATRIX
         ///    gl_Position = vec4(_position, 1.0) * mesh * model * view * projection;
-        ///}
-        ///.
+        ///#else
+        ///    gl_Position = vec4(_position, 1.0) * [остаток строки не уместился]&quot;;.
         /// </summary>
-        internal static string VertexShader_1 {
+        internal static string UniversalVertexShader {
             get {
-                return ResourceManager.GetString("VertexShader_1", resourceCulture);
+                return ResourceManager.GetString("UniversalVertexShader", resourceCulture);
             }
         }
     }

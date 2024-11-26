@@ -8,7 +8,7 @@ public class STLObject : GameObject
 {
     private readonly STLModel _model;
 
-    public STLObject(STLModel model, bool useCamera) : base([model.mesh], useCamera, 0)
+    public STLObject(STLModel model, bool useCamera) : base([model.mesh], useCamera, model._renderProfile, 512)
     {
         _model = model;
     }

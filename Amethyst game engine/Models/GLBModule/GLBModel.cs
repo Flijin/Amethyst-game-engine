@@ -3,13 +3,14 @@
 public readonly struct GLBModel
 {
 	private readonly NodeInfo?[] _nodes;
-	internal readonly Mesh[] _meshes;
+	internal readonly Mesh[] meshes;
+	internal readonly int _renderProfile = 0b_0010;
 
-	public string Name { readonly get; init; } = "None";
+    public string Name { readonly get; init; } = "None";
 
     internal GLBModel(NodeInfo?[] nodes, Mesh[] meshes)
 	{
 		_nodes = nodes;
-		_meshes = meshes;
+		this.meshes = meshes;
 	}
 }

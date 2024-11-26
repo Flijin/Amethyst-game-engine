@@ -2,17 +2,27 @@
 
 internal static class ShadersCollection
 {
-    public static Dictionary<int, Shader> shaders = [];
+    private static readonly Dictionary<int, Shader> _shaders = [];
 
-    public static void InitShaders()
+    public static Shader GetShader(int flags)
     {
-        shaders[0] = new Shader(0);
-        shaders[1] = new Shader(1);
+        if (_shaders.TryGetValue(flags, out Shader? result))
+        {
+            return result;
+        }
+        else
+        {
+            Shader shader = new(flags);
+            _shaders.Add(flags, shader);
+            return shader;
+        }
     }
 
     public static void Dispose()
     {
-        shaders[0].Dispose();
-        shaders[1].Dispose();
+        foreach (var shader in _shaders.Values)
+        {
+            shader.Dispose();
+        }
     }
 }
