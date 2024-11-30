@@ -20,7 +20,6 @@ internal readonly struct Mesh : IDisposable
         unsafe
         {
             _matrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-            Unsafe.InitBlock(_matrix, 0, Mathematics.MATRIX_SIZE);
         }
     }
 

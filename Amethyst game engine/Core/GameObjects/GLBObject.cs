@@ -32,8 +32,10 @@ public class GLBObject : GameObject
             foreach (var primitive in mesh.primitives)
             {
                 GL.BindVertexArray(primitive.vao);
+                GL.BindTexture(TextureTarget.Texture2D, primitive.material[Models.MaterialsProperties.Albedo].texture);
 
                 _activeShader.Use();
+
                 _activeShader.SetInt("albeloTextute", 0);
                 _activeShader.SetMatrix4("mesh", mesh.Matrix);
                 _activeShader.SetMatrix4("model", ModelMatrix);

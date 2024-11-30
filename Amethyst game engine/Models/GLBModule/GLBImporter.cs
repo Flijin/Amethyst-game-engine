@@ -1,8 +1,6 @@
 ﻿using Amethyst_game_engine.Core;
 using OpenTK.Graphics.OpenGL4;
 using StbImageSharp;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
@@ -157,63 +155,46 @@ public class GLBImporter
 
         for (int i = 0; i < sceneNodesIndices.Length; i++)
         {
-            ReadSceneRec(sceneNodesIndices[i]);
+            ReadSceneRec(sceneNodesIndices[i], null);
         }
 
-        void ReadSceneRec(int nodeIndex, float* previousNodeMatrix = default)
+        void ReadSceneRec(int nodeIndex, float* previousNodeMatrix)
         {
             var currentNodeInfo = new NodeInfo(_nodes[nodeIndex], nodeIndex);
-            Span<float> globalNodeMatrix = null;
-
-            //CalculateGlobalMatrix(previousNodeMatrix, currentNodeInfo.LocalMatrix, globalNodeMatrix);
+            float* globalNodeMatrix = stackalloc float[16];
 
             if (previousNodeMatrix is null && currentNodeInfo.LocalMatrix is not null)
-            {
-                globalNodeMatrix = new Span<float>(currentNodeInfo.LocalMatrix, 16);
-            }
+                globalNodeMatrix = currentNodeInfo.LocalMatrix;
             else if (previousNodeMatrix is not null && currentNodeInfo.LocalMatrix is null)
-            {
-                globalNodeMatrix = new Span<float>(previousNodeMatrix, 16);
-            }
+                globalNodeMatrix = previousNodeMatrix;
             else if (previousNodeMatrix is not null && currentNodeInfo.LocalMatrix is not null)
+                Mathematics.MultiplyMatrices4(previousNodeMatrix, currentNodeInfo.LocalMatrix, globalNodeMatrix);
+            else
+                globalNodeMatrix = null;
+
+            if (currentNodeInfo.Mesh is not null)
             {
-
-#pragma warning disable CS9081
-                globalNodeMatrix = stackalloc float[16];
-#pragma warning restore
-
-                fixed (float* ptr = globalNodeMatrix)
+                models.Add(ReadModel(new NodeInfo(_nodes[nodeIndex], nodeIndex), globalNodeMatrix));
+            }
+            else if (currentNodeInfo.Name == "RootNode")
+            {
+                for (int i = 0; i < currentNodeInfo.Children!.Length; i++)
                 {
-                    Mathematics.MultiplyMatrices4(previousNodeMatrix, currentNodeInfo.LocalMatrix, ptr);
+                    var index = currentNodeInfo.Children[i];
+                    models.Add(ReadModel(new NodeInfo(_nodes[index], index), globalNodeMatrix));
                 }
             }
-
-            fixed (float* ptr = globalNodeMatrix)
+            else if (currentNodeInfo.Children?.Length > 1)
             {
-                if (currentNodeInfo.Mesh is not null)
+                for (int i = 0; i < currentNodeInfo.Children.Length; i++)
                 {
-                    models.Add(ReadModel(new NodeInfo(_nodes[nodeIndex], nodeIndex), ptr));
+                    var index = currentNodeInfo.Children[i];
+                    models.Add(ReadModel(new NodeInfo(_nodes[index], index), globalNodeMatrix));
                 }
-                else if (currentNodeInfo.Name == "RootNode")
-                {
-                    for (int i = 0; i < currentNodeInfo.Children!.Length; i++)
-                    {
-                        var index = currentNodeInfo.Children[i];
-                        models.Add(ReadModel(new NodeInfo(_nodes[index], index), ptr));
-                    }
-                }
-                else if (currentNodeInfo.Children?.Length > 1)
-                {
-                    for (int i = 0; i < currentNodeInfo.Children.Length; i++)
-                    {
-                        var index = currentNodeInfo.Children[i];
-                        models.Add(ReadModel(new NodeInfo(_nodes[index], index), ptr));
-                    }
-                }
-                else if (currentNodeInfo.Children?.Length == 1)
-                {
-                    ReadSceneRec(currentNodeInfo.Children[0], ptr);
-                }
+            }
+            else if (currentNodeInfo.Children?.Length == 1)
+            {
+                ReadSceneRec(currentNodeInfo.Children[0], globalNodeMatrix);
             }
 
             currentNodeInfo.Dispose();
@@ -222,31 +203,23 @@ public class GLBImporter
         return new GLBScene([.. models]) { Name = name ?? "None" };
     }
 
-    private unsafe GLBModel ReadModel(NodeInfo node, float* globalMatrix = default)
+    private unsafe GLBModel ReadModel(NodeInfo node, float* globalMatrix)
     {
-        NodeInfo?[] modelNodes = new NodeInfo?[_nodes.Length];
+        var modelNodes = new NodeInfo[_nodes.Length];
         List<Mesh> meshes = [];
 
         if (ReadNodes(node))
-            CalculateMatricesAndAddMeshes((NodeInfo)modelNodes[node.Index]!, globalMatrix);
+            CalculateMatricesAndAddMeshes(modelNodes[node.Index], globalMatrix);
 
         return new GLBModel(modelNodes, [..meshes]) { Name = node.Name ?? "None" };
 
         void CalculateMatricesAndAddMeshes(NodeInfo node, float* matrix)
         {
-            float* matrixPtr = null;
-            
-            if (matrix is not null) //Вот тут можно оптимизировать
-            {
-                matrixPtr = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-                System.Buffer.MemoryCopy(matrix, matrixPtr, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
-            }
-
-            node.CalculateGlobalMatrix(matrixPtr);
+            node.CalculateGlobalMatrix(matrix);
 
             for (int i = 0; i < node.Children!.Length; i++)
             {
-                CalculateMatricesAndAddMeshes((NodeInfo)modelNodes[node.Children[i]]!, node.GlobalMatrix);
+                CalculateMatricesAndAddMeshes(modelNodes[node.Children[i]], node.GlobalMatrix);
             }
 
             if (node.Mesh is not null)
@@ -257,6 +230,7 @@ public class GLBImporter
         {
             if (node.Children is null && node.Mesh is null)
             {
+                node.Dispose();
                 return false;
             }
             else if (node.Children is null && node.Mesh is not null)
@@ -291,6 +265,7 @@ public class GLBImporter
                 }
                 else
                 {
+                    node.Dispose();
                     return false;
                 }
             }
@@ -345,12 +320,14 @@ public class GLBImporter
                 ReadMaterial(ref primitive, buffers, (int)materialIndex);
 
             primitives[i] = primitive;
+
+            GL.BindVertexArray(0);
         }
-        
+
         return new Mesh(primitives, [..buffers]) { Matrix = matrix };
     }
 
-    private GLBufferInfo ReadAccessor(int index)
+    private unsafe GLBufferInfo ReadAccessor(int index)
     {
         var accessor = _accessors[index];
         var accessorOffset = accessor.TryGetValue("byteOffset", out object? aOffset) ? (int)aOffset : 0;
@@ -367,8 +344,6 @@ public class GLBImporter
         var stride = bufferView.TryGetValue("byteStride", out object? byteStride) ? (int)byteStride : typeLength;
         int target = bufferView.TryGetValue("target", out object? targetResult) ? (int)targetResult : 34962;
 
-        var bufferSlice = _binChunk[(accessorOffset + bufferViewOffset)..(bufferViewOffset + byteLength)];
-
         var result = new GLBufferInfo(glBuffer, componentType)
         {
             count = (int)accessor["count"],
@@ -379,9 +354,14 @@ public class GLBImporter
 
         GL.BindBuffer((BufferTarget)target, glBuffer);
 
-        GL.BufferData((BufferTarget)target,
-                       bufferSlice.Length, bufferSlice,
-                       BufferUsageHint.DynamicDraw);
+        fixed (void* ptr = _binChunk)
+        {
+            GL.BufferData((BufferTarget)target,
+               byteLength - accessorOffset, ((nint)ptr) + accessorOffset + bufferViewOffset,
+               BufferUsageHint.DynamicDraw);
+        }
+
+        GL.BindBuffer((BufferTarget)target, 0);
 
         return result;
     }
@@ -428,13 +408,13 @@ public class GLBImporter
                 GL.BindTexture(TextureTarget.Texture2D, metallicRoughnessHandle);
 
                 if (metallicRoughnessTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                    AddAttribute(buffers, _glBuffers[(int)texCoordIndex], 0);
+                    AddAttribute(buffers, _glBuffers[(int)texCoordIndex], 2);
             }
 
             primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
             primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
             
-            primitive.materialsUsed[0] = 1; // ? 0_o
+            primitive.materialsUsed[0] = 1;
             primitive.materialsUsed[1] = 1;
 
             primitive.textureHandles[0] = albedoHandle;
@@ -470,7 +450,7 @@ public class GLBImporter
             for (int i = 0; i < _glTextures.Length; i++)
             {
                 var handle = GL.GenTexture();
-                GL.ActiveTexture(0);
+                GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, handle);
 
                 var source = _images[(int)_textures[i]["source"]];
@@ -510,6 +490,8 @@ public class GLBImporter
                               image.Data);
 
                 _glTextures[i] = handle;
+
+                GL.BindTexture(TextureTarget.Texture2D, 0);
             }
         }
     }

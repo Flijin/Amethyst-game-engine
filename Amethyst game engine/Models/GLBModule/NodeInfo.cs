@@ -41,7 +41,7 @@ internal unsafe struct NodeInfo : IDisposable
             float[] temp = ((object[])matrix).Cast<float>().ToArray();
             LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
-            fixed (float* ptr = temp)
+            fixed (void* ptr = temp)
             {
                 Buffer.MemoryCopy(ptr, LocalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
             }
@@ -55,10 +55,10 @@ internal unsafe struct NodeInfo : IDisposable
         {
             var t = ((object[])translation).Cast<float>().ToArray();
             _translationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+            LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
             Mathematics.CreateTranslationMatrix4(t[0], t[1], t[2], _translationMatrix);
-
-            LocalMatrix = _translationMatrix;
+            Buffer.MemoryCopy(_translationMatrix, LocalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
         }
 
         if (nodePresentation.TryGetValue("rotation", out object? rotation))
@@ -79,7 +79,10 @@ internal unsafe struct NodeInfo : IDisposable
                 Mathematics.MultiplyMatrices4(temp, _rotationMatrix, LocalMatrix);
             }
             else
-                LocalMatrix = _rotationMatrix;
+            {
+                LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+                Buffer.MemoryCopy(LocalMatrix, _rotationMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
+            }
         }
 
         if (nodePresentation.TryGetValue("scale", out object? scale))
@@ -100,7 +103,10 @@ internal unsafe struct NodeInfo : IDisposable
                 Mathematics.MultiplyMatrices4(temp, _scaleMatrix, LocalMatrix);
             }
             else
-                LocalMatrix = _scaleMatrix;
+            {
+                LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+                Buffer.MemoryCopy(LocalMatrix, _scaleMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
+            }
         }
     }
 
@@ -110,19 +116,17 @@ internal unsafe struct NodeInfo : IDisposable
 
         if (matrix is not null)
         {
+            GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+
             if (LocalMatrix is null)
-            {
-                GlobalMatrix = matrix;
-            }
+                Buffer.MemoryCopy(matrix, GlobalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
             else
-            {
-                GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
                 Mathematics.MultiplyMatrices4(matrix, LocalMatrix, GlobalMatrix);
-            }
         }
-        else
+        else if (LocalMatrix is not null)
         {
-            GlobalMatrix = LocalMatrix;
+            GlobalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+            Buffer.MemoryCopy(LocalMatrix, GlobalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
         }
     }
 
@@ -214,8 +218,5 @@ internal unsafe struct NodeInfo : IDisposable
 
         if (GlobalMatrix is not null)
             Marshal.FreeHGlobal((nint)GlobalMatrix);
-
-        if (PreviousMatrix is not null)
-            Marshal.FreeHGlobal((nint)PreviousMatrix);
     }
 }

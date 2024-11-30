@@ -34,6 +34,7 @@ public class Window : GameWindow
     }
 
     internal static new float AspectRatio => _aspectRatio;
+    public static float DeltaTime { get; private set; }
 
     public static RenderSettings RenderProps { get; set; } =
         RenderSettings.UseColors |
@@ -93,6 +94,7 @@ public class Window : GameWindow
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         _scene?.DrawScene();
+        DeltaTime = (float)args.Time;
 
         SwapBuffers();
     }

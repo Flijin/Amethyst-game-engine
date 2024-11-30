@@ -23,12 +23,16 @@ internal readonly struct Quaternion
 
     public Quaternion(float pitch, float yaw, float roll)
     {
-        float cy = MathF.Cos(yaw * 0.5f);
-        float sy = MathF.Sin(yaw * 0.5f);
-        float cp = MathF.Cos(pitch * 0.5f);
-        float sp = MathF.Sin(pitch * 0.5f);
-        float cr = MathF.Cos(roll * 0.5f);
-        float sr = MathF.Sin(roll * 0.5f);
+        var radPitch = Mathematics.DegreesToRadians(pitch);
+        var radYaw = Mathematics.DegreesToRadians(yaw);
+        var radRoll = Mathematics.DegreesToRadians(roll);
+
+        float cy = MathF.Cos(radYaw * 0.5f);
+        float sy = MathF.Sin(radYaw * 0.5f);
+        float cp = MathF.Cos(radPitch * 0.5f);
+        float sp = MathF.Sin(radPitch * 0.5f);
+        float cr = MathF.Cos(radRoll * 0.5f);
+        float sr = MathF.Sin(radRoll * 0.5f);
 
         x = sr * cp * cy - cr * sp * sy;
         y = cr * sp * cy + sr * cp * sy;

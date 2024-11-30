@@ -2,13 +2,13 @@
 
 public readonly struct GLBModel
 {
-	private readonly NodeInfo?[] _nodes;
+	private readonly NodeInfo[] _nodes;
 	internal readonly Mesh[] meshes;
 	internal readonly int _renderProfile = 0b_0000;
 
     public string Name { readonly get; init; } = "None";
 
-    internal GLBModel(NodeInfo?[] nodes, Mesh[] meshes)
+    internal GLBModel(NodeInfo[] nodes, Mesh[] meshes)
 	{
 		_nodes = nodes;
 		this.meshes = meshes;

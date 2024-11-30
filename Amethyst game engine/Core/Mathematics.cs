@@ -1,9 +1,10 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core;
 
-public static class Mathematics
+internal static class Mathematics
 {
     public const int MATRIX_SIZE = sizeof(float) * 16;
     public static unsafe readonly float* IDENTITY_MATRIX;
@@ -11,6 +12,7 @@ public static class Mathematics
     unsafe static Mathematics()
     {
         IDENTITY_MATRIX = (float*)Marshal.AllocHGlobal(16 * sizeof(float));
+        Unsafe.InitBlock(IDENTITY_MATRIX, 0, MATRIX_SIZE);
 
         for (int i = 0; i < 4; i++)
         {
@@ -23,12 +25,15 @@ public static class Mathematics
 
     public static unsafe void TransposeMatrix4(float* matrix)
     {
+        float* temp = stackalloc float[16];
+        Buffer.MemoryCopy(matrix, temp, MATRIX_SIZE, MATRIX_SIZE);
+
         for (int i = 0; i < 4; i++)
         {
-            matrix[i * 4] = matrix[i];
-            matrix[i * 4 + 1] = matrix[4 + i];
-            matrix[i * 4 + 2] = matrix[8 + i];
-            matrix[i * 4 + 3] = matrix[12 + i];
+            matrix[i * 4] = temp[i];
+            matrix[i * 4 + 1] = temp[4 + i];
+            matrix[i * 4 + 2] = temp[8 + i];
+            matrix[i * 4 + 3] = temp[12 + i];
         }
     }
 

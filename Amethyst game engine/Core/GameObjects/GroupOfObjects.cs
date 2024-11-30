@@ -1,12 +1,15 @@
 ﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.Models.GLBModule;
 using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 
-public class GroupOfObjects(DrawableObject[] objects) : DrawableObject, IDisposable
+public class GroupOfObjects : DrawableObject, IDisposable
 {
     private bool _disposed = false;
-    private readonly DrawableObject[] _gameObjects = objects;
+    private readonly DrawableObject[] _gameObjects;
+
+    public DrawableObject[] GroupObjects => _gameObjects;
 
     public override sealed Vector3 Position
     {
@@ -59,6 +62,18 @@ public class GroupOfObjects(DrawableObject[] objects) : DrawableObject, IDisposa
                 else
                     item.Scale = value;
             }
+        }
+    }
+
+    public GroupOfObjects(DrawableObject[] objects) => _gameObjects = objects;
+
+    public GroupOfObjects(GLBScene scene)
+    {
+        _gameObjects = new DrawableObject[scene.ModelsCount];
+
+        for (int i = 0; i < scene.ModelsCount; i++)
+        {
+            _gameObjects[i] = new GLBObject(scene.Models[i], true);
         }
     }
 
