@@ -38,10 +38,13 @@ internal unsafe struct NodeInfo : IDisposable
 
         if (nodePresentation.TryGetValue("matrix", out object? matrix))
         {
-            float[] temp = ((object[])matrix).Cast<float>().ToArray();
+            var temp = ((object[])matrix).Select(el => el = Convert.ToSingle(el))
+                                         .Cast<float>()
+                                         .ToArray();
+
             LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
-            fixed (void* ptr = temp)
+            fixed (float* ptr = temp)
             {
                 Buffer.MemoryCopy(ptr, LocalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
             }
@@ -53,7 +56,10 @@ internal unsafe struct NodeInfo : IDisposable
 
         if (nodePresentation.TryGetValue("translation", out object? translation))
         {
-            var t = ((object[])translation).Cast<float>().ToArray();
+            var t = ((object[])translation).Select(el => el = Convert.ToSingle(el))
+                            .Cast<float>()
+                            .ToArray();
+
             _translationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
             LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
@@ -63,7 +69,10 @@ internal unsafe struct NodeInfo : IDisposable
 
         if (nodePresentation.TryGetValue("rotation", out object? rotation))
         {
-            var r = ((object[])rotation).Cast<float>().ToArray();
+            var r = ((object[])rotation).Select(el => el = Convert.ToSingle(el))
+                                        .Cast<float>()
+                                        .ToArray();
+
             _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
             Quaternion.ConvertQuaternionToMatrix
@@ -81,13 +90,16 @@ internal unsafe struct NodeInfo : IDisposable
             else
             {
                 LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-                Buffer.MemoryCopy(LocalMatrix, _rotationMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
+                Buffer.MemoryCopy(_rotationMatrix, LocalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
             }
         }
 
         if (nodePresentation.TryGetValue("scale", out object? scale))
         {
-            var s = ((object[])scale).Cast<float>().ToArray();
+            var s = ((object[])scale).Select(el => el = Convert.ToSingle(el))
+                .Cast<float>()
+                .ToArray(); 
+
             _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
             Mathematics.CreateScaleMatrix4
@@ -105,7 +117,7 @@ internal unsafe struct NodeInfo : IDisposable
             else
             {
                 LocalMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-                Buffer.MemoryCopy(LocalMatrix, _scaleMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
+                Buffer.MemoryCopy(_scaleMatrix, LocalMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
             }
         }
     }
@@ -202,7 +214,7 @@ internal unsafe struct NodeInfo : IDisposable
         }
     }
 
-    public readonly void Dispose()
+    public void Dispose()
     {
         if (_translationMatrix is not null)
             Marshal.FreeHGlobal((nint)_translationMatrix);
@@ -217,6 +229,9 @@ internal unsafe struct NodeInfo : IDisposable
             Marshal.FreeHGlobal((nint)LocalMatrix);
 
         if (GlobalMatrix is not null)
+        {
             Marshal.FreeHGlobal((nint)GlobalMatrix);
+            GlobalMatrix = null;
+        }
     }
 }

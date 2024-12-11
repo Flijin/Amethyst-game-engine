@@ -27,7 +27,6 @@ public class GLBImporter
     private string[] _extensions = [];
     private string[] _extensionsRequired = [];
 
-    private GLBufferInfo[] _glBuffers = [];
     private int[] _glTextures = [];
 
     private static readonly Dictionary<string, int> _countOfComponents = new()
@@ -71,7 +70,6 @@ public class GLBImporter
         ReadBinaryChunk(reader);
         ReadChunkObjects();
         CheckExtensions();
-        ReadAccessors();
         ReadTextures();
 
         var t1 = Task.Factory.StartNew(ReadMetadata);
@@ -281,32 +279,33 @@ public class GLBImporter
 
         List<int> buffers = [];
 
-        lock (_glBuffers) { }
-
         for (int i = 0; i < primitivesDicts.Length; i++)
         {
             var vertexArrayObject = GL.GenVertexArray();
             GL.BindVertexArray(vertexArrayObject);
 
             var attributes = (Dictionary<string, object>)primitivesDicts[i]["attributes"];
-            var currentBuffer = _glBuffers[(int)attributes["POSITION"]];
+            var currentBuffer = ReadAccessor((int)attributes["POSITION"], BufferTarget.ArrayBuffer);
 
             AddAttribute(buffers, currentBuffer, 0);
 
             if (attributes.TryGetValue("COLOR_0", out object? color))
-                AddAttribute(buffers, _glBuffers[(int)color], 1);
+                AddAttribute(buffers, ReadAccessor((int)color, BufferTarget.ArrayBuffer), 1);
 
             if (attributes.TryGetValue("TEXCOORD_0", out object? textCoord))
-                AddAttribute(buffers, _glBuffers[(int)textCoord], 2);
+                AddAttribute(buffers, ReadAccessor((int)textCoord, BufferTarget.ArrayBuffer), 2);
 
             var primitive = new Primitive(vertexArrayObject)
             {
                 mode = primitivesDicts[i].TryGetValue("mode", out object? modeRes) ? (int)modeRes : 4
             };
 
+            if (primitivesDicts[i].TryGetValue("material", out object? materialIndex))
+                ReadMaterial(ref primitive, buffers, (int)materialIndex);
+
             if (primitivesDicts[i].TryGetValue("indices", out object? indicesRes))
             {
-                currentBuffer = _glBuffers[(int)indicesRes];
+                currentBuffer = ReadAccessor((int)indicesRes, BufferTarget.ElementArrayBuffer);
                 primitive.isIndexedGeometry = true;
                 primitive.componentType = currentBuffer.componentType;
 
@@ -316,9 +315,6 @@ public class GLBImporter
 
             primitive.count = currentBuffer.count;
 
-            if (primitivesDicts[i].TryGetValue("material", out object? materialIndex))
-                ReadMaterial(ref primitive, buffers, (int)materialIndex);
-
             primitives[i] = primitive;
 
             GL.BindVertexArray(0);
@@ -327,7 +323,7 @@ public class GLBImporter
         return new Mesh(primitives, [..buffers]) { Matrix = matrix };
     }
 
-    private unsafe GLBufferInfo ReadAccessor(int index)
+    private unsafe GLBufferInfo ReadAccessor(int index, BufferTarget target)
     {
         var accessor = _accessors[index];
         var accessorOffset = accessor.TryGetValue("byteOffset", out object? aOffset) ? (int)aOffset : 0;
@@ -342,7 +338,6 @@ public class GLBImporter
 
         var typeLength = _countOfComponents[type] * _componentSize[componentType];
         var stride = bufferView.TryGetValue("byteStride", out object? byteStride) ? (int)byteStride : typeLength;
-        int target = bufferView.TryGetValue("target", out object? targetResult) ? (int)targetResult : 34962;
 
         var result = new GLBufferInfo(glBuffer, componentType)
         {
@@ -352,16 +347,16 @@ public class GLBImporter
             stride = stride, 
         };
 
-        GL.BindBuffer((BufferTarget)target, glBuffer);
+        GL.BindBuffer(target, glBuffer);
 
-        fixed (void* ptr = _binChunk)
+        fixed (byte* ptr = _binChunk)
         {
-            GL.BufferData((BufferTarget)target,
+            GL.BufferData(target,
                byteLength - accessorOffset, ((nint)ptr) + accessorOffset + bufferViewOffset,
                BufferUsageHint.DynamicDraw);
         }
 
-        GL.BindBuffer((BufferTarget)target, 0);
+        GL.BindBuffer(target, 0);
 
         return result;
     }
@@ -379,13 +374,17 @@ public class GLBImporter
             var metallicRoughnessHandle = -1;
 
             if (mainMaterial.TryGetValue("baseColorFactor", out object? baseColorFactorObj))
-                baseColorFactor = ((object[])baseColorFactorObj).Cast<float>().ToArray();
+            {
+                baseColorFactor = ((object[])baseColorFactorObj).Select(el => el = Convert.ToSingle(el))
+                                                                .Cast<float>()
+                                                                .ToArray();
+            }
 
             if (mainMaterial.TryGetValue("metallicFactor", out object? metallicFactor))
-                metallicRoughnessFactors[0] = (float)metallicFactor;
+                metallicRoughnessFactors[0] = Convert.ToSingle(metallicFactor);
 
             if (mainMaterial.TryGetValue("roughnessFactor", out object? roughnessFactor))
-                metallicRoughnessFactors[1] = (float)roughnessFactor;
+                metallicRoughnessFactors[1] = Convert.ToSingle(roughnessFactor);
 
             if (mainMaterial.TryGetValue("baseColorTexture", out object? baseColorTextureObj) &&
                 baseColorTextureObj is Dictionary<string, object> baseColorTexture)
@@ -396,7 +395,7 @@ public class GLBImporter
                 GL.BindTexture(TextureTarget.Texture2D, albedoHandle);
 
                 if (baseColorTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                    AddAttribute(buffers, _glBuffers[(int)texCoordIndex], 0);
+                    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
             }
 
             if (mainMaterial.TryGetValue("metallicRoughnessTexture", out object? metallicRoughnessTextureObj) &&
@@ -408,7 +407,7 @@ public class GLBImporter
                 GL.BindTexture(TextureTarget.Texture2D, metallicRoughnessHandle);
 
                 if (metallicRoughnessTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                    AddAttribute(buffers, _glBuffers[(int)texCoordIndex], 2);
+                    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
             }
 
             primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
@@ -429,8 +428,9 @@ public class GLBImporter
                                (VertexAttribPointerType)buffer.componentType,
                                buffer.normalized,
                                buffer.stride, 0);
-
+        
         GL.EnableVertexAttribArray(location);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
         buffers.Add(buffer.buffer);
     }
@@ -454,7 +454,7 @@ public class GLBImporter
                 GL.BindTexture(TextureTarget.Texture2D, handle);
 
                 var source = _images[(int)_textures[i]["source"]];
-                var sampler = _samplers[(int)_textures[i]["sampler"]];
+                var sampler = _textures[i].TryGetValue("sampler", out object? samplerRes) ? _samplers[(int)samplerRes] : [];
 
                 var mimeType = (string)source["mimeType"] == "image/png" ? 1 : 0;
                 var bufferView = _bufferViews[(int)source["bufferView"]];
@@ -492,22 +492,6 @@ public class GLBImporter
                 _glTextures[i] = handle;
 
                 GL.BindTexture(TextureTarget.Texture2D, 0);
-            }
-        }
-    }
-
-    private void ReadAccessors()
-    {
-        lock (_accessors) { }
-        lock (_bufferViews) { }
-
-        lock (_glBuffers)
-        {
-            _glBuffers = new GLBufferInfo[_accessors.Length];
-
-            for (int i = 0; i < _accessors.Length; i++)
-            {
-                _glBuffers[i] = ReadAccessor(i);
             }
         }
     }

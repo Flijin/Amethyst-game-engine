@@ -110,9 +110,9 @@ internal class Shader : IDisposable
         if ((shaderFlags & 0b_0001) != 0)
         {
             if ((shaderFlags & 0b_0010_00000000) != 0)
-                target.AppendLine("#define USE_COLOR_5_BITS");
+                target.AppendLine("#define USE_STL_COLORS");
             else
-                target.AppendLine("#define USE_COLOR");
+                target.AppendLine("#define USE_COLORS");
         }
 
         if ((shaderFlags & 0b_0010) != 0)

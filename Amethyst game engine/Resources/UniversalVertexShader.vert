@@ -2,10 +2,8 @@
 
 layout (location = 0) in vec3 _position;
 
-#if defined(USE_COLOR)
+#if defined(USE_COLORS) || defined(USE_STL_COLORS)
 layout (location = 1) in vec4 _color;
-#elif defined(USE_COLOR_5_BITS)
-layout (location = 1) in vec3 _color;
 #endif
 
 #ifdef USE_MESH_MATRIX
@@ -16,7 +14,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-#if defined(USE_COLOR) || defined(USE_COLOR_5_BITS)
+#if defined(USE_COLORS) || defined(USE_STL_COLORS)
 out vec4 color;
 #endif
 
@@ -31,10 +29,10 @@ void main()
     albedoCoords = _albedoCoords;
 #endif
 
-#if defined(USE_COLOR)
+#if defined(USE_COLORS)
     color = _color;
-#elif defined(USE_COLOR_5_BITS)
-    color = vec4(_color / 32.0, 1);
+#elif defined(USE_STL_COLORS)
+    color = vec4(_color.x / 32.0, _color.y / 32.0, _color.z / 32.0, _color.w);
 #endif
 
 #ifdef USE_MESH_MATRIX

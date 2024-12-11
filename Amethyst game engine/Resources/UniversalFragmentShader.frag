@@ -5,7 +5,7 @@ uniform sampler2D albeloTextute;
 in vec2 albedoCoords;
 #endif
 
-#if defined(USE_COLOR) || defined(USE_COLOR_5_BITS)
+#if defined(USE_COLORS) || defined(USE_STL_COLORS)
 in vec4 color;
 #endif
 
@@ -13,9 +13,9 @@ out vec4 FragColor;
 
 void main()
 {
-#if defined(USE_COLOR) && defined(USE_ALBEDO)
+#if defined(USE_COLORS) && defined(USE_ALBEDO)
     FragColor = mix(color, texture(albeloTextute, albedoCoords));
-#elif defined(USE_COLOR) && defined(USE_ALBEDO) == false || defined(USE_COLOR_5_BITS)
+#elif defined(USE_COLORS) || defined(USE_STL_COLORS)
     FragColor = color;
 #elif defined(USE_ALBEDO)
     FragColor = texture(albeloTextute, albedoCoords);

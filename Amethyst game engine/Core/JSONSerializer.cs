@@ -16,6 +16,9 @@ public static class JSONSerializer
 
     public static Dictionary<string, object?> JsonToObj(char[] data)
     {
+        //If you see this comment, you can delete it.
+        //File.WriteAllText(@"C:\Users\it_ge\Desktop\Новый текстовый документ.txt", new string(data));
+
         Dictionary<string, object?>? result = null;
         var symIndex = 0;
 

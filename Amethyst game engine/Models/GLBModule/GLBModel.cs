@@ -4,7 +4,7 @@ public readonly struct GLBModel
 {
 	private readonly NodeInfo[] _nodes;
 	internal readonly Mesh[] meshes;
-	internal readonly int _renderProfile = 0b_0000;
+	internal readonly int _renderProfile = 0b_0010;
 
     public string Name { readonly get; init; } = "None";
 
