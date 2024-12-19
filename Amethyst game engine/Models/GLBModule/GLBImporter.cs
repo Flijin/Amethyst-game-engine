@@ -1,5 +1,5 @@
 ﻿using Amethyst_game_engine.Core;
-using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL;
 using StbImageSharp;
 
 namespace Amethyst_game_engine.Models.GLBModule;
@@ -394,8 +394,8 @@ public class GLBImporter
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, albedoHandle);
 
-                if (baseColorTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
+                //if (baseColorTexture.TryGetValue("texCoord", out object? texCoordIndex))
+                //    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
             }
 
             if (mainMaterial.TryGetValue("metallicRoughnessTexture", out object? metallicRoughnessTextureObj) &&
@@ -406,8 +406,8 @@ public class GLBImporter
                 GL.ActiveTexture(TextureUnit.Texture1);
                 GL.BindTexture(TextureTarget.Texture2D, metallicRoughnessHandle);
 
-                if (metallicRoughnessTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
+                //if (metallicRoughnessTexture.TryGetValue("texCoord", out object? texCoordIndex))
+                //    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
             }
 
             primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);

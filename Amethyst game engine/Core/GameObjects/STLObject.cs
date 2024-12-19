@@ -1,6 +1,6 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Models.STLModule;
-using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.ES30;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 

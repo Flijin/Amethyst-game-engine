@@ -1,5 +1,5 @@
 ﻿using Amethyst_game_engine.Core;
-using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.ES30;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Buffer = System.Buffer;
