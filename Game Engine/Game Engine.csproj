@@ -6,7 +6,14 @@
     <RootNamespace>Game_Engine</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Structs\**" />
+    <EmbeddedResource Remove="Structs\**" />
+    <None Remove="Structs\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.8.2" />
