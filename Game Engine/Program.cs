@@ -1,5 +1,4 @@
-﻿using Game_Engine.Core;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
 namespace Game_Engine;

@@ -1,9 +1,8 @@
-﻿namespace Game_Engine.Enums
+﻿namespace Game_Engine.Enums;
+
+internal enum AttribTypes : byte
 {
-    internal enum AttribTypes : byte
-    {
-        Vertex = 0,
-        Color = 1,
-        Normal = 2
-    }
+    Vertex = 0,
+    Color = 1,
+    Normal = 2
 }
