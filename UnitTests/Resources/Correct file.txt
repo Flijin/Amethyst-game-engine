@@ -1,0 +1,30 @@
+ {
+  "Key1" : "Value1",
+  "Key2" : {},
+  "Key3" : [],
+  "Key4" : true,
+  "Key5" : false,
+  "Key6"  :  null  ,  
+"Key7":"Value7",
+	"Key8"	:	"Value8"	,	
+"Key9"
+:
+"Value9"
+,
+  "Key10" : 10,
+  "Key11" : -10,
+  "Key12" : 1.0,
+  "Key13" : -1.0,
+  "Key14" : -1.0e-05,
+  "Key15" :  1.0e-5,
+  "Key16" : -1.0e05,
+  "Key17" : -1.0e5,
+  "Key18" : -1.0e+05,
+  "Key19" : -1.0e+5,
+  "Key20" : -1.0E+5,
+  "Key21" : [1, null,true	, false,
+{
+  "Key001" : "Value001",
+  "Key002" : [1, 2,]
+}],
+} 
