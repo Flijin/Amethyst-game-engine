@@ -37,10 +37,7 @@ internal readonly struct Mesh : IDisposable
             {
                 Unsafe.InitBlock(_matrix, 0, Mathematics.MATRIX_SIZE);
 
-                _matrix[0] = 1;
-                _matrix[5] = 1;
-                _matrix[10] = 1;
-                _matrix[15] = 1;
+                _matrix[0] = _matrix[5] = _matrix[10] = _matrix[15] = 1;
             }
         }
     }

@@ -6,7 +6,7 @@ namespace Amethyst_game_engine.Core.GameObjects;
 
 public class GLBObject : GameObject
 {
-    public GLBObject(GLBModel model, bool useCamera) : base(model.meshes, useCamera, 0b_0010, 256)
+    public GLBObject(GLBModel model, bool useCamera) : base(model.meshes, useCamera, 0b_0010)
     {
         
     }
@@ -32,7 +32,7 @@ public class GLBObject : GameObject
             foreach (var primitive in mesh.primitives)
             {
                 GL.BindVertexArray(primitive.vao);
-                GL.BindTexture(TextureTarget.Texture2D, primitive.material[Models.MaterialsProperties.Albedo].texture);
+                //GL.BindTexture(TextureTarget.Texture2D, primitive.material[Models.MaterialsProperties.Albedo].texture);
 
                 _activeShader.Use();
 

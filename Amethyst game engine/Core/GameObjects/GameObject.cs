@@ -3,7 +3,7 @@ using Amethyst_game_engine.Render;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 
-public abstract class GameObject : DrawableObject, IDisposable
+public abstract class GameObject : DrawableObject
 {
     private bool _disposed = false;
 
@@ -11,18 +11,15 @@ public abstract class GameObject : DrawableObject, IDisposable
     private protected bool _useCamera;
     private protected readonly Mesh[] _meshes;
 
-    private protected int _modelProfile;
-    private protected int _modelValidate;
+    private int _modelProfile;
+    private int _currentRenderState = (int)RenderSettings.All;
 
-    private int _renderFilter = 64;
-
-    private protected GameObject(Mesh[] meshes, bool useCamera, int modelProfile, int modelValidate)
+    private protected GameObject(Mesh[] meshes, bool useCamera, int modelProfile)
     {
         _meshes = meshes;
         _useCamera = useCamera;
-        _modelValidate = modelValidate;
         _modelProfile = modelProfile;
-        _activeShader = ShadersCollection.GetShader((modelProfile & (int)Window.RenderProps) | modelValidate);
+        _activeShader = ShadersCollection.GetShader(_modelProfile & (int)Window.RenderKeys);
     }
 
     ~GameObject()
@@ -33,13 +30,13 @@ public abstract class GameObject : DrawableObject, IDisposable
 
     public void ChangeRenderSettings(RenderSettings settings)
     {
-        _renderFilter = (int)settings;
-        _activeShader = ShadersCollection.GetShader((_modelProfile & _renderFilter & (int)Window.RenderProps) | _modelValidate);
+        _currentRenderState = _modelProfile & (int)settings & (int)Window.RenderKeys;
+        _activeShader = ShadersCollection.GetShader(_currentRenderState);
     }
 
     internal void ChangeGlobalRenderSettings()
     {
-        _activeShader = ShadersCollection.GetShader((_modelProfile & _renderFilter & (int)Window.RenderProps) | _modelValidate);
+        _activeShader = ShadersCollection.GetShader(_currentRenderState & (int)Window.RenderKeys);
     }
 
     public override sealed void Dispose()

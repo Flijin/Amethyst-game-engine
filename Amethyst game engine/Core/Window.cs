@@ -36,14 +36,7 @@ public class Window : GameWindow
     internal static new float AspectRatio => _aspectRatio;
     public static float DeltaTime { get; private set; }
 
-    public static RenderSettings RenderProps { get; set; } =
-        RenderSettings.UseColors |
-        RenderSettings.UseAlbedoMap |
-        RenderSettings.UseMetallicRoughness |
-        RenderSettings.UseNormalMap |
-        RenderSettings.UseNormals |
-        RenderSettings.UseOcclusionMap |
-        RenderSettings.UseEmissiveMap;
+    public static RenderSettings RenderKeys { get; set; } = (RenderSettings)65535;
 
     public static BaseScene? Scene
     {

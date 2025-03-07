@@ -1,4 +1,6 @@
-﻿namespace Amethyst_game_engine.Models;
+﻿using Amethyst_game_engine.Core;
+
+namespace Amethyst_game_engine.Models;
 
 internal struct Primitive(int vao)
 {
@@ -9,15 +11,5 @@ internal struct Primitive(int vao)
     public int mode = 4;
     public bool isIndexedGeometry = false;
 
-    public readonly int[] materialsUsed = new int[5];
-    public readonly int[] textureHandles = new int[5];
-
-    public readonly Dictionary<MaterialsProperties, (float[] factor, int texture)> material = new()
-    {
-        { MaterialsProperties.Albedo, ([1.0f, 1.0f, 1.0f, 1.0f], -1) },
-        { MaterialsProperties.MetallicRoughness, ([0.0f, 0.0f], -1) },
-        { MaterialsProperties.Normal, ([1.0f], -1) },
-        { MaterialsProperties.Occlusion, ([1.0f], -1) },
-        { MaterialsProperties.Emissive, ([0.0f], -1) },
-    };
+    public Material material = Material.NoneMaterial;
 }

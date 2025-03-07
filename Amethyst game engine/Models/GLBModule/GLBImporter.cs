@@ -410,14 +410,14 @@ public class GLBImporter
                 //    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
             }
 
-            primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
-            primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
+            //primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
+            //primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
             
-            primitive.materialsUsed[0] = 1;
-            primitive.materialsUsed[1] = 1;
+            //primitive.materialsUsed[0] = 1;
+            //primitive.materialsUsed[1] = 1;
 
-            primitive.textureHandles[0] = albedoHandle;
-            primitive.textureHandles[1] = metallicRoughnessHandle;
+            //primitive.textureHandles[0] = albedoHandle;
+            //primitive.textureHandles[1] = metallicRoughnessHandle;
         }
     }
 
