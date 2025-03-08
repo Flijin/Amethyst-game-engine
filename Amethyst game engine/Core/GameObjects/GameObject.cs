@@ -7,7 +7,6 @@ public abstract class GameObject : DrawableObject
 {
     private bool _disposed = false;
 
-    private protected Shader _activeShader;
     private protected bool _useCamera;
     private protected readonly Mesh[] _meshes;
 

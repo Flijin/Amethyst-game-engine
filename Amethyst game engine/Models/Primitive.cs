@@ -1,4 +1,5 @@
 ﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Render;
 
 namespace Amethyst_game_engine.Models;
 
@@ -12,4 +13,6 @@ internal struct Primitive(int vao)
     public bool isIndexedGeometry = false;
 
     public Material material = Material.NoneMaterial;
+
+    public Shader activeShader;
 }

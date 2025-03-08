@@ -22,15 +22,11 @@ public readonly struct Color
     internal readonly float b;
     internal readonly float a;
 
-    internal readonly bool isNoneColor = false;
-
-    public Color() => isNoneColor = true;
-
     public Color(int r, int g, int b) : this(r, g, b, 255) { }
 
     public Color(int r, int g, int b, int a)
     {
-        if (r is < 0 or > 255 || g is < 0 or > 255 || b is < 0 or > 255 || a is < 0 or > 255)
+        if ((r | g | b | a) is < 0 or > 255)
             throw new ArgumentException("The color values must be in the range 0 - 255");
 
         R = r;
