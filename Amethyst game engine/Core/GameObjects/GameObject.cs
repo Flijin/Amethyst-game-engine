@@ -8,8 +8,9 @@ namespace Amethyst_game_engine.Core.GameObjects;
 public abstract class GameObject : DrawableObject
 {
     private bool _disposed = false;
-    private protected bool _useCamera;
     private uint _currentRenderState = (uint)RenderSettings.All;
+    private readonly bool _useMeshMatrix;
+    private protected bool _useCamera;
 
     private protected readonly IModel objectModel;
 
@@ -18,13 +19,18 @@ public abstract class GameObject : DrawableObject
         ChangeRenderSettings(renderKeys);
     }
 
-    private protected GameObject(IModel model, bool useCamera)
+    private protected unsafe GameObject(IModel model, bool useCamera)
     {
         _useCamera = useCamera;
         objectModel = model;
+
+        if ((model.GetModelSettings() & (1 << 24)) != 0)
+            _useMeshMatrix = true;
+        else
+            _useMeshMatrix = false;
     }
 
-    internal override unsafe void DrawObject(Camera? cam)
+    internal override unsafe sealed void DrawObject(Camera? cam)
     {
         var meshes = objectModel.GetMeshes();
 
@@ -48,7 +54,15 @@ public abstract class GameObject : DrawableObject
             {
                 GL.BindVertexArray(primitive.vao);
                 primitive.activeShader.Use();
-                primitive.DrawPrimitive(viewMatrix, projectionMatrix);
+
+                primitive.activeShader.SetMatrix4("model", ModelMatrix);
+                primitive.activeShader.SetMatrix4("view", viewMatrix);
+                primitive.activeShader.SetMatrix4("projection", projectionMatrix);
+
+                if (_useMeshMatrix)
+                    primitive.activeShader.SetMatrix4("mesh", mesh.Matrix);
+
+                primitive.DrawPrimitive();
             }
         }
     }

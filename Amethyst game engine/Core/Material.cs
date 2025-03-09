@@ -1,56 +1,69 @@
 ﻿using Amethyst_game_engine.Models;
 using Amethyst_game_engine.Render;
-using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Amethyst_game_engine.Core;
 
+/*
+ * _albedoMap0
+ * _albedoMap1
+ * _albedoMap2
+ * _albedoMap3
+ * _metallicRoughnessMap
+ * _normalMap
+ * _occlusionMap
+ * _emissiveMap
+ * _occlusionStrength
+ * _normalScale
+ * _metallicFactor
+ * _roughnessFactor
+ * _emissiveFactor
+ * _baseColorFactor
+ */
+
 public class Material
 {
-    private Color _baseColorFactor;
+    internal readonly Dictionary<string, int> uniforms_int = [];
+    internal readonly Dictionary<string, float> uniforms_float = [];
+    internal (string? uniform, Color value) baseColorFactor;
+
     internal uint materialKey;
-
-    internal int albedoMap0;
-    internal int albedoMap1;
-    internal int albedoMap2;
-    internal int albedoMap3;
-
-    internal int metallicRoughnessMap;
-    internal int normalMap;
-    internal int occlusionMap;
-    internal int emissiveMap;
-    internal float occlusionStrength;
-    internal float normalScale;
-
-    private float _metallicFactor;
-    private float _roughnessFactor;
-    private float _emissiveFactor;
-
-    internal uint MaterialKey => materialKey;
 
     public Color BaseColorFactor
     {
-        get => _baseColorFactor;
+        get => baseColorFactor.value;
 
         set
         {
-            _baseColorFactor = value;
+            baseColorFactor.value = value;
         }
     }
 
     public float MetallicFactor
     {
-        get => _metallicFactor;
+        get
+        {
+            if (uniforms_float.TryGetValue("_metallicFactor", out float res))
+                return res;
+
+            return -1f;
+        }
 
         set
         {
             if (value >= 0)
             {
-                _metallicFactor = value <= 1f ? value : 1f;
+                var clamptedValue = value <= 1f ? value : 1f;
+
+                if (uniforms_float.TryAdd("_metallicFactor", clamptedValue) == false)
+                    uniforms_float["_metallicFactor"] = clamptedValue;
+
                 materialKey |= (uint)RenderSettings.MetallicFactor;
             }
             else
             {
-                _metallicFactor = -1f;
+                uniforms_float.Remove("_metallicFactor");
                 materialKey &= ~(uint)RenderSettings.MetallicFactor;
             }
         }
@@ -58,18 +71,28 @@ public class Material
 
     public float RoughnessFactor
     {
-        get => _roughnessFactor;
+        get
+        {
+            if (uniforms_float.TryGetValue("_roughnessFactor", out float res))
+                return res;
+
+            return -1f;
+        }
 
         set
         {
             if (value >= 0)
             {
-                _roughnessFactor = value <= 1f ? value : 1f;
+                var clamptedValue = value <= 1f ? value : 1f;
+
+                if (uniforms_float.TryAdd("_roughnessFactor", clamptedValue) == false)
+                    uniforms_float["_roughnessFactor"] = clamptedValue;
+
                 materialKey |= (uint)RenderSettings.RoughnessFactor;
             }
             else
             {
-                _metallicFactor = -1f;
+                uniforms_float.Remove("_roughnessFactor");
                 materialKey &= ~(uint)RenderSettings.RoughnessFactor;
             }
         }
@@ -77,18 +100,28 @@ public class Material
 
     public float EmissiveFactor
     {
-        get => _emissiveFactor;
+        get
+        {
+            if (uniforms_float.TryGetValue("_emissiveFactor", out float res))
+                return res;
+
+            return -1f;
+        }
 
         set
         {
             if (value >= 0)
             {
-                _emissiveFactor = value <= 1f ? value : 1f;
+                var clamptedValue = value <= 1f ? value : 1f;
+
+                if (uniforms_float.TryAdd("_emissiveFactor", clamptedValue) == false)
+                    uniforms_float["_emissiveFactor"] = clamptedValue;
+
                 materialKey |= (uint)RenderSettings.EmissiveFactor;
             }
             else
             {
-                _emissiveFactor = -1f;
+                uniforms_float.Remove("_emissiveFactor");
                 materialKey &= ~(uint)RenderSettings.EmissiveFactor;
             }
         }
@@ -100,5 +133,7 @@ public class Material
     {
         BaseColorFactor = baseColorFactor;
         materialKey |= (int)RenderSettings.BaseColorFactor | (int)ModelSettings.USE_COLOR_5_BITS;
+
+        this.baseColorFactor.uniform = "_baseColorFactor";
     }
 }

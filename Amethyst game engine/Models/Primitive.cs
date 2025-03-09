@@ -1,6 +1,6 @@
-﻿using Amethyst_game_engine.CameraModules;
-using Amethyst_game_engine.Core;
+﻿using Amethyst_game_engine.Core;
 using Amethyst_game_engine.Render;
+using OpenTK.Graphics.ES30;
 
 namespace Amethyst_game_engine.Models;
 
@@ -15,7 +15,7 @@ internal struct Primitive(int vao)
 
     public int count = 0;
     public int componentType = 5126;
-    public int mode = 4;
+    public PrimitiveType mode = PrimitiveType.Triangles;
     public bool isIndexedGeometry = false;
 
     public required Material Material
@@ -25,21 +25,20 @@ internal struct Primitive(int vao)
         set
         {
             _material = value;
-            activeShader = ShadersCollection.GetShader(value.MaterialKey);
+            activeShader = ShadersCollection.GetShader(value.materialKey);
         }
     }
 
     public void RebuildShader(uint renderSettings, uint modelSettings)
     {
-        activeShader = ShadersCollection.GetShader(_material.MaterialKey & renderSettings | modelSettings);
+        activeShader = ShadersCollection.GetShader(_material.materialKey & renderSettings | modelSettings);
     }
 
-    public unsafe void DrawPrimitive(float* viewMatrix, float* projectionMatrix)
+    public readonly void DrawPrimitive()
     {
-        activeShader.SetMatrix4("model", ModelMatrix);
-        activeShader.SetMatrix4("view", viewMatrix);
-        activeShader.SetMatrix4("projection", projectionMatrix);
+        activeShader.SetFloats(_material.uniforms_float);
+        activeShader.SetInts(_material.uniforms_int);
 
-        GL.DrawArrays((PrimitiveType)primitive.mode, 0, primitive.count);
+        GL.DrawArrays(mode, 0, count);
     }
 }

@@ -157,6 +157,8 @@ public readonly struct STLModel : IModel
 
     void IModel.RebuildShaders(uint renderKeys) => mesh.RebuildShaders(renderKeys, MODEL_SPECIFICITY);
 
+    uint IModel.GetModelSettings() => MODEL_SPECIFICITY;
+
     public void Dispose()
     {
         mesh.Dispose();

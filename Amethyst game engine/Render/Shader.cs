@@ -38,46 +38,54 @@ internal class Shader : IDisposable
     public void Use() => GL.UseProgram(Handle);
     public void Dispose() => GL.DeleteProgram(Handle);
 
-    public void SetMatrix4(string name, float[,] matrix)
+    public void SetFloats(Dictionary<string, float> data)
     {
-        GL.UseProgram(Handle);
+        var pairs = data.ToArray();
 
-        var arr1D = new float[matrix.Length];
-        var index = 0;
-
-        for (int i = 0; i < matrix.GetLength(0); i++)
+        for (int i = 0; i < pairs.Length; i++)
         {
-            for (int j = 0; j < matrix.GetLength(1); j++)
-            {
-                arr1D[index++] = matrix[i, j];
-            }
+            GL.Uniform1(_uniformLocations[pairs[i].Key], pairs[i].Value);
         }
-
-        GL.UniformMatrix4(_uniformLocations[name], 1, false, arr1D);
     }
 
-    public unsafe void SetMatrix4(string name, float* matrixP)
+    public void SetInts(Dictionary<string, int> data)
     {
-        GL.UseProgram(Handle);
-        GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixP);
+        var pairs = data.ToArray();
+
+        for (int i = 0; i < pairs.Length; i++)
+        {
+            GL.Uniform1(_uniformLocations[pairs[i].Key], pairs[i].Value);
+        }
     }
 
-    public void SetVector3(string name, Vector3 vec)
+    public void SetVectors3(Dictionary<string, Vector3> data)
     {
-        GL.UseProgram(Handle);
-        GL.Uniform3(_uniformLocations[name], vec);
+        var pairs = data.ToArray();
+
+        for (int i = 0; i < pairs.Length; i++)
+        {
+            GL.Uniform3(_uniformLocations[pairs[i].Key], pairs[i].Value);
+        }
+    }
+
+    public unsafe void SetMatrix4(string name, float* matrixPtr)
+    {
+        GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixPtr);
     }
 
     public void SetFloat(string name, float value)
     {
-        GL.UseProgram(Handle);
         GL.Uniform1(_uniformLocations[name], value);
     }
 
     public void SetInt(string name, int value)
     {
-        GL.UseProgram(Handle);
         GL.Uniform1(_uniformLocations[name], value);
+    }
+
+    public void SetVector3(string name, Vector3 vec)
+    {
+        GL.Uniform3(_uniformLocations[name], vec);
     }
 
     private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags)

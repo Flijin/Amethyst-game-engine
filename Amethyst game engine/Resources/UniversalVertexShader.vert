@@ -41,7 +41,7 @@ void main()
     albedoCoords_0 = _albedoCoords_0;
 #endif
 
-#if defined(USE_COLOR_5_BITS)
+#if defined(USE_COLOR_5_BITS) && defined(USE_VERTEX_COLORS)
     color = vec4(_color.x / 32.0, _color.y / 32.0, _color.z / 32.0, _color.w);
 #elif defined(USE_VERTEX_COLORS)
     color = _color;
