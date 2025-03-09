@@ -1,11 +1,13 @@
-﻿using Amethyst_game_engine.Render;
+﻿using Amethyst_game_engine.Models;
+using Amethyst_game_engine.Render;
+using System.Reflection;
 
 namespace Amethyst_game_engine.Core;
 
 public class Material
 {
-    private RenderSettings _materialKey = RenderSettings.None;
     private Color _baseColorFactor;
+    internal uint materialKey;
 
     internal int albedoMap0;
     internal int albedoMap1;
@@ -23,7 +25,7 @@ public class Material
     private float _roughnessFactor;
     private float _emissiveFactor;
 
-    internal RenderSettings GetMaterialKey => _materialKey;
+    internal uint MaterialKey => materialKey;
 
     public Color BaseColorFactor
     {
@@ -44,12 +46,12 @@ public class Material
             if (value >= 0)
             {
                 _metallicFactor = value <= 1f ? value : 1f;
-                _materialKey |= RenderSettings.MetallicFactor;
+                materialKey |= (uint)RenderSettings.MetallicFactor;
             }
             else
             {
                 _metallicFactor = -1f;
-                _materialKey &= ~RenderSettings.MetallicFactor;
+                materialKey &= ~(uint)RenderSettings.MetallicFactor;
             }
         }
     }
@@ -63,12 +65,12 @@ public class Material
             if (value >= 0)
             {
                 _roughnessFactor = value <= 1f ? value : 1f;
-                _materialKey |= RenderSettings.RoughnessFactor;
+                materialKey |= (uint)RenderSettings.RoughnessFactor;
             }
             else
             {
                 _metallicFactor = -1f;
-                _materialKey &= ~RenderSettings.RoughnessFactor;
+                materialKey &= ~(uint)RenderSettings.RoughnessFactor;
             }
         }
     }
@@ -82,21 +84,21 @@ public class Material
             if (value >= 0)
             {
                 _emissiveFactor = value <= 1f ? value : 1f;
-                _materialKey |= RenderSettings.EmissiveFactor;
+                materialKey |= (uint)RenderSettings.EmissiveFactor;
             }
             else
             {
                 _emissiveFactor = -1f;
-                _materialKey &= ~RenderSettings.EmissiveFactor;
+                materialKey &= ~(uint)RenderSettings.EmissiveFactor;
             }
         }
     }
 
-    internal Material(RenderSettings keys) => _materialKey = keys;
+    internal Material(uint Materialkeys) => materialKey = Materialkeys;
 
     public Material(Color baseColorFactor)
     {
         BaseColorFactor = baseColorFactor;
-        _materialKey |= RenderSettings.BaseColorFactor;
+        materialKey |= (int)RenderSettings.BaseColorFactor | (int)ModelSettings.USE_COLOR_5_BITS;
     }
 }

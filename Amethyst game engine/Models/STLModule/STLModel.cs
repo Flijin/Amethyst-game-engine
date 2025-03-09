@@ -5,25 +5,24 @@ using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.STLModule;
 
-public readonly struct STLModel
+public readonly struct STLModel : IModel
 {
-    internal const int VALID_FLAGS = 0x_3C03;
-
-    internal readonly int renderKeys = (int)RenderSettings.All;
+    internal const uint MODEL_SPECIFICITY = (uint)ModelSettings.USE_COLOR_5_BITS;
     internal readonly Mesh mesh;
 
     public string Header { get; }
     public int TrianglesCount { get; }
 
-    public STLModel(string path, Material material, RenderSettings settings) : this(path, settings)
-    {
-        mesh.primitives[0].material = material;
-    }
+    public STLModel(string path) : this(path, RenderSettings.All, new Material(0)) { }
 
-    public STLModel(string path) : this(path, RenderSettings.All) { }
+    public STLModel(string path, RenderSettings settings) : this(path, settings, new Material(0)) { }
 
-    public unsafe STLModel(string path, RenderSettings settings)
+    public STLModel(string path, Material material) : this(path, RenderSettings.All, material) { }
+
+    public unsafe STLModel(string path, RenderSettings settings, Material material)
     {
+        int settings_int = (int)settings;
+
         using BinaryReader reader = new(File.OpenRead(path));
 
         Header = new string(reader.ReadChars(80)).Trim('\0');
@@ -36,20 +35,20 @@ public readonly struct STLModel
         var bufferLenght = bytesCount;
         var usedBuffers = 1;
 
-        Span<float> vertices;
-        Span<float> colors;
-        Span<float> normals;
+        scoped Span<float> vertices;
+        scoped Span<float> colors;
+        scoped Span<float> normals;
 
-        if (((int)settings & 0b_0001) != 0)
+        if ((settings_int & 0b_0001) != 0)
         {
-            renderKeys |= 0b_0001;
+            material.materialKey |= 0b_0001;
             bytesCount += bufferLenght;
             usedBuffers += 1;
         }
 
-        if (((int)settings & 0b_0010) != 0)
+        if ((settings_int & 0b_0010) != 0)
         {
-            renderKeys |= 0b_0010;
+            material.materialKey |= 0b_0010;
             bytesCount += bufferLenght;
             usedBuffers += 1;
         }
@@ -58,10 +57,8 @@ public readonly struct STLModel
 
         GL.BindVertexArray(vertexArrayObject);
 
-        var modelPrimitive = new Primitive(vertexArrayObject);
+        var modelPrimitive = new Primitive(vertexArrayObject) { Material = material };
         var attributesCount = TrianglesCount * 9;
-
-#pragma warning disable CS9081
 
         //-----------------------------------
         // Stack fill limit 800 KB
@@ -71,23 +68,21 @@ public readonly struct STLModel
         if (bytesCount > 819200)
         {
             vertices = new(new float[attributesCount]);
-            colors = (renderKeys & 0b_0001) != 0 ? new(new float[attributesCount]) : null;
-            normals = (renderKeys & 0b_0010) != 0 ? new(new float[attributesCount]) : null;
+            colors = (settings_int & 0b_0001) != 0 ? new(new float[attributesCount]) : null;
+            normals = (settings_int & 0b_0010) != 0 ? new(new float[attributesCount]) : null;
         }
         else
         {
             vertices = stackalloc float[attributesCount];
-            colors = (renderKeys & 0b_0001) != 0 ? stackalloc float[attributesCount] : null;
-            normals = (renderKeys & 0b_0010) != 0 ? stackalloc float[attributesCount] : null;
+            colors = (settings_int & 0b_0001) != 0 ? stackalloc float[attributesCount] : null;
+            normals = (settings_int & 0b_0010) != 0 ? stackalloc float[attributesCount] : null;
         }
-
-#pragma warning restore
 
         modelPrimitive.count = TrianglesCount * 3;
 
         for (int i = 0; i < TrianglesCount; i++)
         {
-            if ((renderKeys & 0b_0010) != 0)
+            if ((settings_int & 0b_0010) != 0)
             {
                 for (int j = 0; j < 3; j++)
                 {
@@ -104,7 +99,7 @@ public readonly struct STLModel
                 vertices[vertexIndex++] = reader.ReadSingle();
             }
 
-            if ((renderKeys & 0b_0001) != 0)
+            if ((settings_int & 0b_0001) != 0)
             {
                 ushort attributeByteCount = reader.ReadUInt16();
 
@@ -156,5 +151,14 @@ public readonly struct STLModel
         {
             mesh = new([modelPrimitive], bufferHandles) { Matrix = null };
         }
+    }
+
+    Mesh[] IModel.GetMeshes() => [mesh];
+
+    void IModel.RebuildShaders(uint renderKeys) => mesh.RebuildShaders(renderKeys, MODEL_SPECIFICITY);
+
+    public void Dispose()
+    {
+        mesh.Dispose();
     }
 }

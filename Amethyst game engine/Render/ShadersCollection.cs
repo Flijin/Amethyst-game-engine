@@ -2,9 +2,9 @@
 
 internal static class ShadersCollection
 {
-    private static readonly Dictionary<int, Shader> _shaders = [];
+    private static readonly Dictionary<uint, Shader> _shaders = [];
 
-    public static Shader GetShader(int flags)
+    public static Shader GetShader(uint flags)
     {
         if (_shaders.TryGetValue(flags, out Shader? result))
         {

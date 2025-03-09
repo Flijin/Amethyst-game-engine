@@ -297,7 +297,8 @@ public class GLBImporter
 
             var primitive = new Primitive(vertexArrayObject)
             {
-                mode = primitivesDicts[i].TryGetValue("mode", out object? modeRes) ? (int)modeRes : 4
+                mode = primitivesDicts[i].TryGetValue("mode", out object? modeRes) ? (int)modeRes : 4,
+                Material = new(0)
             };
 
             if (primitivesDicts[i].TryGetValue("material", out object? materialIndex))

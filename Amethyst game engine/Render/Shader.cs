@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.ES30;
+﻿using Amethyst_game_engine.Models;
+using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 using System.Text;
 
@@ -10,7 +11,7 @@ internal class Shader : IDisposable
 
     public int Handle { get; private set; }
 
-    public Shader(int shaderFlags)
+    public Shader(uint shaderFlags)
     {
         Handle = GL.CreateProgram();
 
@@ -79,7 +80,7 @@ internal class Shader : IDisposable
         GL.Uniform1(_uniformLocations[name], value);
     }
 
-    private static int CreateAndAttachShader(ShaderType type, int handle, int shaderFlags)
+    private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags)
     {
         StringBuilder defines = ValidateFlags(shaderFlags);
         StringBuilder sourse;
@@ -100,23 +101,15 @@ internal class Shader : IDisposable
         return shaderDescriptor;
     }
 
-    private static StringBuilder ValidateFlags(int shaderFlags)
+    private static StringBuilder ValidateFlags(uint shaderFlags)
     {
         StringBuilder target = new();
 
-        if ((shaderFlags & 0b_0001_00000000) != 0)
-            target.AppendLine("#define USE_MESH_MATRIX");
+        var renderSettings = (RenderSettings)(shaderFlags & 0b_00000000_11111111_11111111_11111111);
+        var modelSettings = (ModelSettings)(shaderFlags & 0b_11111111_00000000_00000000_00000000);
 
-        if ((shaderFlags & 0b_0001) != 0)
-        {
-            if ((shaderFlags & 0b_0010_00000000) != 0)
-                target.AppendLine("#define USE_STL_COLORS");
-            else
-                target.AppendLine("#define USE_COLORS");
-        }
-
-        if ((shaderFlags & 0b_0010) != 0)
-            target.AppendLine("#define USE_ALBEDO");
+        target.AppendLine(renderSettings.ToMacrosString());
+        target.AppendLine(modelSettings.ToMacrosString());
 
         return target;
     }

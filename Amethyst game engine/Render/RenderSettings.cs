@@ -1,7 +1,7 @@
 ﻿namespace Amethyst_game_engine.Render;
 
 [Flags]
-public enum RenderSettings
+public enum RenderSettings : uint
 {
     None = 0,
     VertexColors = 1,
