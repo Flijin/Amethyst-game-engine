@@ -8,11 +8,11 @@ namespace Amethyst_game_engine.Core.GameObjects;
 public abstract class GameObject : DrawableObject
 {
     private bool _disposed = false;
-    private uint _currentRenderState = (uint)RenderSettings.All;
-    private readonly bool _useMeshMatrix;
+    private protected uint _currentRenderState = (uint)RenderSettings.All;
     private protected bool _useCamera;
+    private readonly bool _useMeshMatrix;
 
-    private protected readonly IModel objectModel;
+    private protected readonly IModel _objectModel;
 
     private protected GameObject(IModel model, bool useCamera, RenderSettings renderKeys) : this(model, useCamera)
     {
@@ -22,7 +22,7 @@ public abstract class GameObject : DrawableObject
     private protected unsafe GameObject(IModel model, bool useCamera)
     {
         _useCamera = useCamera;
-        objectModel = model;
+        _objectModel = model;
 
         if ((model.GetModelSettings() & (1 << 24)) != 0)
             _useMeshMatrix = true;
@@ -32,7 +32,7 @@ public abstract class GameObject : DrawableObject
 
     internal override unsafe sealed void DrawObject(Camera? cam)
     {
-        var meshes = objectModel.GetMeshes();
+        var meshes = _objectModel.GetMeshes();
 
         float* viewMatrix;
         float* projectionMatrix;
@@ -70,12 +70,12 @@ public abstract class GameObject : DrawableObject
     public void ChangeRenderSettings(RenderSettings settings)
     {
         _currentRenderState = (uint)settings;
-        objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
+        _objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
     }
 
     internal void ChangeRenderSettings()
     {
-        objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
+        _objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
     }
 
     public override sealed void Dispose()
@@ -84,7 +84,7 @@ public abstract class GameObject : DrawableObject
         {
             base.Dispose();
 
-            objectModel.Dispose();
+            _objectModel.Dispose();
             GC.SuppressFinalize(this);
 
             _disposed = true;

@@ -12,7 +12,11 @@ uniform mat4 projection;
 
 #ifdef USE_VERTEX_COLORS
 out vec4 color;
-layout (location = 1) in vec4 _color;
+    #ifdef USE_COLOR_5_BITS
+        layout (location = 1) in vec3 _color;
+    #else
+        layout (location = 1) in vec3 _color;
+    #endif
 #endif
 
 #ifdef USE_ALBEDO_MAP_0
@@ -37,14 +41,15 @@ layout (location = 5) in vec2 _albedoCoords_3;
 
 void main()
 {
+
 #ifdef USE_ALBEDO_MAP_0
     albedoCoords_0 = _albedoCoords_0;
 #endif
 
 #if defined(USE_COLOR_5_BITS) && defined(USE_VERTEX_COLORS)
-    color = vec4(_color.x / 32.0, _color.y / 32.0, _color.z / 32.0, _color.w);
+    color = vec4(_color.x / 31.0, _color.y / 31.0, _color.z / 31.0, 1);
 #elif defined(USE_VERTEX_COLORS)
-    color = _color;
+    color = vec4(_color, 1);
 #endif
 
 #ifdef USE_MESH_MATRIX
@@ -52,6 +57,7 @@ void main()
 #else
     gl_Position = vec4(_position, 1.0) * model * view * projection;
 #endif
+
 }
 
 

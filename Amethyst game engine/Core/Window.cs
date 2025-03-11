@@ -95,7 +95,7 @@ public class Window : GameWindow
     protected override void OnUnload()
     {
         _scene?.Dispose();
-        ShadersCollection.Dispose();
+        ShadersPool.Dispose();
 
         base.OnUnload();
     }

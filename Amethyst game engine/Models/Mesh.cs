@@ -46,7 +46,7 @@ internal readonly struct Mesh : IDisposable
     {
         foreach (var primitive in primitives)
         {
-            primitive.RebuildShader(renderSettings, modelSettings);
+            primitive.BuildShader(renderSettings, modelSettings);
         }
     }
 

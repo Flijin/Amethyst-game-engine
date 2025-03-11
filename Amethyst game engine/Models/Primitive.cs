@@ -25,13 +25,13 @@ internal struct Primitive(int vao)
         set
         {
             _material = value;
-            activeShader = ShadersCollection.GetShader(value.materialKey);
+            activeShader = ShadersPool.GetShader(value.materialKey);
         }
     }
 
-    public void RebuildShader(uint renderSettings, uint modelSettings)
+    public void BuildShader(uint renderSettings, uint modelSettings)
     {
-        activeShader = ShadersCollection.GetShader(_material.materialKey & renderSettings | modelSettings);
+        activeShader = ShadersPool.GetShader(_material.materialKey & renderSettings | modelSettings);
     }
 
     public readonly void DrawPrimitive()

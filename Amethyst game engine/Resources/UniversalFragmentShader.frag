@@ -20,8 +20,12 @@ uniform sampler2D albeloTextute_3;
 in vec2 albedoCoords_3;
 #endif
 
+#ifdef USE_BASE_COLOR_FACTOR
+uniform vec3 _baseColorFactor
+#endif
+
 #ifdef USE_VERTEX_COLORS
-in vec4 color;
+in vec4 vertexColor;
 #endif
 
 out vec4 FragColor;
@@ -30,15 +34,24 @@ void main()
 {
 
 #ifdef USE_VERTEX_COLORS
-    FragColor = color;
+    FragColor = vertexColor;
     #define FRAG_COLOR_INIT
 #endif
 
 #ifdef USE_ALBEDO_MAP_0
     #ifdef FRAG_COLOR_INIT
-        FragColor = mix(color, texture(albeloTextute_0, albedoCoords_0));
+        FragColor = mix(vertexColor, texture(albeloTextute_0, albedoCoords_0));
     #else
         FragColor = texture(albeloTextute_0, albedoCoords_0);
+        #define FRAG_COLOR_INIT
+    #endif
+#endif
+
+#ifdef USE_BASE_COLOR_FACTOR
+    #ifdef FRAG_COLOR_INIT
+        FragColor = mix(FragColor, _baseColorFactor);
+    #else
+        FragColor = _baseColorFactor;
         #define FRAG_COLOR_INIT
     #endif
 #endif
@@ -52,8 +65,8 @@ void main()
 // It's just a note to me.
 
 //      Attibs
-//      [1] = "USE_VERTEX_COLORS",
-//      [1 << 1] = "USE_NORMALS",
+//      [1] = "USE_VERTEX_COLORS", vertexColor
+//      [1 << 1] = "USE_NORMALS", normals
 
 //      TexUnits
 //      [1 << 2] = "USE_ALBEDO_MAP_0", int
@@ -66,14 +79,14 @@ void main()
 //      [1 << 9] = "USE_EMISSIVE_MAP", int
 
 //      Uniforms
-//      [1 << 10] = "USE_BASE_COLOR_FACTOR", vec3
-//      [1 << 11] = "USE_METALLIC_FACTOR", float
-//      [1 << 12] = "USE_ROUGHNESS_FACTOR", float
-//      [1 << 13] = "USE_EMISSIVE_FACTOR", float
-//      [1 << 14] = "USE_OCCLUSION_STRENGTH", float
-//      [1 << 15] = "USE_NORMAL_SCALE", float
+//      [1 << 10] = "USE_BASE_COLOR_FACTOR", vec3 baseColor
+//      [1 << 11] = "USE_METALLIC_FACTOR", float metallicFactor
+//      [1 << 12] = "USE_ROUGHNESS_FACTOR", float rougnessFactor
+//      [1 << 13] = "USE_EMISSIVE_FACTOR", float emissiveFactor
+//      [1 << 14] = "USE_OCCLUSION_STRENGTH", float occlusionStrength
+//      [1 << 15] = "USE_NORMAL_SCALE", float normalScale
 //      [1 << 24] = "USE_MESH_MATRIX", mat4
-
 //
+
 //      //------ModelSettings------//
 //      [1 << 25] = "USE_COLOR_5_BITS",

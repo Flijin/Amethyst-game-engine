@@ -1,11 +1,17 @@
-﻿using Amethyst_game_engine.Models;
+﻿#define DEBUG_MODE
+
+using Amethyst_game_engine.Models;
 using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Amethyst_game_engine.Render;
 
-public static class GLSLMacrosExtensions
+internal static class GLSLMacrosExtensions
 {
+#if DEBUG_MODE
+    private static int _timesCalled;
+#endif
+
     private static readonly Dictionary<int, string> _tokens = new()
     {
         //------RenderSettings------//
@@ -31,9 +37,8 @@ public static class GLSLMacrosExtensions
         [1 << 25] = "USE_COLOR_5_BITS",
     };
 
-    public static string ToMacrosString(this RenderSettings exObj) => ToMacrosString((int)exObj, 1);
+    internal static string ToMacrosString(this RenderSettings exObj) => ToMacrosString((int)exObj, 1);
     internal static string ToMacrosString(this ModelSettings exObj) => ToMacrosString((int)exObj, 1 << 24);
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string ToMacrosString(int tokens, int startDigit)
@@ -50,6 +55,10 @@ public static class GLSLMacrosExtensions
 
             startDigit <<= 1;
         }
+
+#if DEBUG_MODE
+        System.Diagnostics.Debug.WriteLine(builder + " {0} times called", ++_timesCalled);
+#endif
 
         return builder.ToString().Trim(',', ' ');
     }

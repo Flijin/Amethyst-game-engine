@@ -22,6 +22,7 @@ public readonly struct STLModel : IModel
     public unsafe STLModel(string path, RenderSettings settings, Material material)
     {
         int settings_int = (int)settings;
+        material.materialKey |= MODEL_SPECIFICITY;
 
         using BinaryReader reader = new(File.OpenRead(path));
 
@@ -36,7 +37,7 @@ public readonly struct STLModel : IModel
         var usedBuffers = 1;
 
         scoped Span<float> vertices;
-        scoped Span<float> colors;
+        scoped Span<byte> colors;
         scoped Span<float> normals;
 
         if ((settings_int & 0b_0001) != 0)
@@ -68,13 +69,13 @@ public readonly struct STLModel : IModel
         if (bytesCount > 819200)
         {
             vertices = new(new float[attributesCount]);
-            colors = (settings_int & 0b_0001) != 0 ? new(new float[attributesCount]) : null;
+            colors = (settings_int & 0b_0001) != 0 ? new(new byte[attributesCount]) : null;
             normals = (settings_int & 0b_0010) != 0 ? new(new float[attributesCount]) : null;
         }
         else
         {
             vertices = stackalloc float[attributesCount];
-            colors = (settings_int & 0b_0001) != 0 ? stackalloc float[attributesCount] : null;
+            colors = (settings_int & 0b_0001) != 0 ? stackalloc byte[attributesCount] : null;
             normals = (settings_int & 0b_0010) != 0 ? stackalloc float[attributesCount] : null;
         }
 
@@ -103,15 +104,15 @@ public readonly struct STLModel : IModel
             {
                 ushort attributeByteCount = reader.ReadUInt16();
 
-                float r = 0f;
-                float g = 0f;
-                float b = 0f;
+                byte r = default;
+                byte g = default;
+                byte b = default;
 
                 if (attributeByteCount >> 15 != 0)
                 {
-                    r = ((attributeByteCount & 0b_01111100_00000000) >> 10) / 31f;
-                    g = ((attributeByteCount & 0b_00000011_11100000) >> 5) / 31f;
-                    b = (attributeByteCount & 0b_00000000_00011111) / 31f;
+                    r = (byte)((attributeByteCount & 0b_01111100_00000000) >> 10);
+                    g = (byte)((attributeByteCount & 0b_00000011_11100000) >> 5);
+                    b = (byte)(attributeByteCount & 0b_00000000_00011111);
                 }
 
                 colors[i * 9] = colors[i * 9 + 3] = colors[i * 9 + 6] = r;
@@ -124,27 +125,29 @@ public readonly struct STLModel : IModel
             }
         }
 
-        void AddAttribute(int location, float* ptr)
+        void AddAttribute(int location, void* ptr, Type typeOfData)
         {
+            var typeOfAtribute = Marshal.SizeOf(typeOfData) == 4 ? VertexAttribPointerType.Float : VertexAttribPointerType.UnsignedByte;
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[location] = GL.GenBuffer());
-            GL.BufferData(BufferTarget.ArrayBuffer, attributesCount * sizeof(float), (nint)ptr, BufferUsageHint.DynamicDraw);
-            GL.VertexAttribPointer(location, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.BufferData(BufferTarget.ArrayBuffer, attributesCount * Marshal.SizeOf(typeOfData), (nint)ptr, BufferUsageHint.DynamicDraw);
+            GL.VertexAttribPointer(location, 3, typeOfAtribute, false, 3 * Marshal.SizeOf(typeOfData), 0);
             GL.EnableVertexAttribArray(location);
         }
 
         fixed (float* ptr = &MemoryMarshal.GetReference(vertices))
-            AddAttribute(0, ptr);
+            AddAttribute(0, ptr, typeof(float));
 
         if (colors != null)
         {
-            fixed (float* ptr = &MemoryMarshal.GetReference(colors))
-                AddAttribute(1, ptr);
+            fixed (byte* ptr = &MemoryMarshal.GetReference(colors))
+                AddAttribute(1, ptr, typeof(byte));
         }
 
         if (normals != null)
         {
             fixed (float* ptr = &MemoryMarshal.GetReference(normals))
-                AddAttribute(2, ptr);
+                AddAttribute(2, ptr, typeof(float));
         }
 
         unsafe
