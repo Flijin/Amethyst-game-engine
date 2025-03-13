@@ -8,7 +8,7 @@ internal interface IModel : IDisposable
     Mesh[] GetMeshes();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    uint GetModelSettings();
+    bool UseMeshMatrix();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void RebuildShaders(uint renderKeys);

@@ -113,11 +113,7 @@ internal class Shader : IDisposable
     {
         StringBuilder target = new();
 
-        var renderSettings = (RenderSettings)(shaderFlags & 0b_00000000_11111111_11111111_11111111);
-        var modelSettings = (ModelSettings)(shaderFlags & 0b_11111111_00000000_00000000_00000000);
-
-        target.AppendLine(renderSettings.ToMacrosString());
-        target.AppendLine(modelSettings.ToMacrosString());
+        target.AppendLine(shaderFlags.ToMacrosString());
 
         return target;
     }

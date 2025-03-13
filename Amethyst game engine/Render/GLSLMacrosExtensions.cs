@@ -12,7 +12,7 @@ internal static class GLSLMacrosExtensions
     private static int _timesCalled;
 #endif
 
-    private static readonly Dictionary<int, string> _tokens = new()
+    private static readonly Dictionary<uint, string> _tokens = new()
     {
         //------RenderSettings------//
         [1] = "USE_VERTEX_COLORS",
@@ -32,20 +32,18 @@ internal static class GLSLMacrosExtensions
         [1 << 14] = "USE_OCCLUSION_STRENGTH",
         [1 << 15] = "USE_NORMAL_SCALE",
 
-        //------ModelSettings------//
+        //------Special Flag------//
         [1 << 24] = "USE_MESH_MATRIX",
-        [1 << 25] = "USE_COLOR_5_BITS",
     };
 
-    internal static string ToMacrosString(this RenderSettings exObj) => ToMacrosString((int)exObj, 1);
-    internal static string ToMacrosString(this ModelSettings exObj) => ToMacrosString((int)exObj, 1 << 24);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static string ToMacrosString(int tokens, int startDigit)
+    internal static string ToMacrosString(this uint tokens)
     {
         if (tokens == 0)
             return string.Empty;
 
+        uint startDigit = 1;
         var builder = new StringBuilder();
 
         while (startDigit <= tokens)

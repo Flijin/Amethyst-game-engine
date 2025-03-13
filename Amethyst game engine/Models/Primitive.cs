@@ -30,9 +30,9 @@ internal struct Primitive(int vao)
         }
     }
 
-    public void BuildShader(uint renderSettings, uint modelSettings)
+    public void BuildShader(uint renderSettings, uint useMeshMatrixKey)
     {
-        activeShader = ShadersPool.GetShader(_material.materialKey & renderSettings | modelSettings);
+        activeShader = ShadersPool.GetShader(_material.materialKey & renderSettings | useMeshMatrixKey);
     }
 
     public readonly void DrawPrimitive()

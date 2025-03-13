@@ -23,11 +23,7 @@ public abstract class GameObject : DrawableObject
     {
         _useCamera = useCamera;
         _objectModel = model;
-
-        if ((model.GetModelSettings() & (1 << 24)) != 0)
-            _useMeshMatrix = true;
-        else
-            _useMeshMatrix = false;
+        _useMeshMatrix = _objectModel.UseMeshMatrix();
     }
 
     internal override unsafe sealed void DrawObject(Camera? cam)

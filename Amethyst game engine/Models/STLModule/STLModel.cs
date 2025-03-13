@@ -7,7 +7,6 @@ namespace Amethyst_game_engine.Models.STLModule;
 
 public readonly struct STLModel : IModel
 {
-    internal const uint MODEL_SPECIFICITY = (uint)ModelSettings.USE_COLOR_5_BITS;
     internal readonly Mesh mesh;
 
     public string Header { get; }
@@ -23,7 +22,6 @@ public readonly struct STLModel : IModel
     {
         uint settings_uint = (uint)settings;
         material.materialKey &= settings_uint;
-        material.materialKey |= MODEL_SPECIFICITY;
 
         using BinaryReader reader = new(File.OpenRead(path));
 
@@ -157,9 +155,9 @@ public readonly struct STLModel : IModel
 
     Mesh[] IModel.GetMeshes() => [mesh];
 
-    void IModel.RebuildShaders(uint renderKeys) => mesh.RebuildShaders(renderKeys, MODEL_SPECIFICITY);
+    void IModel.RebuildShaders(uint renderKeys) => mesh.RebuildShaders(renderKeys, 0);
 
-    uint IModel.GetModelSettings() => MODEL_SPECIFICITY;
+    bool IModel.UseMeshMatrix() => false;
 
     public void Dispose()
     {

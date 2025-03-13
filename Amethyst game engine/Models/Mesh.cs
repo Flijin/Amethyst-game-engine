@@ -42,11 +42,11 @@ internal readonly struct Mesh : IDisposable
         }
     }
 
-    public void RebuildShaders(uint renderSettings, uint modelSettings)
+    public void RebuildShaders(uint renderSettings, uint useMeshMatrixKey)
     {
         foreach (var primitive in primitives)
         {
-            primitive.BuildShader(renderSettings, modelSettings);
+            primitive.BuildShader(renderSettings, useMeshMatrixKey);
         }
     }
 

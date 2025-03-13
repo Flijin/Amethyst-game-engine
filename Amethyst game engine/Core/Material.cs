@@ -132,7 +132,7 @@ public class Material
     public Material(Color baseColorFactor)
     {
         BaseColorFactor = baseColorFactor;
-        materialKey |= (int)RenderSettings.BaseColorFactor | (int)ModelSettings.USE_COLOR_5_BITS;
+        materialKey |= (uint)RenderSettings.BaseColorFactor;
 
         this.baseColorFactor.uniform = "_baseColorFactor";
     }
