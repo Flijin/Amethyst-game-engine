@@ -297,7 +297,10 @@ public class GLBImporter
 
             var primitive = new Primitive(vertexArrayObject)
             {
-                mode = primitivesDicts[i].TryGetValue("mode", out object? modeRes) ? (int)modeRes : 4
+                mode = (primitivesDicts[i].TryGetValue("mode", out object? modeRes) ?
+                (OpenTK.Graphics.ES20.PrimitiveType)modeRes : OpenTK.Graphics.ES20.PrimitiveType.Triangles),
+
+                Material = new(0)
             };
 
             if (primitivesDicts[i].TryGetValue("material", out object? materialIndex))
@@ -410,14 +413,14 @@ public class GLBImporter
                 //    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
             }
 
-            primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
-            primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
+            //primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
+            //primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
             
-            primitive.materialsUsed[0] = 1;
-            primitive.materialsUsed[1] = 1;
+            //primitive.materialsUsed[0] = 1;
+            //primitive.materialsUsed[1] = 1;
 
-            primitive.textureHandles[0] = albedoHandle;
-            primitive.textureHandles[1] = metallicRoughnessHandle;
+            //primitive.textureHandles[0] = albedoHandle;
+            //primitive.textureHandles[1] = metallicRoughnessHandle;
         }
     }
 

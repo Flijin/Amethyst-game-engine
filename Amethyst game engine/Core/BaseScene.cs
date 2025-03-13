@@ -41,7 +41,7 @@ public abstract class BaseScene : IDisposable
         {
             while (_cancellationTokenSource.IsCancellationRequested == false)
             {
-                OnFixedTimeUpdate();
+                OnFixedTimeUpdate(); //Нужно учитывать дельту с расчетом updateTime
                 Thread.Sleep(updateTime);
             }
         }, _cancellationTokenSource.Token);

@@ -1,25 +1,34 @@
 ﻿namespace Amethyst_game_engine.Render;
 
 [Flags]
-public enum RenderSettings
+public enum RenderSettings : uint
 {
     None = 0,
-    UseColors = 1, //Атрибуты
-    UseAlbedoMap = 2, //карта
-    UseMetallicRoughness = 4, //Коэф, карта
-    UseNormalMap = 8, //карта
-    UseNormals = 16, //Атрибуты
-    UseOcclusionMap = 32, //Коэф, карта
-    UseEmissiveMap = 64, //Коэф, карта
+    VertexColors = 1,
+    Normals = 1 << 1,
+
+    AlbedoMap_0 = 1 << 2,
+    AlbedoMap_1 = 1 << 3,
+    AlbedoMap_2 = 1 << 4,
+    AlbedoMap_3 = 1 << 5,
+
+    MetallicRoughnessMap = 1 << 6,
+    NormalMap = 1 << 7,
+    OcclusionMap = 1 << 8,
+    EmissiveMap = 1 << 9,
+
+    BaseColorFactor = 1 << 10,
+    MetallicFactor = 1 << 11,
+    RoughnessFactor = 1 << 12,
+    EmissiveFactor = 1 << 13,
+
+    OcclusionStrength = 1 << 14,
+    NormalScale = 1 << 15,
+
+    All = 65535
 }
 
-//USE_COLOR = 1, //Атрибуты
-//UseAlbedoMap = 2, //карта
-//UseMetallicRoughness = 4, //Коэф, карта
-//UseNormalMap = 8, //карта
-//UseNormals = 16, //Атрибуты
-//Occlusion = 32, //Коэф, карта
-//Emissive = 64, //Коэф, карта
-
-//USE_MESH_MATRIX = 256
-//USE_COLOR_5_BITS = 512
+// Keys
+//----------------------
+// STL 0011110000000011
+// GLB 1111111111111111

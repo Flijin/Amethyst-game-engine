@@ -2,6 +2,16 @@
 
 public readonly struct Color
 {
+    public static Color Red => new(255, 0, 0);
+    public static Color Green => new(0, 255, 0);
+    public static Color Blue => new(0, 0, 255);
+    public static Color Cyan => new(0, 255, 255);
+    public static Color Magenta => new(255, 0, 255);
+    public static Color Yellow => new(0, 0, 255);
+    public static Color Black => new(0, 0, 0);
+    public static Color White => new(255, 255, 255);
+    public static Color Gray => new(127, 127, 127);
+
     public int R { get; }
     public int G { get; }
     public int B { get; }
@@ -16,7 +26,7 @@ public readonly struct Color
 
     public Color(int r, int g, int b, int a)
     {
-        if (r is < 0 or > 255 || g is < 0 or > 255 || b is < 0 or > 255 || a is < 0 or > 255)
+        if ((r | g | b | a) is < 0 or > 255)
             throw new ArgumentException("The color values must be in the range 0 - 255");
 
         R = r;

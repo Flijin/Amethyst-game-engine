@@ -4,6 +4,8 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Amethyst_game_engine.Render;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Amethyst_game_engine.Core;
 
@@ -36,14 +38,7 @@ public class Window : GameWindow
     internal static new float AspectRatio => _aspectRatio;
     public static float DeltaTime { get; private set; }
 
-    public static RenderSettings RenderProps { get; set; } =
-        RenderSettings.UseColors |
-        RenderSettings.UseAlbedoMap |
-        RenderSettings.UseMetallicRoughness |
-        RenderSettings.UseNormalMap |
-        RenderSettings.UseNormals |
-        RenderSettings.UseOcclusionMap |
-        RenderSettings.UseEmissiveMap;
+    public static RenderSettings RenderKeys { get; set; } = (RenderSettings)65535;
 
     public static BaseScene? Scene
     {
@@ -99,13 +94,24 @@ public class Window : GameWindow
         SwapBuffers();
     }
 
-    protected override void OnUnload()
+    protected override void OnClosing(CancelEventArgs e)
     {
-        _scene?.Dispose();
-        ShadersCollection.Dispose();
+        base.OnClosing(e);
 
-        base.OnUnload();
+        Debug.WriteLine("Работает OnClosing()");
+        ShadersPool.Dispose();
+        //_scene?.Dispose();
+        Debug.WriteLine("Все очистилось");
     }
+
+    //protected override void OnUnload()
+    //{
+    //    Debug.WriteLine("Работает OnUnload()");
+    //    _scene?.Dispose();
+    //    ShadersPool.Dispose();
+    //    Debug.WriteLine("Все очистилось");
+    //    base.OnUnload();
+    //}
 
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
