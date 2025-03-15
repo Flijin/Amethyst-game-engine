@@ -2,7 +2,7 @@
 using Amethyst_game_engine.Models;
 using Amethyst_game_engine.Models.STLModule;
 using Amethyst_game_engine.Render;
-using OpenTK.Graphics.ES20;
+using OpenTK.Graphics.ES30;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 

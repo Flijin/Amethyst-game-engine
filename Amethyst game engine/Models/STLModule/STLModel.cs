@@ -12,9 +12,9 @@ public readonly struct STLModel : IModel
     public string Header { get; }
     public int TrianglesCount { get; }
 
-    public STLModel(string path) : this(path, RenderSettings.All, new Material(0)) { }
+    public STLModel(string path) : this(path, RenderSettings.All, new Material()) { }
 
-    public STLModel(string path, RenderSettings settings) : this(path, settings, new Material(0)) { }
+    public STLModel(string path, RenderSettings settings) : this(path, settings, new Material()) { }
 
     public STLModel(string path, Material material) : this(path, RenderSettings.All, material) { }
 
@@ -58,6 +58,8 @@ public readonly struct STLModel : IModel
         GL.BindVertexArray(vertexArrayObject);
 
         var modelPrimitive = new Primitive(vertexArrayObject) { Material = material };
+        modelPrimitive.BuildShader(material.materialKey & (uint)Window.RenderKeys, 0);
+
         var attributesCount = TrianglesCount * 9;
 
         //-----------------------------------

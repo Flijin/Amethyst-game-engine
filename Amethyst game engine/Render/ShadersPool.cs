@@ -1,7 +1,5 @@
 ﻿#define DEBUG_MODE
 
-using System.Diagnostics;
-
 namespace Amethyst_game_engine.Render;
 
 internal static class ShadersPool
@@ -31,7 +29,6 @@ internal static class ShadersPool
     {
         foreach (var shader in _shaders.Values)
         {
-            Debug.WriteLine("Я тут был");
             shader.Dispose();
         }
     }

@@ -298,9 +298,9 @@ public class GLBImporter
             var primitive = new Primitive(vertexArrayObject)
             {
                 mode = (primitivesDicts[i].TryGetValue("mode", out object? modeRes) ?
-                (OpenTK.Graphics.ES20.PrimitiveType)modeRes : OpenTK.Graphics.ES20.PrimitiveType.Triangles),
+                (OpenTK.Graphics.ES30.PrimitiveType)modeRes : OpenTK.Graphics.ES30.PrimitiveType.Triangles),
 
-                Material = new(0)
+                Material = new()
             };
 
             if (primitivesDicts[i].TryGetValue("material", out object? materialIndex))

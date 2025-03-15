@@ -1,6 +1,7 @@
 ﻿using Amethyst_game_engine.Models;
-using OpenTK.Graphics.ES20;
+using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Amethyst_game_engine.Render;
@@ -58,35 +59,20 @@ internal class Shader : IDisposable
         }
     }
 
-    public void SetVectors3(Dictionary<string, Vector3> data)
-    {
-        var pairs = data.ToArray();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void SetMatrix4(string name, float* matrixPtr) => GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixPtr);
 
-        for (int i = 0; i < pairs.Length; i++)
-        {
-            GL.Uniform3(_uniformLocations[pairs[i].Key], pairs[i].Value);
-        }
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetFloat(string name, float value) => GL.Uniform1(_uniformLocations[name], value);
 
-    public unsafe void SetMatrix4(string name, float* matrixPtr)
-    {
-        GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixPtr);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetInt(string name, int value) => GL.Uniform1(_uniformLocations[name], value);
 
-    public void SetFloat(string name, float value)
-    {
-        GL.Uniform1(_uniformLocations[name], value);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetVector3(string name, Vector3 vec3) => GL.Uniform3(_uniformLocations[name], vec3);
 
-    public void SetInt(string name, int value)
-    {
-        GL.Uniform1(_uniformLocations[name], value);
-    }
-
-    public void SetVector3(string name, Vector3 vec)
-    {
-        GL.Uniform3(_uniformLocations[name], vec);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetVector4(string name, Vector4 vec4) => GL.Uniform4(_uniformLocations[name], vec4);
 
     private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags)
     {

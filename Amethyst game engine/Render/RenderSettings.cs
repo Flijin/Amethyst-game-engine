@@ -27,8 +27,3 @@ public enum RenderSettings : uint
 
     All = 65535
 }
-
-// Keys
-//----------------------
-// STL 0011110000000011
-// GLB 1111111111111111

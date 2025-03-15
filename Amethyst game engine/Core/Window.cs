@@ -13,6 +13,7 @@ public class Window : GameWindow
 {
     private static BaseScene? _scene;
     private static float _aspectRatio;
+    private static RenderSettings _renderSettings = RenderSettings.All;
 
     private static Action<KeyboardState, float>? _keyPressedHandler;
     internal static event Action<KeyboardState, float> KeyPressedEvent
@@ -38,7 +39,16 @@ public class Window : GameWindow
     internal static new float AspectRatio => _aspectRatio;
     public static float DeltaTime { get; private set; }
 
-    public static RenderSettings RenderKeys { get; set; } = (RenderSettings)65535;
+    public static RenderSettings RenderKeys
+    {
+        get => _renderSettings;
+
+        set
+        {
+            _scene?.ChangeGlobalRenderSettings((uint)value);
+            _renderSettings = value;
+        }
+    }
 
     public static BaseScene? Scene
     {

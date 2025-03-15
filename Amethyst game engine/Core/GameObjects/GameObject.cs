@@ -63,15 +63,15 @@ public abstract class GameObject : DrawableObject
         }
     }
 
-    public void ChangeRenderSettings(RenderSettings settings)
+    public override sealed void ChangeRenderSettings(RenderSettings settings)
     {
         _currentRenderState = (uint)settings;
         _objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
     }
 
-    internal void ChangeRenderSettings()
+    internal override sealed void ChangeGlobalRenderSettings(uint globalSettings)
     {
-        _objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
+        _objectModel.RebuildShaders(_currentRenderState & globalSettings);
     }
 
     public override sealed void Dispose()

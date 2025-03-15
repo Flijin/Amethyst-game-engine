@@ -1,5 +1,6 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Core.GameObjects;
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 
@@ -133,6 +134,14 @@ public abstract class BaseScene : IDisposable
         return [.. result];
     }
     #endregion
+
+    internal void ChangeGlobalRenderSettings(uint globalRenderSettings)
+    {
+        foreach (var obj in _objects)
+        {
+            obj.ChangeGlobalRenderSettings(globalRenderSettings);
+        }
+    }
 
     public void Dispose()
     {

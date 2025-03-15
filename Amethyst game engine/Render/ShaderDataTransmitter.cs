@@ -1,25 +1,26 @@
-﻿using OpenTK.Graphics.ES20;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using OpenTK.Graphics.ES30;
 
 namespace Amethyst_game_engine.Render;
 
-[Experimental("Needs_tests")]
 internal class ShaderDataTransmitter
 {
     private static readonly int[] _lastBindedTexture = [..Enumerable.Repeat(-1, 8)];
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void BindTexturesToUnits(TextureUnit[] units, int[] textureHandlers)
+    public static void BindTexturesToUnits(Dictionary<TextureUnit, int> param)
     {
-        for (int i = 0; i < units.Length; i++)
-        {
-            if (_lastBindedTexture[(int)units[i] - 33984] != textureHandlers[i])
-            {
-                GL.ActiveTexture(units[i]);
-                GL.BindTexture(TextureTarget.Texture2D, textureHandlers[i]);
+        if (param.Count == 0)
+            return;
 
-                _lastBindedTexture[i] = textureHandlers[i];
+        var keyValuePairs = param.ToArray();
+
+        for (int i = 0; i < keyValuePairs.Length; i++)
+        {
+            if (_lastBindedTexture[(int)keyValuePairs[i].Key - 33984] != keyValuePairs[i].Value)
+            {
+                GL.ActiveTexture(keyValuePairs[i].Key);
+                GL.BindTexture(TextureTarget.Texture2D, keyValuePairs[i].Value);
+
+                _lastBindedTexture[i] = keyValuePairs[i].Value;
             }
         }
     }

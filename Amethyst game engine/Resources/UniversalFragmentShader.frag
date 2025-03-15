@@ -22,7 +22,7 @@ in vec2 albedoCoords_3;
 #endif
 
 #ifdef USE_BASE_COLOR_FACTOR
-uniform vec3 _baseColorFactor;
+uniform vec4 _baseColorFactor;
 #endif
 
 #ifdef USE_VERTEX_COLORS
@@ -50,9 +50,9 @@ void main()
 
 #ifdef USE_BASE_COLOR_FACTOR
     #ifdef FRAG_COLOR_INIT
-        FragColor = mix(FragColor, vec4(_baseColorFactor, 1.0), 0.5);
+        FragColor = mix(FragColor, _baseColorFactor, 0.5);
     #else
-        FragColor = vec4(_baseColorFactor, 1.0);
+        FragColor = _baseColorFactor;
         #define FRAG_COLOR_INIT;
     #endif
 #endif

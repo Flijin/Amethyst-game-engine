@@ -1,4 +1,5 @@
 ﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
@@ -79,6 +80,9 @@ public abstract class DrawableObject : IDisposable
     }
 
     internal abstract void DrawObject(Camera? cam);
+
+    public abstract void ChangeRenderSettings(RenderSettings settings);
+    internal abstract void ChangeGlobalRenderSettings(uint globalSettings);
 
     public virtual void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
     {

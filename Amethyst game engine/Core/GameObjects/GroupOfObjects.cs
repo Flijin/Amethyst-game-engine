@@ -1,5 +1,6 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Models.GLBModule;
+using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.GameObjects;
@@ -98,6 +99,22 @@ public class GroupOfObjects : DrawableObject, IDisposable
         foreach (var gameObject in _gameObjects)
         {
             gameObject.DrawObject(cam);
+        }
+    }
+
+    internal sealed override void ChangeGlobalRenderSettings(uint globalSettings)
+    {
+        foreach (var obj in _gameObjects)
+        {
+            obj.ChangeGlobalRenderSettings(globalSettings);
+        }
+    }
+
+    public override sealed void ChangeRenderSettings(RenderSettings settings)
+    {
+        foreach (var obj in _gameObjects)
+        {
+            obj.ChangeRenderSettings(settings);
         }
     }
 
