@@ -97,7 +97,7 @@ internal struct Primitive(int vao)
             }
             else if (baseColorFactor == startDigit)
             {
-                _baseColorFactor = Material.baseColorFactor;
+                _baseColorFactor = Material.BaseColorFactor;
             }
             else if ((flags_float & startDigit) != 0)
             {

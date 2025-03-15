@@ -1,4 +1,4 @@
-﻿#define DEBUG_MODE
+﻿//#define DEBUG_MODE
 
 namespace Amethyst_game_engine.Render;
 

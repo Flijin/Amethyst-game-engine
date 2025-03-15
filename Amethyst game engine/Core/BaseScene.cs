@@ -1,6 +1,5 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Core.GameObjects;
-using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 
@@ -14,6 +13,7 @@ public abstract class BaseScene : IDisposable
     private readonly List<StandartCameraController> _cameraControllers = [];
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
+
     private Vector3 _backgroundColor = new(0.3f, 0.3f, 0.3f);
     private bool _disposed;
 
@@ -42,7 +42,7 @@ public abstract class BaseScene : IDisposable
         {
             while (_cancellationTokenSource.IsCancellationRequested == false)
             {
-                OnFixedTimeUpdate(); //Нужно учитывать дельту с расчетом updateTime
+                OnFixedTimeUpdate();
                 Thread.Sleep(updateTime);
             }
         }, _cancellationTokenSource.Token);
@@ -51,7 +51,7 @@ public abstract class BaseScene : IDisposable
     ~BaseScene()
     {
         if (_disposed == false)
-            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, GPU memory leak");
+            SystemSettings.PrintMessage("Warning. The Dispose method was not called, GPU memory leak", MessageTypes.WarningMessage);
     }
 
     protected virtual void OnFrameUpdate() { }
@@ -82,20 +82,20 @@ public abstract class BaseScene : IDisposable
         }
         else
         {
-            SystemSettings.PrintErrorMessage("Error. There is no camera with that name");
+            SystemSettings.PrintMessage("Error. There is no camera with that name", MessageTypes.ErrorMessage);
         }       
     }
 
     protected void AddCamera(Camera cam, string name)
     {
         if (_cameras.TryAdd(name, cam) == false)
-            SystemSettings.PrintErrorMessage("Error. A camera with that name has already been added");
+            SystemSettings.PrintMessage("Error. A camera with that name has already been added", MessageTypes.ErrorMessage);
     }
 
     protected void RemoveCamera(string name)
     {
         if (_cameras.Remove(name) == false)
-            SystemSettings.PrintErrorMessage("Error. There is no camera with that name");
+            SystemSettings.PrintMessage("Error. There is no camera with that name", MessageTypes.ErrorMessage);
     }
 
     protected Camera GetCamera(string name) => _cameras[name];
@@ -135,11 +135,11 @@ public abstract class BaseScene : IDisposable
     }
     #endregion
 
-    internal void ChangeGlobalRenderSettings(uint globalRenderSettings)
+    internal void ChangeGlobalRenderSettings(uint globalSettings)
     {
         foreach (var obj in _objects)
         {
-            obj.ChangeGlobalRenderSettings(globalRenderSettings);
+            obj.ChangeGlobalRenderSettings(globalSettings);
         }
     }
 

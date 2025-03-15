@@ -20,12 +20,12 @@ public class GroupOfObjects : DrawableObject, IDisposable
         {
             _position += value;
 
-            foreach (var item in _gameObjects)
+            foreach (var gameObject in _gameObjects)
             {
-                if (item is GameObject)
-                    item.Position += value;
+                if (gameObject is GameObject)
+                    gameObject.Position += value;
                 else
-                    item.Position = value;
+                    gameObject.Position = value;
             }
         }
     }
@@ -38,12 +38,12 @@ public class GroupOfObjects : DrawableObject, IDisposable
         {
             _rotation += value;
 
-            foreach (var item in _gameObjects)
+            foreach (var gameObject in _gameObjects)
             {
-                if (item is GameObject)
-                    item.Rotation += value;
+                if (gameObject is GameObject)
+                    gameObject.Rotation += value;
                 else
-                    item.Rotation = value;
+                    gameObject.Rotation = value;
             }
         }
     }
@@ -56,12 +56,12 @@ public class GroupOfObjects : DrawableObject, IDisposable
         {
             _scale += value;
 
-            foreach (var item in _gameObjects)
+            foreach (var gameObject in _gameObjects)
             {
-                if (item is GameObject)
-                    item.Scale += value;
+                if (gameObject is GameObject)
+                    gameObject.Scale += value;
                 else
-                    item.Scale = value;
+                    gameObject.Scale = value;
             }
         }
     }
@@ -81,16 +81,16 @@ public class GroupOfObjects : DrawableObject, IDisposable
     ~GroupOfObjects()
     {
         if (_disposed == false)
-            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
+            SystemSettings.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
     }
 
     public override sealed void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
     {
         base.ModifyObject(position + base.Position, rotation + base.Rotation, scale + base.Scale);
 
-        foreach (var item in _gameObjects)
+        foreach (var gameObject in _gameObjects)
         {
-            item.ModifyObject(position + item.Position, rotation + item.Rotation, scale + item.Scale);
+            gameObject.ModifyObject(position + gameObject.Position, rotation + gameObject.Rotation, scale + gameObject.Scale);
         }
     }
 
@@ -101,20 +101,19 @@ public class GroupOfObjects : DrawableObject, IDisposable
             gameObject.DrawObject(cam);
         }
     }
-
-    internal sealed override void ChangeGlobalRenderSettings(uint globalSettings)
+    public override sealed void ChangeRenderSettings(RenderSettings settings)
     {
-        foreach (var obj in _gameObjects)
+        foreach (var gameObject in _gameObjects)
         {
-            obj.ChangeGlobalRenderSettings(globalSettings);
+            gameObject.ChangeRenderSettings(settings);
         }
     }
 
-    public override sealed void ChangeRenderSettings(RenderSettings settings)
+    internal sealed override void ChangeGlobalRenderSettings(uint globalSettings)
     {
-        foreach (var obj in _gameObjects)
+        foreach (var gameObject in _gameObjects)
         {
-            obj.ChangeRenderSettings(settings);
+            gameObject.ChangeGlobalRenderSettings(globalSettings);
         }
     }
 

@@ -76,11 +76,10 @@ public abstract class DrawableObject : IDisposable
     ~DrawableObject()
     {
         if (_disposed == false)
-            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
+            SystemSettings.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
     }
 
     internal abstract void DrawObject(Camera? cam);
-
     public abstract void ChangeRenderSettings(RenderSettings settings);
     internal abstract void ChangeGlobalRenderSettings(uint globalSettings);
 

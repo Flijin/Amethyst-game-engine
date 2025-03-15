@@ -1,5 +1,4 @@
-﻿using Amethyst_game_engine.Models;
-using OpenTK.Graphics.ES30;
+﻿using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -22,7 +21,7 @@ internal class Shader : IDisposable
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
 
-        if (code == 0) PrintErrorMessage(GL.GetProgramInfoLog(Handle));
+        if (code == 0) SystemSettings.PrintMessage("Error. " + GL.GetShaderInfoLog(Handle), Core.MessageTypes.ErrorMessage);
 
         ClearShader(vertexDescriptor);
         ClearShader(fragmentDescriptor);
@@ -36,7 +35,10 @@ internal class Shader : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Use() => GL.UseProgram(Handle);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose() => GL.DeleteProgram(Handle);
 
     public void SetFloats(Dictionary<string, float> data)
@@ -109,15 +111,7 @@ internal class Shader : IDisposable
         GL.CompileShader(descriptor);
         GL.GetShader(descriptor, ShaderParameter.CompileStatus, out int code);
 
-        if (code == 0) PrintErrorMessage(GL.GetShaderInfoLog(descriptor));
-    }
-
-    private static void PrintErrorMessage(string message)
-    {
-        SystemSettings.ShowWindow(SystemSettings.SW_SHOW);
-        Console.Write(message);
-        Console.ReadKey();
-        Environment.Exit(0);
+        if (code == 0) SystemSettings.PrintMessage("Error. " + GL.GetShaderInfoLog(descriptor), Core.MessageTypes.ErrorMessage);
     }
 
     private Dictionary<string, int> GetUniforms()

@@ -20,7 +20,7 @@ public struct Material
         [1 << 13] = -1
     };
 
-    internal Color baseColorFactor = Color.NoneColor;
+    private Color baseColorFactor = Color.NoneColor;
 
     internal uint materialKey;
 

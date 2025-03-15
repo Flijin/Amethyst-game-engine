@@ -1,6 +1,5 @@
-﻿#define DEBUG_MODE
+﻿//#define DEBUG_MODE
 
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Amethyst_game_engine.Render;
@@ -35,8 +34,6 @@ internal static class GLSLMacrosExtensions
         [1 << 24] = "USE_MESH_MATRIX",
     };
 
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static string ToMacrosString(this uint tokens)
     {
         if (tokens == 0)

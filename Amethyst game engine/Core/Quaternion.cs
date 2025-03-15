@@ -1,4 +1,6 @@
-﻿namespace Amethyst_game_engine.Core;
+﻿using System.Runtime.CompilerServices;
+
+namespace Amethyst_game_engine.Core;
 
 internal readonly struct Quaternion
 {
@@ -40,9 +42,13 @@ internal readonly struct Quaternion
         w = cr * cp * cy + sr * sp * sy;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void GetRotationMatrix(float* res) => ConvertQuaternionToMatrix(x, y, z, w, res);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe void ConvertQuaternionToMatrix(Quaternion q, float* res) => ConvertQuaternionToMatrix(q.x, q.y, q.z, q.w, res);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe void ConvertQuaternionToMatrix(float x, float y, float z, float w, float* res)
     {
         float* temp = stackalloc float[16]

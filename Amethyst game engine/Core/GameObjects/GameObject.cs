@@ -8,7 +8,7 @@ namespace Amethyst_game_engine.Core.GameObjects;
 public abstract class GameObject : DrawableObject
 {
     private bool _disposed = false;
-    private protected uint _currentRenderState = (uint)RenderSettings.All;
+    private protected uint _localRenderSettings = (uint)RenderSettings.All;
     private protected bool _useCamera;
     private readonly bool _useMeshMatrix;
 
@@ -49,8 +49,8 @@ public abstract class GameObject : DrawableObject
             foreach (var primitive in mesh.primitives)
             {
                 GL.BindVertexArray(primitive.vao);
-                primitive.activeShader.Use();
 
+                primitive.activeShader.Use();
                 primitive.activeShader.SetMatrix4("model", ModelMatrix);
                 primitive.activeShader.SetMatrix4("view", viewMatrix);
                 primitive.activeShader.SetMatrix4("projection", projectionMatrix);
@@ -65,13 +65,13 @@ public abstract class GameObject : DrawableObject
 
     public override sealed void ChangeRenderSettings(RenderSettings settings)
     {
-        _currentRenderState = (uint)settings;
-        _objectModel.RebuildShaders(_currentRenderState & (uint)Window.RenderKeys);
+        _localRenderSettings = (uint)settings;
+        _objectModel.RebuildShaders(_localRenderSettings & (uint)Window.RenderKeys);
     }
 
     internal override sealed void ChangeGlobalRenderSettings(uint globalSettings)
     {
-        _objectModel.RebuildShaders(_currentRenderState & globalSettings);
+        _objectModel.RebuildShaders(_localRenderSettings & globalSettings);
     }
 
     public override sealed void Dispose()
