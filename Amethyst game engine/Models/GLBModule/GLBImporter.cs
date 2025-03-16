@@ -66,7 +66,7 @@ public class GLBImporter
 
     public GLBImporter(string path, RenderSettings settings)
     {
-        _renderSettings = (uint)settings;
+        _renderSettings = (uint)settings & (uint)Window.RenderKeys;
 
         BinaryReader reader = new(new FileStream(path, FileMode.Open));
 

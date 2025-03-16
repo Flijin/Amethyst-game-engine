@@ -17,10 +17,10 @@ public readonly struct STLModel : IModel
     public STLModel(string path, RenderSettings settings) : this(path, settings, new Material()) { }
 
     public STLModel(string path, Material material) : this(path, RenderSettings.All, material) { }
-
+    
     public unsafe STLModel(string path, RenderSettings settings, Material material)
     {
-        uint settings_uint = (uint)settings;
+        uint settings_uint = (uint)settings & (uint)Window.RenderKeys;
         material.materialKey &= settings_uint;
 
         using BinaryReader reader = new(File.OpenRead(path));

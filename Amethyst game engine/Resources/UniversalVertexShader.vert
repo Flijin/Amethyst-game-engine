@@ -21,12 +21,17 @@ out vec2 albedoCoords;
 layout (location = 2) in vec2 _albedoCoords;
 #endif
 
-#ifdef USE_VERTEX_COLORS
+#ifdef USE_NORMALS
+out vec3 normal;
+out vec3 fragPos;
 layout (location = 3) in vec3 _normal;
 #endif
 
 void main()
 {
+#ifdef USE_NORMALS
+normal = _normal;
+#endif
 
 #ifdef USE_ALBEDO_MAP
     albedoCoords = _albedoCoords;
@@ -38,8 +43,14 @@ void main()
 
 #ifdef USE_MESH_MATRIX
     gl_Position = vec4(_position, 1.0) * mesh * model * view * projection;
+    #ifdef USE_NORMALS
+        fragPos = vec3(mesh * model * vec4(_position, 1.0));
+    #endif
 #else
     gl_Position = vec4(_position, 1.0) * model * view * projection;
+    #ifdef USE_NORMALS
+        fragPos = vec3(model * vec4(_position, 1.0));
+    #endif
 #endif
 
 }
