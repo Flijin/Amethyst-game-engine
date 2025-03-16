@@ -454,6 +454,7 @@ public class GLBImporter
             for (int i = 0; i < _glTextures.Length; i++)
             {
                 var handle = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, handle);
 
                 var source = _images[(int)_textures[i]["source"]];
                 var sampler = _textures[i].TryGetValue("sampler", out object? samplerRes) ? _samplers[(int)samplerRes] : [];
@@ -492,6 +493,8 @@ public class GLBImporter
                               image.Data);
 
                 _glTextures[i] = handle;
+
+                GL.BindTexture(TextureTarget.Texture2D, 0);
             }
         }
     }

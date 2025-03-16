@@ -15,12 +15,16 @@ internal class ShaderDataTransmitter
 
         for (int i = 0; i < keyValuePairs.Length; i++)
         {
-            if (_lastBindedTexture[(int)keyValuePairs[i].Key - 33984] != keyValuePairs[i].Value)
-            {
-                GL.ActiveTexture(keyValuePairs[i].Key);
-                GL.BindTexture(TextureTarget.Texture2D, keyValuePairs[i].Value);
+            var textureUnit = keyValuePairs[i].Key;
+            var textureHandler = keyValuePairs[i].Value;
+            var numberOfUnit = (int)textureUnit - (int)TextureUnit.Texture0;
 
-                _lastBindedTexture[i] = keyValuePairs[i].Value;
+            if (_lastBindedTexture[numberOfUnit] != textureHandler)
+            {
+                GL.ActiveTexture(textureUnit);
+                GL.BindTexture(TextureTarget.Texture2D, textureHandler);
+
+                _lastBindedTexture[numberOfUnit] = textureHandler;
             }
         }
     }

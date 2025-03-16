@@ -83,7 +83,7 @@ internal struct Primitive(int vao, Material material)
         var baseColorFactor = renderSettings & Material.materialKey & 0b_10000000;
         var flags_float = renderSettings & Material.materialKey & 0b_00000111_00000000;
 
-        var leftBorder = (1 << 10);
+        var leftBorder = 1 << 10;
 
         while (startDigit <= leftBorder)
         {
@@ -91,7 +91,7 @@ internal struct Primitive(int vao, Material material)
             {
                 var handler = (int)Material[startDigit];
 
-                _uniforms_int.Add(_uniformNames[startDigit], handler);
+                _uniforms_int.Add(_uniformNames[startDigit], (int)_textureUnits[startDigit] - (int)TextureUnit.Texture0);
                 _usedTextureUnits.Add(_textureUnits[startDigit], handler);
             }
             else if (baseColorFactor == startDigit)
