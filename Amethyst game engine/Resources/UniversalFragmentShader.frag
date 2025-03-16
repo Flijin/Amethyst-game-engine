@@ -1,28 +1,20 @@
 ﻿#version 330 core
 
-
-#ifdef USE_ALBEDO_MAP_0
-uniform sampler2D _albeloTexture_0;
-in vec2 albedoCoords_0;
-#endif
-
-#ifdef USE_ALBEDO_MAP_1
-uniform sampler2D _albeloTexture_1;
-in vec2 albedoCoords_1;
-#endif
-
-#ifdef USE_ALBEDO_MAP_2
-uniform sampler2D _albeloTexture_2;
-in vec2 albedoCoords_2;
-#endif
-
-#ifdef USE_ALBEDO_MAP_3
-uniform sampler2D _albeloTexture_3;
-in vec2 albedoCoords_3;
+#ifdef USE_ALBEDO_MAP
+uniform sampler2D _albedoTexture;
+in vec2 albedoCoords;
 #endif
 
 #ifdef USE_BASE_COLOR_FACTOR
 uniform vec4 _baseColorFactor;
+#endif
+
+#ifdef USE_METALLIC_FACTOR
+uniform float _metallicFactor;
+#endif
+
+#ifdef USE_ROUGHNESS_FACTOR
+uniform float _roughnessFactor;
 #endif
 
 #ifdef USE_VERTEX_COLORS
@@ -39,11 +31,11 @@ void main()
     #define FRAG_COLOR_INIT;
 #endif
 
-#ifdef USE_ALBEDO_MAP_0
+#ifdef USE_ALBEDO_MAP
     #ifdef FRAG_COLOR_INIT
-        FragColor = mix(vertexColor, texture(albeloTextute_0, albedoCoords_0));
+        FragColor = mix(vertexColor, texture(_albedoTexture, albedoCoords), 0.5);
     #else
-        FragColor = texture(albeloTextute_0, albedoCoords_0, 0.5);
+        FragColor = texture(_albedoTexture, albedoCoords);
         #define FRAG_COLOR_INIT;
     #endif
 #endif

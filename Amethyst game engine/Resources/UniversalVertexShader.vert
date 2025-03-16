@@ -16,31 +16,20 @@ out vec4 vertexColor;
 layout (location = 1) in vec3 _vertexColor;
 #endif
 
-#ifdef USE_ALBEDO_MAP_0
-out vec2 albedoCoords_0;
-layout (location = 2) in vec2 _albedoCoords_0;
+#ifdef USE_ALBEDO_MAP
+out vec2 albedoCoords;
+layout (location = 2) in vec2 _albedoCoords;
 #endif
 
-#ifdef USE_ALBEDO_MAP_1
-out vec2 albedoCoords_1;
-layout (location = 3) in vec2 _albedoCoords_1;
-#endif
-
-#ifdef USE_ALBEDO_MAP_2
-out vec2 albedoCoords_2;
-layout (location = 4) in vec2 _albedoCoords_2;
-#endif
-
-#ifdef USE_ALBEDO_MAP_3
-out vec2 albedoCoords_3;
-layout (location = 5) in vec2 _albedoCoords_3;
+#ifdef USE_VERTEX_COLORS
+layout (location = 3) in vec3 _normal;
 #endif
 
 void main()
 {
 
-#ifdef USE_ALBEDO_MAP_0
-    albedoCoords_0 = _albedoCoords_0;
+#ifdef USE_ALBEDO_MAP
+    albedoCoords = _albedoCoords;
 #endif
 
 #ifdef USE_VERTEX_COLORS

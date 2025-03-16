@@ -27,4 +27,6 @@ public struct GLBScene
     }
 
     public readonly GLBModel GetModelByIndex(int index) => _models[index];
+
+    public readonly GLBModel? GetModelByName(string name) => _models.FirstOrDefault(obj => obj.Name == name);
 }

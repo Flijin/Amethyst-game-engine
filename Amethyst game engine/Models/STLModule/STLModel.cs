@@ -57,7 +57,7 @@ public readonly struct STLModel : IModel
 
         GL.BindVertexArray(vertexArrayObject);
 
-        var modelPrimitive = new Primitive(vertexArrayObject) { Material = material };
+        var modelPrimitive = new Primitive(vertexArrayObject, material);
         modelPrimitive.BuildShader(material.materialKey & (uint)Window.RenderKeys, 0);
 
         var attributesCount = TrianglesCount * 9;

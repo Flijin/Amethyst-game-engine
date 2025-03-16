@@ -1,10 +1,9 @@
 ﻿namespace Amethyst_game_engine.Models.GLBModule;
 
-public readonly struct GLBModel
+public readonly struct GLBModel : IModel
 {
 	private readonly NodeInfo[] _nodes;
-	internal readonly Mesh[] meshes;
-	internal readonly int _renderProfile = 0b_0010;
+	private readonly Mesh[] meshes;
 
     public string Name { readonly get; init; } = "None";
 
@@ -13,4 +12,29 @@ public readonly struct GLBModel
 		_nodes = nodes;
 		this.meshes = meshes;
 	}
+
+    Mesh[] IModel.GetMeshes() => meshes;
+
+    bool IModel.UseMeshMatrix() => true;
+
+    void IModel.RebuildShaders(uint renderKeys)
+    {
+        foreach (var mesh in meshes)
+        {
+            mesh.RebuildShaders(renderKeys, 1 << 24);
+        }
+    }
+
+    public void Dispose()
+    {
+        foreach (var mesh in meshes)
+        {
+            mesh.Dispose();
+        }
+
+        foreach (var node in _nodes)
+        {
+            node.Dispose();
+        }
+    }
 }

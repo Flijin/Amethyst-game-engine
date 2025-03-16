@@ -7,23 +7,19 @@ public enum RenderSettings : uint
     VertexColors = 1,
     Normals = 1 << 1,
 
-    AlbedoMap_0 = 1 << 2,
-    AlbedoMap_1 = 1 << 3,
-    AlbedoMap_2 = 1 << 4,
-    AlbedoMap_3 = 1 << 5,
+    AlbedoMap = 1 << 2,
+    MetallicRoughnessMap = 1 << 3,
+    NormalMap = 1 << 4,
+    OcclusionMap = 1 << 5,
+    EmissiveMap = 1 << 6,
 
-    MetallicRoughnessMap = 1 << 6,
-    NormalMap = 1 << 7,
-    OcclusionMap = 1 << 8,
-    EmissiveMap = 1 << 9,
+    BaseColorFactor = 1 << 7,
+    MetallicFactor = 1 << 8,
+    RoughnessFactor = 1 << 9,
+    EmissiveFactor = 1 << 10,
 
-    BaseColorFactor = 1 << 10,
-    MetallicFactor = 1 << 11,
-    RoughnessFactor = 1 << 12,
-    EmissiveFactor = 1 << 13,
+    OcclusionStrength = 1 << 11,
+    NormalScale = 1 << 12,
 
-    OcclusionStrength = 1 << 14,
-    NormalScale = 1 << 15,
-
-    All = 65535
+    All = 0b_00011111_11111111
 }

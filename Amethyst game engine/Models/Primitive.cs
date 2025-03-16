@@ -4,22 +4,19 @@ using OpenTK.Graphics.ES30;
 
 namespace Amethyst_game_engine.Models;
 
-internal struct Primitive(int vao)
+internal struct Primitive(int vao, Material material)
 {
     private static readonly Dictionary<uint, string> _uniformNames = new()
     {
-        [1 << 2] = "_albeloTexture_0",
-        [1 << 3] = "_albeloTexture_1",
-        [1 << 4] = "_albeloTexture_2",
-        [1 << 5] = "_albeloTexture_3",
-        [1 << 6] = "_metallicRoughnessTexture",
-        [1 << 7] = "_normalTexture",
-        [1 << 8] = "_occlusionTexture",
-        [1 << 9] = "_emissiveTexture",
-        [1 << 10] = "_baseColorFactor",
-        [1 << 11] = "_metallicFactor",
-        [1 << 12] = "_roughnessFactor",
-        [1 << 13] = "_emissiveFactor",
+        [1 << 2] = "_albedoTexture",
+        [1 << 3] = "_metallicRoughnessTexture",
+        [1 << 4] = "_normalTexture",
+        [1 << 5] = "_occlusionTexture",
+        [1 << 6] = "_emissiveTexture",
+        [1 << 7] = "_baseColorFactor",
+        [1 << 8] = "_metallicFactor",
+        [1 << 9] = "_roughnessFactor",
+        [1 << 10] = "_emissiveFactor",
     };
 
     private static readonly Dictionary<uint, TextureUnit> _textureUnits = new()
@@ -29,9 +26,6 @@ internal struct Primitive(int vao)
         [1 << 4] = TextureUnit.Texture2,
         [1 << 5] = TextureUnit.Texture3,
         [1 << 6] = TextureUnit.Texture4,
-        [1 << 7] = TextureUnit.Texture5,
-        [1 << 8] = TextureUnit.Texture6,
-        [1 << 9] = TextureUnit.Texture7
     };
 
     private readonly Dictionary<string, int> _uniforms_int = [];
@@ -47,11 +41,11 @@ internal struct Primitive(int vao)
     public readonly int vao = vao;
 
     public int count = 0;
-    public int componentType = 5126;
+    public int drawElementsType = 5125;
     public PrimitiveType mode = PrimitiveType.Triangles;
     public bool isIndexedGeometry = false;
-    
-    public required Material Material { get; set; }
+
+    public Material Material { get; set; } = material;
 
     public void BuildShader(uint renderSettings, uint useMeshMatrixKey)
     {
@@ -69,7 +63,10 @@ internal struct Primitive(int vao)
 
         ShaderDataTransmitter.BindTexturesToUnits(_usedTextureUnits);
 
-        GL.DrawArrays(mode, 0, count);
+        if (isIndexedGeometry)
+            GL.DrawElements(mode, count, (DrawElementsType)drawElementsType, 0);
+        else
+            GL.DrawArrays(mode, 0, count);
     }
 
     private void LimitShaderData(uint renderSettings)
@@ -82,11 +79,13 @@ internal struct Primitive(int vao)
 
         var startDigit = 4u;
 
-        var flags_int = renderSettings & Material.materialKey & 0b_00000011_11111100;
-        var baseColorFactor = renderSettings & Material.materialKey & 0b_00000100_00000000;
-        var flags_float = renderSettings & Material.materialKey & 0b_00111000_00000000;
+        var flags_int = renderSettings & Material.materialKey & 0b_01111100;
+        var baseColorFactor = renderSettings & Material.materialKey & 0b_10000000;
+        var flags_float = renderSettings & Material.materialKey & 0b_00000111_00000000;
 
-        while (startDigit <= (1 << 13))
+        var leftBorder = (1 << 10);
+
+        while (startDigit <= leftBorder)
         {
             if (flags_int <= startDigit && (flags_int & startDigit) != 0)
             {

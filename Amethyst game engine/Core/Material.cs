@@ -113,5 +113,7 @@ public struct Material
     internal readonly float this[uint key]
     {
         get => _materialValues[key];
+
+        set => _materialValues[key] = value;
     }
 }

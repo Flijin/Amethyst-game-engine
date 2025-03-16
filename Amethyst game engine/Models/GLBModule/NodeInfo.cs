@@ -28,7 +28,7 @@ internal unsafe struct NodeInfo : IDisposable
             Name = (string)name;
 
         if (nodePresentation.TryGetValue("children", out object? children))
-            Children = ((object[])children).Cast<int>().ToArray();
+            Children = [.. ((object[])children).Cast<int>()];
 
         if (nodePresentation.TryGetValue("mesh", out object? mesh))
             Mesh = (int)mesh;
