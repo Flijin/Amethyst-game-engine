@@ -395,10 +395,10 @@ public class GLBImporter
         {
             var bCFComponents = (object[])baseColorFactor;
 
-            material.BaseColorFactor = new Color((float)bCFComponents[0],
-                                                (float)bCFComponents[1],
-                                                (float)bCFComponents[2],
-                                                (float)bCFComponents[3]);
+            material.BaseColorFactor = new Color(Convert.ToSingle(bCFComponents[0]),
+                                                Convert.ToSingle(bCFComponents[1]),
+                                                Convert.ToSingle(bCFComponents[2]),
+                                                Convert.ToSingle(bCFComponents[3]));
         }
 
         //if ((_renderSettings & (uint)RenderSettings.MetallicFactor) != 0 && pbrMetallicRoughness.TryGetValue("metallicFactor", out object? metallicFactor))

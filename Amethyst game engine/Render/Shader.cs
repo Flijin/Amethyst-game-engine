@@ -62,7 +62,7 @@ internal class Shader : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void SetMatrix4(string name, float* matrixPtr) => GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixPtr);
+    public unsafe void SetMatrix4(string name, float* matrixPtr) => GL.UniformMatrix4(_uniformLocations[name], 1, true, matrixPtr);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetFloat(string name, float value) => GL.Uniform1(_uniformLocations[name], value);
