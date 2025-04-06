@@ -1,4 +1,4 @@
-﻿namespace Amethyst_game_engine.Core.GameObjects;
+﻿namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
 internal struct Light
 {

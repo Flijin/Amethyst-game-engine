@@ -25,7 +25,6 @@ in vec4 vertexColor;
 #ifdef USE_NORMALS
 in vec3 Normal;
 in vec3 FragPos;
-in vec3 LightPos;
 #endif
 
 out vec4 FragColor;
@@ -36,13 +35,10 @@ out vec4 FragColor;
 //uniform vec3 specularColor;
 //uniform float shininess;
 
-vec3 BlinnPhong(vec3 N, vec3 L, vec3 V, vec3 lightColor, vec3 baseColor, float shininess) {
-    float diff = max(dot(N, L), 0.0);
-    vec3 diffuse = diff * baseColor * lightColor;
-    vec3 H = normalize(L + V);
-    float spec = pow(max(dot(N, H), 0.0), shininess);
-    vec3 specular = spec * lightColor;
-    vec3 ambient = 0.1 * lightColor;
+vec3 BlinnPhong(vec3 N, vec3 L, vec3 V, vec3 lightColor, vec3 baseColor, float shininess, float ambientStrength, float specularStrength) {
+    vec3 ambient = ambientStrength * baseColor * lightColor;
+    vec3 diffuse = max(dot(N, L), 0.0) * baseColor * lightColor;
+    vec3 specular = pow(max(dot(N, normalize(L + V)), 0.0), shininess) * specularStrength * lightColor;
 
     return ambient + diffuse + specular;
 }
@@ -79,12 +75,15 @@ resultFragColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 #ifdef USE_NORMALS
     vec3 lightColor = vec3(1);
+    vec3 lightPos = vec3(100);
+    float ambientStrength = 0.1;
+    float specularStrength = 0.5;
 
     vec3 N = normalize(Normal);
-    vec3 L = normalize(LightPos - FragPos);
+    vec3 L = normalize(lightPos - FragPos);
     vec3 V = normalize(-FragPos);
 
-    resultFragColor = vec4(BlinnPhong(N, L, FragPos, lightColor, vec3(resultFragColor), 32), resultFragColor.w);
+    resultFragColor = vec4(BlinnPhong(N, L, V, lightColor, vec3(resultFragColor), 32, ambientStrength, specularStrength), resultFragColor.w);
 #endif
 
 FragColor = resultFragColor;
