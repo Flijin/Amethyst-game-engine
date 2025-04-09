@@ -58,8 +58,16 @@ uniform int _numPointLights;
 uniform int _numSpotLights;
 uniform int _numDirectionalLights;
 
-layout(std140, binding = 0) uniform Lights{
+layout(std140, binding = 0) uniform DirectionalLights{
     DirectionalLight[1] directionalLights;
+};
+
+layout(std140, binding = 1) uniform PointLights{
+    PointLight[1] pointLights;
+};
+
+layout(std140, binding = 2) uniform SpotLights{
+    SpotLights[1] spotlights;
 };
 
 #endif
@@ -68,14 +76,52 @@ uniform vec3 _cameraPos;
 
 out vec4 FragColor;
 
-vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos) {
+vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrengh) {
+//Потом убери
+    if (light.constant != 0.32 || light.linear != 0.1 || light.quadratic != 0.35) {
+        light.color = vec3(1.0, 0.0, 0.0);
+    }
+
+    vec3 L = normalize(light.position - fragPos);
+    float dist = length(L);
+
+    float attenuation = 1.0 / (light.constant + light.linear * dist +
+    light.quadratic * dist * dist);
+
+    vec3 N = normalize(normal);
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(V + L);
+    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
+
+    return (diffuse + specular) * attenuation;
+
+
+//    vec3 L = normalize(light.position - fragPos);
+//    float dist = length(L);
+//
+//    float attenuation = 1.0 / (light.constant + light.linear * dist +
+//    light.quadratic * dist * dist);
+//
+//    vec3 N = normalize(normal);
+//    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+//
+//    vec3 V = normalize(viewPos - fragPos);
+//    vec3 H = normalize(V + L);
+//    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
+//
+//    return (diffuse + specular) * attenuation;
+}
+
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrengh) {
     vec3 N = normalize(normal);
     vec3 L = normalize(-light.direction);
-    vec3 V = normalize(_cameraPos - fragPos);
+    vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(V + L);
 
     vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
-    vec3 specular = pow(max(dot(N, H), 0.0), 64) * light.color * light.intensity;
+    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
 
     return diffuse + specular;
 }
@@ -116,9 +162,13 @@ float ambientStrengh = 0.1;
 
 vec3 resColorVec3 = vec3(resultFragColor);
 
-vec3 test = CalculateDirectionalLight(directionalLights[0], Normal, FragPos);
+//vec3 test = CalculateDirectionalLight(directionalLights[0], Normal, FragPos, _cameraPos, 1.0);
+//resColorVec3 *= test;
+
+vec3 test = CalculatePointLight(pointLights[0], Normal, FragPos, _cameraPos, 1.0);
 resColorVec3 *= test;
-resColorVec3 += (ambientStrengh * directionalLights[0].color);
+
+resColorVec3 += (ambientStrengh * pointLights[0].color);
 
 resultFragColor = vec4(resColorVec3, resultFragColor.w);
 

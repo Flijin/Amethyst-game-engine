@@ -1,9 +1,26 @@
 ﻿using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
-class PointLight(Color color, Vector3 direction, float attenuation, Vector3 position)
+[StructLayout(LayoutKind.Explicit)]
+public struct PointLight
 {
-    public float Attenuation { get; set; } = attenuation;
-    public Vector3 Position { get; set; } = position;
+    [FieldOffset(0)]
+    public Vector3 position;
+
+    [FieldOffset(16)]
+    public Vector3 color;
+
+    [FieldOffset(28)]
+    public float intensity;
+
+    [FieldOffset(32)]
+    public float constant;
+
+    [FieldOffset(36)]
+    public float linear;
+
+    [FieldOffset(40)]
+    public float quadratic;
 }
