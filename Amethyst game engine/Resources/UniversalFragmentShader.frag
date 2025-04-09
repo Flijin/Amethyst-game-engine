@@ -1,5 +1,7 @@
-﻿#version 430 core
+﻿#version 330 core
 
+
+#pragma optimize(off)
 
 struct PointLight {
     vec3 position;
@@ -56,56 +58,26 @@ uniform int _numPointLights;
 uniform int _numSpotLights;
 uniform int _numDirectionalLights;
 
-layout(std430, binding = 0) buffer Lights{
-    int numPointLights;
-    int numSpotLights;
-    int numDirectionalLights;
-    DirectionalLight directionalLights[];
-    PointLight pointLights[];
-    SpotLight spotLights[];
-}
+layout(std140, binding = 0) uniform Lights{
+    DirectionalLight[1] directionalLights;
+};
+
 #endif
+
+uniform vec3 _cameraPos;
 
 out vec4 FragColor;
 
-vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir, float shininess) {
-    vec3 lightDir = normalize(-light.direction);
-    vec3 diffuse = light.color * max(dot(normal, lightDir), 0.0) * light.intensity;
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    vec3 specular = light.color * pow(max(dot(normal, halfwayDir), 0.0), shininess);
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos) {
+    vec3 N = normalize(normal);
+    vec3 L = normalize(-light.direction);
+    vec3 V = normalize(_cameraPos - fragPos);
+    vec3 H = normalize(V + L);
+
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+    vec3 specular = pow(max(dot(N, H), 0.0), 64) * light.color * light.intensity;
 
     return diffuse + specular;
-}
-
-vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
-    vec3 lightDir = normalize(light.position - fragPos);
-    float dist = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic
-    * dist * dist);
-
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    float diffuse = max(dot(normal, lightDir), 0.0);
-    float specular = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-
-    return (diffuse + specular) * light.color * light.intensity + attenuation;
-}
-
-vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, float shininess) {
-    vec3 lightDir = normalize(light.position - fragPos);
-
-    float theta = dot(lightDir, normalize(-light.direction));
-    float epsilon = light.innerCuttof - light.outerCuttof;
-    float intensity = clamp((theta - light.outerCuttof) / epsilon, 0.0, 1.0);
-
-    float dist = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic
-    * dist * dist);
-
-    vec3 diffuse = light.color * max(dot(normal, lightDir), 0.0) * intensity;
-    vec3 halfwayDir = normalize(lightDir + viewDir);
-    vec3 specular = light.color * pow(max(dot(normal, halfwayDir), 0.0), shininess) * intensity;
-
-    return (diffuse + specular) * attenuation;
 }
 
 void main() {
@@ -127,7 +99,7 @@ vec4 resultFragColor;
 
 #ifdef USE_BASE_COLOR_FACTOR
     #ifdef FRAG_COLOR_INIT
-        resultFragColor = mix(FragColor, _baseColorFactor, 0.5);
+        resultFragColor = mix(resultFragColor, _baseColorFactor, 0.5);
     #else
         resultFragColor = _baseColorFactor;
         #define FRAG_COLOR_INIT;
@@ -140,24 +112,15 @@ resultFragColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 #ifdef USE_NORMALS
 
-    float ambientStrength = 0.1;
-    resultFragColor *= ambientStrength;
+float ambientStrengh = 0.1;
 
-    vec3 N = normalize(Normal);
-    vec3 L = normalize(lightPos - FragPos);
-    vec3 V = normalize(-FragPos);
+vec3 resColorVec3 = vec3(resultFragColor);
 
-    for (int i = 0; i < _numDirectionalLights; i++) {
-        
-    }
+vec3 test = CalculateDirectionalLight(directionalLights[0], Normal, FragPos);
+resColorVec3 *= test;
+resColorVec3 += (ambientStrengh * directionalLights[0].color);
 
-    for (int i = 0; i < _numPointLights; i++) {
-
-    }
-
-    for (int i = 0; i < _numSpotLights; i++) {
-
-    }
+resultFragColor = vec4(resColorVec3, resultFragColor.w);
 
 #endif
 

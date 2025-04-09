@@ -2,7 +2,7 @@
 
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
-class Spotlight : DirectionalLight
+class Spotlight
 {
     private float _innerCutoff;
     private float _outerCutoff;
@@ -23,7 +23,7 @@ class Spotlight : DirectionalLight
 
     public Vector3 Position { get; set; }
 
-    public Spotlight(Color color, Vector3 direction, Vector3 position, float innerCutoff, float outerCutoff) : base(color, direction)
+    public Spotlight(Color color, Vector3 direction, Vector3 position, float innerCutoff, float outerCutoff)
     {
         Position = position;
         InnerCutoff = innerCutoff;

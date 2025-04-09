@@ -1,7 +1,9 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Core.GameObjects;
+using Amethyst_game_engine.Core.GameObjects.Lights;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core;
 
@@ -13,6 +15,9 @@ public abstract class BaseScene : IDisposable
     private readonly List<StandartCameraController> _cameraControllers = [];
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Dictionary<string, Camera> _cameras = [];
+    private readonly List<DirectionalLight> _directionalLights = [];
+
+    private readonly int _dirLightsUBO = GL.GenBuffer();
 
     private Vector3 _backgroundColor = new(0.3f, 0.3f, 0.3f);
     private bool _disposed;
@@ -134,6 +139,16 @@ public abstract class BaseScene : IDisposable
         return [.. result];
     }
     #endregion
+
+
+    public void AddDirectionalLight(Vector3 direction, Color color, float intensity, string name)
+    {
+        //GL.BindBuffer(BufferTarget.UniformBuffer, _dirLightsUBO);
+        //GL.BufferData(BufferTarget.UniformBuffer, Marshal.SizeOf<DirectionalLight>() * lights.Length, lights, BufferUsageHint.DynamicDraw);
+        //GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, ubo);
+
+        //_directionalLights
+    }
 
     internal void ChangeGlobalRenderSettings(uint globalSettings)
     {

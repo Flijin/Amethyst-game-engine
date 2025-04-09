@@ -1,6 +1,5 @@
 ﻿#version 330 core
 
-
 layout (location = 0) in vec3 _position;
 
 #ifdef USE_MESH_MATRIX
@@ -24,6 +23,7 @@ layout (location = 2) in vec2 _albedoCoords;
 #ifdef USE_NORMALS
 out vec3 Normal;
 out vec3 FragPos;
+
 layout (location = 3) in vec3 _normal;
 #endif
 
@@ -39,14 +39,15 @@ void main() {
 #ifdef USE_MESH_MATRIX
     gl_Position = projection * view * model * mesh * vec4(_position, 1.0);
     #ifdef USE_NORMALS
-        Normal = mat3(transpose(inverse(view * model * mesh))) * _normal;
-        FragPos = vec3(view * model * mesh * vec4(_position, 1.0));
+        mat4 modelView = model * mesh;
+        Normal = mat3(transpose(inverse(modelView))) * _normal;
+        FragPos = vec3(modelView * vec4(_position, 1.0));
     #endif
 #else
     gl_Position = projection * view * model * vec4(_position, 1.0);
     #ifdef USE_NORMALS
-        Normal = mat3(transpose(inverse(view * model))) * _normal;
-        FragPos = vec3(view * model * vec4(_position, 1.0));
+        Normal = mat3(transpose(inverse(model))) * _normal;
+        FragPos = vec3(model * vec4(_position, 1.0));
     #endif
 #endif
 }

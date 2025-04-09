@@ -1,27 +1,17 @@
 ﻿using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
-public class DirectionalLight
+[StructLayout(LayoutKind.Explicit)]
+public struct DirectionalLight
 {
-    internal Quaternion _direction;
-    private Vector3 _directionVec;
+    [FieldOffset(0)]
+    public Vector3 direction;
 
-    public Color Color { get; set; }
-    public Vector3 Direction
-    {
-        get => _directionVec;
+    [FieldOffset(16)]
+    public Vector3 color;
 
-        set
-        {
-            _directionVec = value;
-            _direction = new(value.X, value.Y, value.Z);
-        }
-    }
-
-    public DirectionalLight(Color color, Vector3 direction)
-    {
-        Color = color;
-        Direction = direction;
-    }
+    [FieldOffset(28)]
+    public float intensity;
 }

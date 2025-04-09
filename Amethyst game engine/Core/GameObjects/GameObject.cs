@@ -2,6 +2,7 @@
 using Amethyst_game_engine.Models;
 using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
+using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 
@@ -33,6 +34,8 @@ public abstract class GameObject : DrawableObject
         float* viewMatrix;
         float* projectionMatrix;
 
+        Vector3 cameraPos = cam is not null ? cam.Position : Vector3.Zero;
+
         if (cam is null || _useCamera == false)
         {
             viewMatrix = Mathematics.IDENTITY_MATRIX;
@@ -54,6 +57,7 @@ public abstract class GameObject : DrawableObject
                 primitive.activeShader.SetMatrix4("model", ModelMatrix);
                 primitive.activeShader.SetMatrix4("view", viewMatrix);
                 primitive.activeShader.SetMatrix4("projection", projectionMatrix);
+                primitive.activeShader.SetVector3("_cameraPos", cameraPos);
 
                 if (_useMeshMatrix)
                     primitive.activeShader.SetMatrix4("mesh", mesh.Matrix);
