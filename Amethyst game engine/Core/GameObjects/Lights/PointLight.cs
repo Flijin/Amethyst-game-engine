@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 48)]
 public struct PointLight
 {
     [FieldOffset(0)]

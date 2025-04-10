@@ -1,32 +1,32 @@
 ﻿using OpenTK.Mathematics;
+using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
-class Spotlight
+[StructLayout(LayoutKind.Explicit, Size = 64)]
+public struct Spotlight
 {
-    private float _innerCutoff;
-    private float _outerCutoff;
+    [FieldOffset(0)]
+    public Vector3 position;
 
-    public float InnerCutoff
-    {
-        get => _innerCutoff;
+    [FieldOffset(16)]
+    public Vector3 direction;
 
-        set => _innerCutoff = Mathematics.Clamp(value, 0, 180);
-    }
+    [FieldOffset(32)]
+    public Vector3 color;
 
-    public float OuterCutoff
-    {
-        get => _outerCutoff;
+    [FieldOffset(44)]
+    public float innerCutOff;
 
-        set => _outerCutoff = Mathematics.Clamp(value, 0, 180);
-    }
+    [FieldOffset(48)]
+    public float outerCutOff;
 
-    public Vector3 Position { get; set; }
+    [FieldOffset(52)]
+    public float constant;
 
-    public Spotlight(Color color, Vector3 direction, Vector3 position, float innerCutoff, float outerCutoff)
-    {
-        Position = position;
-        InnerCutoff = innerCutoff;
-        OuterCutoff = outerCutoff;
-    }
+    [FieldOffset(56)]
+    public float linear;
+
+    [FieldOffset(60)]
+    public float quadratic;
 }
