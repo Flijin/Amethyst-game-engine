@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.ES30;
+﻿using Amethyst_game_engine.Core.GameObjects.Lights;
+using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -102,6 +103,9 @@ internal class Shader : IDisposable
         StringBuilder target = new();
 
         target.AppendLine(shaderFlags.ToMacrosString());
+
+        if ((shaderFlags & 2) != 0)
+            target.AppendLine(LightManager.GetDefines());
 
         return target;
     }

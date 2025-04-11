@@ -12,7 +12,7 @@ public readonly struct Color
     public static Color Blue => new(0, 0, 255);
     public static Color Cyan => new(0, 255, 255);
     public static Color Magenta => new(255, 0, 255);
-    public static Color Yellow => new(0, 0, 255);
+    public static Color Yellow => new(255, 255, 0);
     public static Color Black => new(0, 0, 0);
     public static Color White => new(255, 255, 255);
     public static Color Gray => new(127, 127, 127);
@@ -24,10 +24,10 @@ public readonly struct Color
 
     internal readonly bool isNoneColor;
 
-    private readonly float r;
-    private readonly float g;
-    private readonly float b;
-    private readonly float a;
+    internal readonly float r;
+    internal readonly float g;
+    internal readonly float b;
+    internal readonly float a;
 
     public Color() => isNoneColor = true;
 

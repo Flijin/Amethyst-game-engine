@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
 [StructLayout(LayoutKind.Explicit, Size = 48)]
-public struct PointLight
+internal struct PointLight
 {
     [FieldOffset(0)]
     public Vector3 position;
@@ -23,4 +23,7 @@ public struct PointLight
 
     [FieldOffset(40)]
     public float quadratic;
+
+    [FieldOffset(44)]
+    private float _pad;
 }

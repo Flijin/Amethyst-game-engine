@@ -309,10 +309,10 @@ public class GLBImporter
                 primitiveMaterial.materialKey |= (uint)RenderSettings.VertexColors;
             }
 
-            if ((_renderSettings & (uint)RenderSettings.Normals) != 0 && attributes.TryGetValue("NORMAL", out object? normal))
+            if ((_renderSettings & (uint)RenderSettings.Lighting) != 0 && attributes.TryGetValue("NORMAL", out object? normal))
             {
                 AddAttribute(buffers, ReadAccessor((int)normal, BufferTarget.ArrayBuffer), 3);
-                primitiveMaterial.materialKey |= (uint)RenderSettings.Normals;
+                primitiveMaterial.materialKey |= (uint)RenderSettings.Lighting;
             }
 
             if (primitivesDicts[i].TryGetValue("material", out object? material))

@@ -1,6 +1,7 @@
 ﻿using Amethyst_game_engine.Core;
 using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
+using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Models;
 
@@ -32,6 +33,8 @@ internal struct Primitive(int vao, Material material)
     private readonly Dictionary<string, float> _uniforms_float = [];
     private readonly Dictionary<TextureUnit, int> _usedTextureUnits = [];
 
+    private bool _useLightning;
+
     private Color _baseColorFactor;
 
 #nullable disable
@@ -49,12 +52,28 @@ internal struct Primitive(int vao, Material material)
 
     public void BuildShader(uint renderSettings, uint useMeshMatrixKey)
     {
-        activeShader = ShadersPool.GetShader(Material.materialKey & renderSettings | useMeshMatrixKey);
+        var flags = Material.materialKey & renderSettings;
+
+        if ((flags & (1 << 1)) != 0)
+            _useLightning = true;
+        else
+            _useLightning = false;
+
+        activeShader = ShadersPool.GetShader(flags | useMeshMatrixKey);
         LimitShaderData(renderSettings);
     }
 
-    public readonly void DrawPrimitive()
+    public readonly void DrawPrimitive(Vector3 cameraPos, int countOfDirLights, int countOfPointLights, int countOfSpotLights)
     {
+        if (_useLightning)
+        {
+            activeShader.SetVector3("_cameraPos", cameraPos);
+
+            activeShader.SetInt("_numDirectionalLights", countOfDirLights);
+            activeShader.SetInt("_numPointLights", countOfPointLights);
+            activeShader.SetInt("_numSpotLights", countOfSpotLights);
+        }
+
         activeShader.SetFloats(_uniforms_float);
         activeShader.SetInts(_uniforms_int);
 

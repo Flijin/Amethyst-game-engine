@@ -1,12 +1,11 @@
 ﻿#version 330 core
 
 
-#pragma optimize(off)
-
 struct SpotLight {
     vec3 position;
     vec3 direction;
     vec3 color;
+    float intensity;
     float innerCutOff;
     float outerCutOff;
     float constant;
@@ -31,7 +30,7 @@ struct DirectionalLight {
 
 #ifdef USE_ALBEDO_MAP
 uniform sampler2D _albedoTexture;
-in vec2 albedoCoords;
+in vec2 AlbedoCoords;
 #endif
 
 #ifdef USE_BASE_COLOR_FACTOR
@@ -47,32 +46,31 @@ uniform float _roughnessFactor;
 #endif
 
 #ifdef USE_VERTEX_COLORS
-in vec4 vertexColor;
+in vec4 VertexColor;
 #endif
 
-#ifdef USE_NORMALS
+#ifdef USE_LIGHTING
 in vec3 Normal;
 in vec3 FragPos;
 
-uniform int _numPointLights;
 uniform int _numSpotLights;
+uniform int _numPointLights;
 uniform int _numDirectionalLights;
+uniform vec3 _cameraPos;
 
 layout(std140, binding = 0) uniform DirectionalLights{
-    DirectionalLight[2] directionalLights;
+    DirectionalLight[DIRECTIONAL_LIGHTS_COUNT] _directionalLights;
 };
 
 layout(std140, binding = 1) uniform PointLights{
-    PointLight[2] pointLights;
+    PointLight[POINT_LIGHTS_COUNT] _pointLights;
 };
 
 layout(std140, binding = 2) uniform SpotLights{
-    SpotLight[2] spotlights;
+    SpotLight[SPOT_LIGHT_COUNT] _spotlights;
 };
 
 #endif
-
-uniform vec3 _cameraPos;
 
 out vec4 FragColor;
 
@@ -88,11 +86,11 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos
     light.quadratic * (dist * dist));
 
     vec3 N = normalize(normal);
-    vec3 diffuse = max(dot(N, L), 0.0) * light.color;
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
 
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(L + V);
-    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * specularStrengh;
+    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
 
     return (diffuse + specular) * attenuation * intensity;
 }
@@ -130,15 +128,15 @@ void main() {
 vec4 resultFragColor;
 
 #ifdef USE_VERTEX_COLORS
-    resultFragColor = vertexColor;
+    resultFragColor = VertexColor;
     #define FRAG_COLOR_INIT;
 #endif
 
 #ifdef USE_ALBEDO_MAP
     #ifdef FRAG_COLOR_INIT
-        resultFragColor = mix(vertexColor, texture(_albedoTexture, albedoCoords), 0.5);
+        resultFragColor = mix(VertexColor, texture(_albedoTexture, AlbedoCoords), 0.5);
     #else
-        resultFragColor = texture(_albedoTexture, albedoCoords);
+        resultFragColor = texture(_albedoTexture, AlbedoCoords);
         #define FRAG_COLOR_INIT;
     #endif
 #endif
@@ -156,17 +154,39 @@ vec4 resultFragColor;
 resultFragColor = vec4(0.5, 0.5, 0.5, 1.0);
 #endif
 
-#ifdef USE_NORMALS
+#ifdef USE_LIGHTING
 
 float ambientStrengh = 0.1;
 
-vec3 resColorVec3 = vec3(resultFragColor);
+vec3 resColorVec3 = vec3(0);
+vec3 temp;
 
-vec3 test = CalculateSpotLight(spotlights[1], Normal, FragPos, _cameraPos, 1.0);
-resColorVec3 *= test;
+for (int i = 0; i < _numDirectionalLights; i++) {
+    if (_directionalLights[i].color.x != -1.0) {
+        temp = CalculateDirectionalLight(_directionalLights[i], Normal, FragPos, _cameraPos, 1.0);
+        temp *= vec3(resultFragColor);
+        resColorVec3 += temp;
+    }
+}
+
+for (int i = 0; i < _numPointLights; i++) {
+    if (_pointLights[i].color.x != -1.0) {
+        temp = CalculatePointLight(_pointLights[0], Normal, FragPos, _cameraPos, 1.0);
+        temp *= vec3(resultFragColor);
+        resColorVec3 += temp;
+    }
+}
+
+for (int i = 0; i < _numSpotLights; i++) {
+    if (_spotlights[i].color.x != -1.0) {
+        temp = CalculateSpotLight(_spotlights[i], Normal, FragPos, _cameraPos, 1.0);
+        temp *= vec3(resultFragColor);
+        resColorVec3 += temp;
+    }
+}
+
 
 resColorVec3 += (ambientStrengh * vec3(1));
-
 resultFragColor = vec4(resColorVec3, resultFragColor.w);
 
 #endif

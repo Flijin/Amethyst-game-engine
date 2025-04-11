@@ -1,26 +1,27 @@
 ﻿#version 330 core
 
+
 layout (location = 0) in vec3 _position;
 
 #ifdef USE_MESH_MATRIX
-uniform mat4 mesh;
+uniform mat4 _mesh;
 #endif
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+uniform mat4 _model;
+uniform mat4 _view;
+uniform mat4 _projection;
 
 #ifdef USE_VERTEX_COLORS
-out vec4 vertexColor;
+out vec4 VertexColor;
 layout (location = 1) in vec3 _vertexColor;
 #endif
 
 #ifdef USE_ALBEDO_MAP
-out vec2 albedoCoords;
+out vec2 AlbedoCoords;
 layout (location = 2) in vec2 _albedoCoords;
 #endif
 
-#ifdef USE_NORMALS
+#ifdef USE_LIGHTING
 out vec3 Normal;
 out vec3 FragPos;
 
@@ -29,25 +30,25 @@ layout (location = 3) in vec3 _normal;
 
 void main() {
 #ifdef USE_ALBEDO_MAP
-    albedoCoords = _albedoCoords;
+    AlbedoCoords = _albedoCoords;
 #endif
 
 #ifdef USE_VERTEX_COLORS
-    vertexColor = vec4(_vertexColor, 1.0);
+    VertexColor = vec4(_vertexColor, 1.0);
 #endif
 
 #ifdef USE_MESH_MATRIX
-    gl_Position = projection * view * model * mesh * vec4(_position, 1.0);
-    #ifdef USE_NORMALS
-        mat4 modelView = model * mesh;
+    gl_Position = _projection * _view * _model * _mesh * vec4(_position, 1.0);
+    #ifdef USE_LIGHTING
+        mat4 modelView = _model * _mesh;
         Normal = mat3(transpose(inverse(modelView))) * _normal;
         FragPos = vec3(modelView * vec4(_position, 1.0));
     #endif
 #else
-    gl_Position = projection * view * model * vec4(_position, 1.0);
-    #ifdef USE_NORMALS
-        Normal = mat3(transpose(inverse(model))) * _normal;
-        FragPos = vec3(model * vec4(_position, 1.0));
+    gl_Position = _projection * _view * _model * vec4(_position, 1.0);
+    #ifdef USE_LIGHTING
+        Normal = mat3(transpose(inverse(_model))) * _normal;
+        FragPos = vec3(_model * vec4(_position, 1.0));
     #endif
 #endif
 }

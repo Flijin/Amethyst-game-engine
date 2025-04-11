@@ -14,7 +14,7 @@ internal static class GLSLMacrosExtensions
     {
         //------RenderSettings------//
         [1] = "USE_VERTEX_COLORS",
-        [1 << 1] = "USE_NORMALS",
+        [1 << 1] = "USE_LIGHTING",
         [1 << 2] = "USE_ALBEDO_MAP",
         [1 << 3] = "USE_METALLIC_ROUGHNESS_MAP",
         [1 << 4] = "USE_NORMAL_MAP",

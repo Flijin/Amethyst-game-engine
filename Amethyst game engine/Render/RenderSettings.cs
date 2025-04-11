@@ -5,7 +5,7 @@ public enum RenderSettings : uint
 {
     None = 0,
     VertexColors = 1,
-    Normals = 1 << 1,
+    Lighting = 1 << 1,
 
     AlbedoMap = 1 << 2,
     MetallicRoughnessMap = 1 << 3,

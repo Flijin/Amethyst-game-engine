@@ -94,11 +94,11 @@ public class GroupOfObjects : DrawableObject, IDisposable
         }
     }
 
-    internal override sealed void DrawObject(Camera? cam)
+    internal override sealed void DrawObject(Camera? cam, int countOfDirLights, int countOfPointLights, int countOfSpotLights)
     {
         foreach (var gameObject in _gameObjects)
         {
-            gameObject.DrawObject(cam);
+            gameObject.DrawObject(cam, countOfDirLights, countOfPointLights, countOfSpotLights);
         }
     }
     public override sealed void ChangeRenderSettings(RenderSettings settings)

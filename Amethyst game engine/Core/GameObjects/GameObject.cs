@@ -27,14 +27,12 @@ public abstract class GameObject : DrawableObject
         _useMeshMatrix = _objectModel.UseMeshMatrix();
     }
 
-    internal override unsafe sealed void DrawObject(Camera? cam)
+    internal override unsafe sealed void DrawObject(Camera? cam, int countOfDirLights, int countOfPointLights, int countOfSpotLights)
     {
         var meshes = _objectModel.GetMeshes();
 
         float* viewMatrix;
         float* projectionMatrix;
-
-        Vector3 cameraPos = cam is not null ? cam.Position : Vector3.Zero;
 
         if (cam is null || _useCamera == false)
         {
@@ -54,15 +52,17 @@ public abstract class GameObject : DrawableObject
                 GL.BindVertexArray(primitive.vao);
 
                 primitive.activeShader.Use();
-                primitive.activeShader.SetMatrix4("model", ModelMatrix);
-                primitive.activeShader.SetMatrix4("view", viewMatrix);
-                primitive.activeShader.SetMatrix4("projection", projectionMatrix);
-                primitive.activeShader.SetVector3("_cameraPos", cameraPos);
+                primitive.activeShader.SetMatrix4("_model", ModelMatrix);
+                primitive.activeShader.SetMatrix4("_view", viewMatrix);
+                primitive.activeShader.SetMatrix4("_projection", projectionMatrix);
 
                 if (_useMeshMatrix)
-                    primitive.activeShader.SetMatrix4("mesh", mesh.Matrix);
+                    primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
 
-                primitive.DrawPrimitive();
+                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero,
+                                        countOfDirLights,
+                                        countOfPointLights,
+                                        countOfSpotLights);
             }
         }
     }

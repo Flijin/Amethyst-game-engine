@@ -3,8 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core.GameObjects.Lights;
 
-[StructLayout(LayoutKind.Explicit, Size = 64)]
-public struct Spotlight
+[StructLayout(LayoutKind.Explicit, Size = 80)]
+internal struct Spotlight
 {
     [FieldOffset(0)]
     public Vector3 position;
@@ -16,17 +16,20 @@ public struct Spotlight
     public Vector3 color;
 
     [FieldOffset(44)]
-    public float innerCutOff;
+    public float intensity;
 
     [FieldOffset(48)]
-    public float outerCutOff;
+    public float innerCutOff;
 
     [FieldOffset(52)]
-    public float constant;
+    public float outerCutOff;
 
     [FieldOffset(56)]
-    public float linear;
+    public float constant;
 
     [FieldOffset(60)]
+    public float linear;
+
+    [FieldOffset(64)]
     public float quadratic;
 }
