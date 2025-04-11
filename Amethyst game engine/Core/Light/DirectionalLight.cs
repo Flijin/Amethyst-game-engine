@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
-namespace Amethyst_game_engine.Core.GameObjects.Lights;
+namespace Amethyst_game_engine.Core.Light;
 
 [StructLayout(LayoutKind.Explicit, Size = 32)]
 internal struct DirectionalLight

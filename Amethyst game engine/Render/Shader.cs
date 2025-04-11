@@ -1,4 +1,4 @@
-﻿using Amethyst_game_engine.Core.GameObjects.Lights;
+﻿using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;

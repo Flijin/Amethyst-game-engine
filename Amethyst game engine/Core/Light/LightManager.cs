@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Amethyst_game_engine.Core.GameObjects.Lights;
+namespace Amethyst_game_engine.Core.Light;
 
 internal static class LightManager
 {

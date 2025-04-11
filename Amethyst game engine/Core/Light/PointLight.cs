@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
-namespace Amethyst_game_engine.Core.GameObjects.Lights;
+namespace Amethyst_game_engine.Core.Light;
 
 [StructLayout(LayoutKind.Explicit, Size = 48)]
 internal struct PointLight
@@ -23,7 +23,4 @@ internal struct PointLight
 
     [FieldOffset(40)]
     public float quadratic;
-
-    [FieldOffset(44)]
-    private float _pad;
 }

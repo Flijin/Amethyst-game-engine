@@ -50,6 +50,9 @@ in vec4 VertexColor;
 #endif
 
 #ifdef USE_LIGHTING
+
+int shininess = MAX_SHININESS;
+
 in vec3 Normal;
 in vec3 FragPos;
 
@@ -74,7 +77,7 @@ layout(std140, binding = 2) uniform SpotLights{
 
 out vec4 FragColor;
 
-vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrengh) {
+vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
     vec3 L = normalize(light.position - fragPos);
     float theta = dot(L, normalize(light.direction));
 
@@ -90,12 +93,12 @@ vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos
 
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(L + V);
-    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
 
     return (diffuse + specular) * attenuation * intensity;
 }
 
-vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrengh) {
+vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
     vec3 L = normalize(light.position - fragPos);
     float dist = length(L);
 
@@ -107,19 +110,19 @@ vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewP
 
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(V + L);
-    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
 
     return (diffuse + specular) * attenuation;
 }
 
-vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrengh) {
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
     vec3 N = normalize(normal);
     vec3 L = normalize(-light.direction);
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(V + L);
 
     vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
-    vec3 specular = pow(max(dot(N, H), 0.0), 32) * light.color * light.intensity * specularStrengh;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
 
     return diffuse + specular;
 }
@@ -156,14 +159,14 @@ resultFragColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 #ifdef USE_LIGHTING
 
-float ambientStrengh = 0.1;
+float ambientStrength = AMBIENT_STHENGTH;
 
 vec3 resColorVec3 = vec3(0);
 vec3 temp;
 
 for (int i = 0; i < _numDirectionalLights; i++) {
     if (_directionalLights[i].color.x != -1.0) {
-        temp = CalculateDirectionalLight(_directionalLights[i], Normal, FragPos, _cameraPos, 1.0);
+        temp = CalculateDirectionalLight(_directionalLights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
         temp *= vec3(resultFragColor);
         resColorVec3 += temp;
     }
@@ -171,7 +174,7 @@ for (int i = 0; i < _numDirectionalLights; i++) {
 
 for (int i = 0; i < _numPointLights; i++) {
     if (_pointLights[i].color.x != -1.0) {
-        temp = CalculatePointLight(_pointLights[0], Normal, FragPos, _cameraPos, 1.0);
+        temp = CalculatePointLight(_pointLights[0], Normal, FragPos, _cameraPos, 1.0, shininess);
         temp *= vec3(resultFragColor);
         resColorVec3 += temp;
     }
@@ -179,14 +182,18 @@ for (int i = 0; i < _numPointLights; i++) {
 
 for (int i = 0; i < _numSpotLights; i++) {
     if (_spotlights[i].color.x != -1.0) {
-        temp = CalculateSpotLight(_spotlights[i], Normal, FragPos, _cameraPos, 1.0);
+        temp = CalculateSpotLight(_spotlights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
         temp *= vec3(resultFragColor);
         resColorVec3 += temp;
     }
 }
 
+#if USE_MONOCHROME_AMBIENT == True
+resColorVec3 += (ambientStrength * vec3(1));
+#else
+resColorVec3 += (ambientStrength * vec3(resultFragColor));
+#endif
 
-resColorVec3 += (ambientStrengh * vec3(1));
 resultFragColor = vec4(resColorVec3, resultFragColor.w);
 
 #endif

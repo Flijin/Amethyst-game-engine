@@ -1,6 +1,6 @@
 ﻿using Amethyst_game_engine.CameraModules;
 using Amethyst_game_engine.Core.GameObjects;
-using Amethyst_game_engine.Core.GameObjects.Lights;
+using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 using System.Drawing;

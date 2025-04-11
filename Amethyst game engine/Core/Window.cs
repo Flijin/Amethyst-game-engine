@@ -6,7 +6,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using Amethyst_game_engine.Render;
 using System.ComponentModel;
 using System.Diagnostics;
-using Amethyst_game_engine.Core.GameObjects.Lights;
+using Amethyst_game_engine.Core.Light;
 
 namespace Amethyst_game_engine.Core;
 

@@ -1,5 +1,6 @@
 ﻿//#define DEBUG_MODE
 
+using System.Globalization;
 using System.Text;
 
 namespace Amethyst_game_engine.Render;
@@ -46,6 +47,11 @@ internal static class GLSLMacrosExtensions
 
             startDigit <<= 1;
         }
+
+        builder.Append($"#define MAX_SHININESS {GlobalRenderSettings.MaxShininess}" + "\r\n");
+        builder.Append($"#define AMBIENT_STHENGTH {GlobalRenderSettings.AmbientStrength.ToString(CultureInfo.InvariantCulture)}" + "\r\n");
+        builder.Append($"#define USE_MONOCHROME_AMBIENT {GlobalRenderSettings.UseMonochromeAmbient}" + "\r\n");
+
 
 #if DEBUG_MODE
         System.Diagnostics.Debug.WriteLine(builder + " {0} times called", ++_timesCalled);
