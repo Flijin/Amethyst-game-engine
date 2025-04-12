@@ -4,6 +4,9 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Amethyst_game_engine.Render;
+using System.ComponentModel;
+using System.Diagnostics;
+using Amethyst_game_engine.Core.Light;
 
 namespace Amethyst_game_engine.Core;
 
@@ -11,6 +14,11 @@ public class Window : GameWindow
 {
     private static BaseScene? _scene;
     private static float _aspectRatio;
+    private static RenderSettings _renderSettings = RenderSettings.All;
+
+    internal static int GL_MAX_UNIFORM_BLOCK_SIZE;
+    internal static int GL_MAX_UNIFORM_BLOCKS_PER_FRAGMENT_SHADER;
+    internal static int GL_MAX_UNIFORM_BUFFER_BINDINGS;
 
     private static Action<KeyboardState, float>? _keyPressedHandler;
     internal static event Action<KeyboardState, float> KeyPressedEvent
@@ -36,14 +44,16 @@ public class Window : GameWindow
     internal static new float AspectRatio => _aspectRatio;
     public static float DeltaTime { get; private set; }
 
-    public static RenderSettings RenderProps { get; set; } =
-        RenderSettings.UseColors |
-        RenderSettings.UseAlbedoMap |
-        RenderSettings.UseMetallicRoughness |
-        RenderSettings.UseNormalMap |
-        RenderSettings.UseNormals |
-        RenderSettings.UseOcclusionMap |
-        RenderSettings.UseEmissiveMap;
+    public static RenderSettings RenderKeys
+    {
+        get => _renderSettings;
+
+        set
+        {
+            _scene?.ChangeGlobalRenderSettings((uint)value);
+            _renderSettings = value;
+        }
+    }
 
     public static BaseScene? Scene
     {
@@ -74,6 +84,12 @@ public class Window : GameWindow
         Title = title;
 
         GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+        GL_MAX_UNIFORM_BLOCK_SIZE = GL.GetInteger(GetPName.MaxUniformBlockSize);
+        GL_MAX_UNIFORM_BLOCKS_PER_FRAGMENT_SHADER = GL.GetInteger(GetPName.MaxFragmentUniformBlocks);
+        GL_MAX_UNIFORM_BUFFER_BINDINGS = GL.GetInteger(GetPName.MaxUniformBufferBindings);
+
+        LightManager.SetLimitsOfLightSourses(GL_MAX_UNIFORM_BLOCK_SIZE);
     }
 
     public Window(string title)
@@ -99,12 +115,13 @@ public class Window : GameWindow
         SwapBuffers();
     }
 
-    protected override void OnUnload()
+    protected override void OnClosing(CancelEventArgs e)
     {
-        _scene?.Dispose();
-        ShadersCollection.Dispose();
+        base.OnClosing(e);
 
-        base.OnUnload();
+        Debug.WriteLine("Работает OnClosing()");
+        ShadersPool.Dispose();
+        Debug.WriteLine("Все очистилось");
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)

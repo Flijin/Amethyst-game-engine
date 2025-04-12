@@ -1,10 +1,12 @@
-﻿namespace Amethyst_game_engine.Render;
+﻿//#define DEBUG_MODE
 
-internal static class ShadersCollection
+namespace Amethyst_game_engine.Render;
+
+internal static class ShadersPool
 {
-    private static readonly Dictionary<int, Shader> _shaders = [];
+    private static readonly Dictionary<uint, Shader> _shaders = [];
 
-    public static Shader GetShader(int flags)
+    public static Shader GetShader(uint flags)
     {
         if (_shaders.TryGetValue(flags, out Shader? result))
         {
@@ -14,6 +16,11 @@ internal static class ShadersCollection
         {
             Shader shader = new(flags);
             _shaders.Add(flags, shader);
+
+#if DEBUG_MODE
+            System.Diagnostics.Debug.WriteLine($"A shader was built, key: {Convert.ToString(flags, 2)}");
+#endif
+
             return shader;
         }
     }

@@ -1,4 +1,6 @@
-﻿using OpenTK.Mathematics;
+﻿using Amethyst_game_engine.Core;
+using OpenTK.Graphics.ES30;
+using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine;
@@ -7,6 +9,7 @@ public static partial class SystemSettings
 {
     public const int SW_HIDE = 0b_0000;
     public const int SW_SHOW = 0b_0101;
+
     private static readonly IntPtr WINDOW_DESCRIPTOR = GetConsoleWindow();
     private static Vector2i _screenResolution;
     private static int _threadsMultiplier = 16;
@@ -96,11 +99,18 @@ public static partial class SystemSettings
 
     private static (int Width, int Height) GetWindowsResolution() => (GetSystemMetrics(0), GetSystemMetrics(1));
 
-    public static void PrintErrorMessage(string message)
+    public static void PrintMessage(string message) => PrintMessage(message, MessageTypes.InformationMessage);
+
+    public static void PrintMessage(string message, MessageTypes type)
     {
         ShowWindow(SW_SHOW);
+
+        Console.ForegroundColor = (ConsoleColor)type;
         Console.WriteLine(message);
-        Environment.Exit(-1);
+        Console.ResetColor();
+
+        if (type is MessageTypes.ErrorMessage)
+            Environment.Exit(-1);
     }
 
     public static bool ShowWindow(int nCmdShow)
@@ -122,13 +132,12 @@ public static partial class SystemSettings
 
     private static void SetMaxThreads()
     {
-        int count = Environment.ProcessorCount * _threadsMultiplier;
+        var count = Environment.ProcessorCount * _threadsMultiplier;
 
         if (count < 4)
             count = 4;
 
-        ThreadPool.SetMaxThreads(count,
-                                 count / 4);
+        ThreadPool.SetMaxThreads(count, count / 4);
     }
 
     private static (int Width, int Height) GetScreenResolution()
@@ -154,8 +163,9 @@ public static partial class SystemSettings
 
     private static (int Width, int Height) GetLinuxResolution()
     {
-        IntPtr display = XOpenDisplay(IntPtr.Zero);
-        IntPtr root = XDefaultRootWindow(display);
+        var display = XOpenDisplay(IntPtr.Zero);
+        var root = XDefaultRootWindow(display);
+
         XGetWindowAttributes(display, root, out XWindowAttributes attributes);
 
         return (attributes.width, attributes.height);

@@ -23,7 +23,7 @@ internal readonly struct Mesh : IDisposable
         }
     }
 
-    public required unsafe float* Matrix
+    public unsafe float* Matrix
     {
         readonly get => _matrix;
 
@@ -37,11 +37,16 @@ internal readonly struct Mesh : IDisposable
             {
                 Unsafe.InitBlock(_matrix, 0, Mathematics.MATRIX_SIZE);
 
-                _matrix[0] = 1;
-                _matrix[5] = 1;
-                _matrix[10] = 1;
-                _matrix[15] = 1;
+                _matrix[0] = _matrix[5] = _matrix[10] = _matrix[15] = 1;
             }
+        }
+    }
+
+    public void RebuildShaders(uint renderSettings, uint useMeshMatrixKey)
+    {
+        foreach (var primitive in primitives)
+        {
+            primitive.BuildShader(renderSettings, useMeshMatrixKey);
         }
     }
 

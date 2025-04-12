@@ -20,7 +20,10 @@ internal static class Mathematics
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float DegreesToRadians(float degrees) => degrees * (float.Pi / 180);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float RadiansToDegrees(float radians) => radians * 180 / float.Pi;
 
     public static unsafe void TransposeMatrix4(float* matrix)
@@ -37,6 +40,7 @@ internal static class Mathematics
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Clamp<T>(T value, T min, T max) where T : INumber<T>
     {
         if (value < min) return min;
@@ -58,6 +62,7 @@ internal static class Mathematics
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe void CreateTranslationMatrix4(float x, float y, float z, float* res)
     {
         float* temp = stackalloc float[16]
@@ -71,6 +76,7 @@ internal static class Mathematics
         Buffer.MemoryCopy(temp, res, MATRIX_SIZE, MATRIX_SIZE);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe void CreateScaleMatrix4(float x, float y, float z, float* res)
     {
         float* temp = stackalloc float[16]

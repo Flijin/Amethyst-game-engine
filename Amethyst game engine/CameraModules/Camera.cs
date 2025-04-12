@@ -163,7 +163,7 @@ public class Camera : IDisposable
     ~Camera()
     {
         if (_disposed == false)
-            SystemSettings.PrintErrorMessage("Warning. The Dispose method was not called, RAM memory leak");
+            SystemSettings.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
     }
 
     private void CalculateVectors()
@@ -171,8 +171,8 @@ public class Camera : IDisposable
         var x = MathF.Cos(_pitch) * MathF.Cos(_yaw);
         var y = MathF.Sin(_pitch);
         var z = MathF.Cos(_pitch) * MathF.Sin(_yaw);
-        Front = Vector3.Normalize(new Vector3(x, y, z));
 
+        Front = Vector3.Normalize(new Vector3(x, y, z));
         RightVector = Vector3.Normalize(Vector3.Cross(Front, Vector3.UnitY));
         Up = Vector3.Cross(RightVector, Front);
     }

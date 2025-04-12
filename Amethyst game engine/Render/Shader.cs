@@ -1,5 +1,7 @@
-﻿using OpenTK.Graphics.ES30;
+﻿using Amethyst_game_engine.Core.Light;
+using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Amethyst_game_engine.Render;
@@ -10,7 +12,7 @@ internal class Shader : IDisposable
 
     public int Handle { get; private set; }
 
-    public Shader(int shaderFlags)
+    public Shader(uint shaderFlags)
     {
         Handle = GL.CreateProgram();
 
@@ -20,7 +22,7 @@ internal class Shader : IDisposable
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
 
-        if (code == 0) PrintErrorMessage(GL.GetProgramInfoLog(Handle));
+        if (code == 0) SystemSettings.PrintMessage("Error. " + GL.GetShaderInfoLog(Handle), Core.MessageTypes.ErrorMessage);
 
         ClearShader(vertexDescriptor);
         ClearShader(fragmentDescriptor);
@@ -34,52 +36,48 @@ internal class Shader : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Use() => GL.UseProgram(Handle);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose() => GL.DeleteProgram(Handle);
 
-    public void SetMatrix4(string name, float[,] matrix)
+    public void SetFloats(Dictionary<string, float> data)
     {
-        GL.UseProgram(Handle);
+        var pairs = data.ToArray();
 
-        var arr1D = new float[matrix.Length];
-        var index = 0;
-
-        for (int i = 0; i < matrix.GetLength(0); i++)
+        for (int i = 0; i < pairs.Length; i++)
         {
-            for (int j = 0; j < matrix.GetLength(1); j++)
-            {
-                arr1D[index++] = matrix[i, j];
-            }
+            GL.Uniform1(_uniformLocations[pairs[i].Key], pairs[i].Value);
         }
-
-        GL.UniformMatrix4(_uniformLocations[name], 1, false, arr1D);
     }
 
-    public unsafe void SetMatrix4(string name, float* matrixP)
+    public void SetInts(Dictionary<string, int> data)
     {
-        GL.UseProgram(Handle);
-        GL.UniformMatrix4(_uniformLocations[name], 1, false, matrixP);
+        var pairs = data.ToArray();
+
+        for (int i = 0; i < pairs.Length; i++)
+        {
+            GL.Uniform1(_uniformLocations[pairs[i].Key], pairs[i].Value);
+        }
     }
 
-    public void SetVector3(string name, Vector3 vec)
-    {
-        GL.UseProgram(Handle);
-        GL.Uniform3(_uniformLocations[name], vec);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void SetMatrix4(string name, float* matrixPtr) => GL.UniformMatrix4(_uniformLocations[name], 1, true, matrixPtr);
 
-    public void SetFloat(string name, float value)
-    {
-        GL.UseProgram(Handle);
-        GL.Uniform1(_uniformLocations[name], value);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetFloat(string name, float value) => GL.Uniform1(_uniformLocations[name], value);
 
-    public void SetInt(string name, int value)
-    {
-        GL.UseProgram(Handle);
-        GL.Uniform1(_uniformLocations[name], value);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetInt(string name, int value) => GL.Uniform1(_uniformLocations[name], value);
 
-    private static int CreateAndAttachShader(ShaderType type, int handle, int shaderFlags)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetVector3(string name, Vector3 vec3) => GL.Uniform3(_uniformLocations[name], vec3);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetVector4(string name, Vector4 vec4) => GL.Uniform4(_uniformLocations[name], vec4);
+
+    private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags)
     {
         StringBuilder defines = ValidateFlags(shaderFlags);
         StringBuilder sourse;
@@ -89,7 +87,7 @@ internal class Shader : IDisposable
         else
             sourse = new(Resources.UniversalFragmentShader);
 
-        sourse.Insert(19, defines.ToString());
+        sourse.Insert(21, defines.ToString());
         
         var shaderDescriptor = GL.CreateShader(type);
 
@@ -100,23 +98,14 @@ internal class Shader : IDisposable
         return shaderDescriptor;
     }
 
-    private static StringBuilder ValidateFlags(int shaderFlags)
+    private static StringBuilder ValidateFlags(uint shaderFlags)
     {
         StringBuilder target = new();
 
-        if ((shaderFlags & 0b_0001_00000000) != 0)
-            target.AppendLine("#define USE_MESH_MATRIX");
+        target.AppendLine(shaderFlags.ToMacrosString());
 
-        if ((shaderFlags & 0b_0001) != 0)
-        {
-            if ((shaderFlags & 0b_0010_00000000) != 0)
-                target.AppendLine("#define USE_STL_COLORS");
-            else
-                target.AppendLine("#define USE_COLORS");
-        }
-
-        if ((shaderFlags & 0b_0010) != 0)
-            target.AppendLine("#define USE_ALBEDO");
+        if ((shaderFlags & 2) != 0)
+            target.AppendLine(LightManager.GetDefines());
 
         return target;
     }
@@ -126,15 +115,7 @@ internal class Shader : IDisposable
         GL.CompileShader(descriptor);
         GL.GetShader(descriptor, ShaderParameter.CompileStatus, out int code);
 
-        if (code == 0) PrintErrorMessage(GL.GetShaderInfoLog(descriptor));
-    }
-
-    private static void PrintErrorMessage(string message)
-    {
-        SystemSettings.ShowWindow(SystemSettings.SW_SHOW);
-        Console.Write(message);
-        Console.ReadKey();
-        Environment.Exit(0);
+        if (code == 0) SystemSettings.PrintMessage("Error. " + GL.GetShaderInfoLog(descriptor), Core.MessageTypes.ErrorMessage);
     }
 
     private Dictionary<string, int> GetUniforms()

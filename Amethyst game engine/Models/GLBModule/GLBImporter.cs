@@ -1,12 +1,15 @@
 ﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL;
 using StbImageSharp;
+using System.Runtime.CompilerServices;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
 public class GLBImporter
 {
     private const float MAX_SUPPORTED_VERSION = 2.0f;
+    private const uint USE_MESH_MATRIX = 1 << 24;
 
     private readonly Dictionary<string, object> _jsonChunk;
     private byte[] _binChunk = [];
@@ -28,6 +31,8 @@ public class GLBImporter
     private string[] _extensionsRequired = [];
 
     private int[] _glTextures = [];
+
+    private readonly uint _renderSettings;
 
     private static readonly Dictionary<string, int> _countOfComponents = new()
     {
@@ -57,8 +62,12 @@ public class GLBImporter
         { "KHR_materials_unlit", false }
     };
 
-    public GLBImporter(string path)
+    public GLBImporter(string path) : this(path, RenderSettings.All) { }
+
+    public GLBImporter(string path, RenderSettings settings)
     {
+        _renderSettings = (uint)settings & (uint)Window.RenderKeys;
+
         BinaryReader reader = new(new FileStream(path, FileMode.Open));
 
         //Task.Factory.StartNew(ReadChunkObjects);
@@ -81,7 +90,10 @@ public class GLBImporter
         _multiScene = ReadMultiScene();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public GLBMultiScene GetMultiScene() => _multiScene;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public GLBScene GetScene() => _multiScene!.GetDefaultScene();
 
     public GLBModel? GetModel()
@@ -274,46 +286,60 @@ public class GLBImporter
     {
         lock (_meshes) { }
 
-        Dictionary<string, object>[] primitivesDicts = ((object[])_meshes[index]["primitives"]).Cast<Dictionary<string, object>>().ToArray();
+        Dictionary<string, object>[] primitivesDicts = [.. ((object[])_meshes[index]["primitives"]).Cast<Dictionary<string, object>>()];
         Primitive[] primitives = new Primitive[primitivesDicts.Length];
 
         List<int> buffers = [];
 
         for (int i = 0; i < primitivesDicts.Length; i++)
         {
-            var vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(vertexArrayObject);
+            var vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+
+            Material primitiveMaterial = new();
 
             var attributes = (Dictionary<string, object>)primitivesDicts[i]["attributes"];
             var currentBuffer = ReadAccessor((int)attributes["POSITION"], BufferTarget.ArrayBuffer);
 
             AddAttribute(buffers, currentBuffer, 0);
 
-            if (attributes.TryGetValue("COLOR_0", out object? color))
+            if ((_renderSettings & (uint)RenderSettings.VertexColors) != 0 && attributes.TryGetValue("COLOR_0", out object? color))
+            {
                 AddAttribute(buffers, ReadAccessor((int)color, BufferTarget.ArrayBuffer), 1);
+                primitiveMaterial.materialKey |= (uint)RenderSettings.VertexColors;
+            }
 
-            if (attributes.TryGetValue("TEXCOORD_0", out object? textCoord))
-                AddAttribute(buffers, ReadAccessor((int)textCoord, BufferTarget.ArrayBuffer), 2);
-
-            var primitive = new Primitive(vertexArrayObject)
+            if ((_renderSettings & (uint)RenderSettings.Lighting) != 0 && attributes.TryGetValue("NORMAL", out object? normal))
             {
-                mode = primitivesDicts[i].TryGetValue("mode", out object? modeRes) ? (int)modeRes : 4
-            };
+                AddAttribute(buffers, ReadAccessor((int)normal, BufferTarget.ArrayBuffer), 3);
+                primitiveMaterial.materialKey |= (uint)RenderSettings.Lighting;
+            }
 
-            if (primitivesDicts[i].TryGetValue("material", out object? materialIndex))
-                ReadMaterial(ref primitive, buffers, (int)materialIndex);
-
-            if (primitivesDicts[i].TryGetValue("indices", out object? indicesRes))
+            if (primitivesDicts[i].TryGetValue("material", out object? material))
             {
-                currentBuffer = ReadAccessor((int)indicesRes, BufferTarget.ElementArrayBuffer);
+                ReadMaterial(ref primitiveMaterial, attributes , buffers, (int)material);
+            }
+
+            Primitive primitive = new(vao, primitiveMaterial);
+
+            if (primitivesDicts[i].TryGetValue("mode", out object? mode))
+                primitive.mode = (OpenTK.Graphics.ES30.PrimitiveType)mode;
+
+            if (primitivesDicts[i].TryGetValue("indices", out object? indices))
+            {
+                currentBuffer = ReadAccessor((int)indices, BufferTarget.ElementArrayBuffer);
+
                 primitive.isIndexedGeometry = true;
-                primitive.componentType = currentBuffer.componentType;
+                primitive.drawElementsType = currentBuffer.componentType;
+                primitive.count = currentBuffer.count;
 
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, currentBuffer.buffer);
                 buffers.Add(currentBuffer.buffer);
+
+                primitive.isIndexedGeometry = true;
             }
 
-            primitive.count = currentBuffer.count;
+            primitive.BuildShader(_renderSettings, USE_MESH_MATRIX);
 
             primitives[i] = primitive;
 
@@ -344,7 +370,7 @@ public class GLBImporter
             count = (int)accessor["count"],
             countOfComponents = _countOfComponents[type],
             normalized = accessor.TryGetValue("normalized", out object? aNormalized) && (bool)aNormalized,
-            stride = stride, 
+            stride = stride,
         };
 
         GL.BindBuffer(target, glBuffer);
@@ -361,64 +387,42 @@ public class GLBImporter
         return result;
     }
 
-    private void ReadMaterial(ref Primitive primitive, List<int> buffers, int materialIndex)
+    private void ReadMaterial(ref Material material, Dictionary<string, object> attributes, List<int> buffers, int materialIndex)
     {
-        var material = _materials[materialIndex];
-        
-        if (material.TryGetValue("pbrMetallicRoughness", out object? mainMaterialObj) &&
-            mainMaterialObj is Dictionary<string, object> mainMaterial)
+        var pbrMetallicRoughness = (Dictionary<string, object>)_materials[materialIndex]["pbrMetallicRoughness"];
+
+        if ((_renderSettings & (uint)RenderSettings.BaseColorFactor) != 0 && pbrMetallicRoughness.TryGetValue("baseColorFactor", out object? baseColorFactor))
         {
-            var baseColorFactor = new float[4] { 1.0f, 1.0f, 1.0f, 1.0f };
-            var metallicRoughnessFactors = new float[2] { 0.0f, 0.0f };
-            var albedoHandle = -1;
-            var metallicRoughnessHandle = -1;
+            var bCFComponents = (object[])baseColorFactor;
 
-            if (mainMaterial.TryGetValue("baseColorFactor", out object? baseColorFactorObj))
-            {
-                baseColorFactor = ((object[])baseColorFactorObj).Select(el => el = Convert.ToSingle(el))
-                                                                .Cast<float>()
-                                                                .ToArray();
-            }
-
-            if (mainMaterial.TryGetValue("metallicFactor", out object? metallicFactor))
-                metallicRoughnessFactors[0] = Convert.ToSingle(metallicFactor);
-
-            if (mainMaterial.TryGetValue("roughnessFactor", out object? roughnessFactor))
-                metallicRoughnessFactors[1] = Convert.ToSingle(roughnessFactor);
-
-            if (mainMaterial.TryGetValue("baseColorTexture", out object? baseColorTextureObj) &&
-                baseColorTextureObj is Dictionary<string, object> baseColorTexture)
-            {
-                albedoHandle = _glTextures[(int)baseColorTexture["index"]];
-
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, albedoHandle);
-
-                //if (baseColorTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                //    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
-            }
-
-            if (mainMaterial.TryGetValue("metallicRoughnessTexture", out object? metallicRoughnessTextureObj) &&
-                    metallicRoughnessTextureObj is Dictionary<string, object> metallicRoughnessTexture)
-            {
-                metallicRoughnessHandle = _glTextures[(int)metallicRoughnessTexture["index"]];
-
-                GL.ActiveTexture(TextureUnit.Texture1);
-                GL.BindTexture(TextureTarget.Texture2D, metallicRoughnessHandle);
-
-                //if (metallicRoughnessTexture.TryGetValue("texCoord", out object? texCoordIndex))
-                //    AddAttribute(buffers, ReadAccessor((int)texCoordIndex, BufferTarget.ArrayBuffer), 2);
-            }
-
-            primitive.material[MaterialsProperties.Albedo] = (baseColorFactor, albedoHandle);
-            primitive.material[MaterialsProperties.MetallicRoughness] = (metallicRoughnessFactors, metallicRoughnessHandle);
-            
-            primitive.materialsUsed[0] = 1;
-            primitive.materialsUsed[1] = 1;
-
-            primitive.textureHandles[0] = albedoHandle;
-            primitive.textureHandles[1] = metallicRoughnessHandle;
+            material.BaseColorFactor = new Color(Convert.ToSingle(bCFComponents[0]),
+                                                Convert.ToSingle(bCFComponents[1]),
+                                                Convert.ToSingle(bCFComponents[2]),
+                                                Convert.ToSingle(bCFComponents[3]));
         }
+
+        //if ((_renderSettings & (uint)RenderSettings.MetallicFactor) != 0 && pbrMetallicRoughness.TryGetValue("metallicFactor", out object? metallicFactor))
+        //{
+        //    material.MetallicFactor = (float)metallicFactor;
+        //}
+
+        //if ((_renderSettings & (uint)RenderSettings.RoughnessFactor) != 0 && pbrMetallicRoughness.TryGetValue("roughnessFactor", out object? roughnessFactor))
+        //{
+        //    material.RoughnessFactor = (float)roughnessFactor;
+        //}
+
+        if ((_renderSettings & (uint)RenderSettings.AlbedoMap) != 0 && pbrMetallicRoughness.TryGetValue("baseColorTexture", out object? baseColorTexture))
+        {
+            var baseColorTextureJson = (Dictionary<string, object>)baseColorTexture;
+            var textureHandle = _glTextures[(int)baseColorTextureJson["index"]];
+            var coordinates = baseColorTextureJson.TryGetValue("texCoord", out object? texCoord) ? (int)texCoord : 0;
+
+            material.materialKey |= (uint)RenderSettings.AlbedoMap;
+            material[(uint)RenderSettings.AlbedoMap] = textureHandle;
+
+            AddAttribute(buffers, ReadAccessor((int)attributes[$"TEXCOORD_{coordinates}"], BufferTarget.ArrayBuffer), 2);
+        }
+
     }
 
     private static void AddAttribute(List<int> buffers, GLBufferInfo buffer, int location)
@@ -450,7 +454,6 @@ public class GLBImporter
             for (int i = 0; i < _glTextures.Length; i++)
             {
                 var handle = GL.GenTexture();
-                GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, handle);
 
                 var source = _images[(int)_textures[i]["source"]];
@@ -511,19 +514,19 @@ public class GLBImporter
         lock (_extensions)
         {
             _extensions = _jsonChunk.TryGetValue("extensionsUsed", out object? extensionsUsed) ?
-                ((object[])extensionsUsed).Cast<string>().ToArray() : [];
+                [.. ((object[])extensionsUsed).Cast<string>()] : [];
         }
 
         lock (_extensionsRequired)
         {
             _extensionsRequired = _jsonChunk.TryGetValue("extensionsRequired", out object? extensionsRequired) ?
-                ((object[])extensionsRequired).Cast<string>().ToArray() : [];
+                [.. ((object[])extensionsRequired).Cast<string>()] : [];
         }
 
         Dictionary<string, object>[] ReadObjectsFromChunk(string objName)
         {
-            if (_jsonChunk.TryGetValue(objName, out object? obj))
-                return ((object[])obj).Cast<Dictionary<string, object>>().ToArray();
+            if (_jsonChunk.TryGetValue(objName, out object? child))
+                return [.. ((object[])child).Cast<Dictionary<string, object>>()];
             else
                 return [];
         }
@@ -548,27 +551,22 @@ public class GLBImporter
     {
         Dictionary<MetadataTypes, string> result = [];
 
-        if ((_jsonChunk.TryGetValue("asset", out object? asset) && asset is Dictionary<string, object?> assetD) == false)
-            throw new FileLoadException("Error. GLB-file is invalid.");
+        var asset = (Dictionary<string, object>)_jsonChunk["asset"];
 
-        if ((assetD.TryGetValue("version", out object? version) && version is string versionS && versionS[0] == '2') == false)
-            throw new FileLoadException("Error. GLB-file is invalid.");
+        if (((string)asset["version"])[0] != '2')
+            SystemSettings.PrintMessage($"The file glTF is { asset["version"] } version. Max 2.0 is supported.", MessageTypes.WarningMessage);
 
-        if (assetD.TryGetValue("minVersion", out object? minVersion) &&
-            minVersion is string minVersionS &&
-            float.Parse(minVersionS) > MAX_SUPPORTED_VERSION)
+        if (asset.TryGetValue("minVersion", out object? minVersion) &&
+            float.Parse((string)minVersion) > MAX_SUPPORTED_VERSION)
         {
-            throw new FileLoadException($"The file requires glTF {minVersionS} support. Max 2.0 is supported.");
+            SystemSettings.PrintMessage($"Error. The file requires glTF {minVersion} support. Max 2.0 is supported.", MessageTypes.ErrorMessage);
         }
 
-        AddValue(assetD, MetadataTypes.Generator);
-        AddValue(assetD, MetadataTypes.Copyright);
+        if (asset.TryGetValue("generator", out object? generagor))
+            result.Add(MetadataTypes.Generator, (string)generagor);
 
-        void AddValue(Dictionary<string, object?> from, MetadataTypes type)
-        {
-            if (from.TryGetValue(type.ToString().ToLower(), out object? value) && value is string valueS)
-                result.Add(type, valueS);
-        }
+        if (asset.TryGetValue("copyright", out object? copyright))
+            result.Add(MetadataTypes.Copyright, (string)copyright);
 
         return result;
     }
@@ -576,12 +574,12 @@ public class GLBImporter
     private static void ReadFile(BinaryReader reader)
     {
         if (reader.ReadUInt32() != 0x46546C67)
-            throw new FileLoadException("Error. GLB-file is invalid");
+            SystemSettings.PrintMessage($"Error. GLB-file is invalid", MessageTypes.ErrorMessage);
 
         var version = reader.ReadUInt32();
 
         if (version != 2)
-            throw new FileLoadException($"Error. Unsupported GLB-file version: ({version}). Only version 2.x is currently supported");
+            SystemSettings.PrintMessage($"Error. Unsupported GLB-file version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
 
         reader.ReadUInt32();
     }

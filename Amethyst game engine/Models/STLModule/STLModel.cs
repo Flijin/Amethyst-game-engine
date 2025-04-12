@@ -1,50 +1,55 @@
-﻿using Amethyst_game_engine.Render;
+﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
-using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.STLModule;
 
-//USE_COLOR = 1, //Атрибуты
-//UseAlbedoMap = 2, //карта
-//UseMetallicRoughness = 4, //Коэф, карта
-//UseNormalMap = 8, //карта
-//UseNormals = 16, //Атрибуты
-//Occlusion = 32, //Коэф, карта
-//Emissive = 64, //Коэф, карта
-
-//USE_MESH_MATRIX = 256
-//USE_COLOR_5_BITS = 512
-
-public readonly struct STLModel
+public readonly struct STLModel : IModel
 {
-    internal readonly float[] normals;
     internal readonly Mesh mesh;
-
-    internal readonly int _renderProfile = 0b_00010001;
 
     public string Header { get; }
     public int TrianglesCount { get; }
-    public Vector3i DefaultColor { readonly get; init; } = new Vector3i(16, 16, 16);
 
-    public unsafe STLModel(string path, RenderSettings settings)
+    public STLModel(string path) : this(path, RenderSettings.All, new Material()) { }
+
+    public STLModel(string path, RenderSettings settings) : this(path, settings, new Material()) { }
+
+    public STLModel(string path, Material material) : this(path, RenderSettings.All, material) { }
+    
+    public unsafe STLModel(string path, RenderSettings settings, Material material)
     {
-        _renderProfile &= (int)settings;
-        using BinaryReader br = new(File.OpenRead(path));
+        uint settings_uint = (uint)settings & (uint)Window.RenderKeys;
+        material.materialKey &= settings_uint;
 
-        Header = new string(br.ReadChars(80)).Trim('\0');
-        TrianglesCount = br.ReadInt32();
+        using BinaryReader reader = new(File.OpenRead(path));
+
+        Header = new string(reader.ReadChars(80)).Trim('\0');
+        TrianglesCount = reader.ReadInt32();
 
         var vertexIndex = 0;
-        var normalIndex = 0;
 
         var vertexArrayObject = GL.GenVertexArray();
         var bytesCount = TrianglesCount * 36;
+        var bufferLenght = bytesCount;
         var usedBuffers = 1;
 
-        if ((_renderProfile & 0b_0001) != 0)
+        scoped Span<float> vertices;
+        scoped Span<float> colors;
+        scoped Span<float> normals;
+
+        if ((settings_uint & 0b_0001) != 0)
         {
-            bytesCount += TrianglesCount * 9;
+            material.materialKey |= 0b_0001;
+            bytesCount += bufferLenght;
+            usedBuffers += 1;
+        }
+
+        if ((settings_uint & 0b_0010) != 0)
+        {
+            material.materialKey |= 0b_0010;
+            bytesCount += bufferLenght;
             usedBuffers += 1;
         }
 
@@ -52,55 +57,63 @@ public readonly struct STLModel
 
         GL.BindVertexArray(vertexArrayObject);
 
-        var modelPrimitive = new Primitive(vertexArrayObject);
-
-        Span<float> vertices;
-        Span<byte> colors;
+        var modelPrimitive = new Primitive(vertexArrayObject, material);
+        modelPrimitive.BuildShader(material.materialKey & (uint)Window.RenderKeys, 0);
 
         var attributesCount = TrianglesCount * 9;
 
-#pragma warning disable CS9081
-        if (bytesCount > 800000)
+        //-----------------------------------
+        // Stack fill limit 800 KB
+        // You can change it at your own risk
+        //-----------------------------------
+
+        if (bytesCount > 819200)
         {
             vertices = new(new float[attributesCount]);
-            colors = (_renderProfile & 0b_0001) != 0 ? new(new byte[attributesCount]) : null;
+            colors = (settings_uint & 0b_0001) != 0 ? new(new float[attributesCount]) : null;
+            normals = (settings_uint & 0b_0010) != 0 ? new(new float[attributesCount]) : null;
         }
         else
         {
             vertices = stackalloc float[attributesCount];
-            colors = (_renderProfile & 0b_0001) != 0 ? stackalloc byte[attributesCount] : null;
+            colors = (settings_uint & 0b_0001) != 0 ? stackalloc float[attributesCount] : null;
+            normals = (settings_uint & 0b_0010) != 0 ? stackalloc float[attributesCount] : null;
         }
-#pragma warning restore
 
-        normals = new float[TrianglesCount * 3];
-
-        modelPrimitive.count = normals.Length;
+        modelPrimitive.count = TrianglesCount * 3;
 
         for (int i = 0; i < TrianglesCount; i++)
         {
-            for (int vectors = 0; vectors < 3; vectors++)
+            if ((settings_uint & 0b_0010) != 0)
             {
-                normals[normalIndex++] = br.ReadSingle();
+                for (int j = 0; j < 3; j++)
+                {
+                    normals[i * 9 + j] = normals[i * 9 + j + 3] = normals[i * 9 + j + 6] = reader.ReadSingle();
+                }
+            }
+            else
+            {
+                reader.BaseStream.Position += 12;
             }
 
-            for (int vectors = 0; vectors < 9; vectors++)
+            for (int j = 0; j < 9; j++)
             {
-                vertices[vertexIndex++] = br.ReadSingle();
+                vertices[vertexIndex++] = reader.ReadSingle();
             }
 
-            if ((_renderProfile & 0b_0001) != 0)
+            if ((settings_uint & 0b_0001) != 0)
             {
-                ushort attributeByteCount = br.ReadUInt16();
+                ushort attributeByteCount = reader.ReadUInt16();
 
-                byte r = (byte)DefaultColor.X;
-                byte g = (byte)DefaultColor.Y;
-                byte b = (byte)DefaultColor.Z;
+                float r = default;
+                float g = default;
+                float b = default;
 
                 if (attributeByteCount >> 15 != 0)
                 {
-                    r = (byte)((attributeByteCount & 0b_01111100_00000000) >> 10);
-                    g = (byte)((attributeByteCount & 0b_00000011_11100000) >> 5);
-                    b = (byte)(attributeByteCount & 0b_00000000_00011111);
+                    r = ((attributeByteCount & 0b_01111100_00000000) >> 10) / 31f;
+                    g = ((attributeByteCount & 0b_00000011_11100000) >> 5) / 31f;
+                    b = (attributeByteCount & 0b_00000000_00011111) / 31f;
                 }
 
                 colors[i * 9] = colors[i * 9 + 3] = colors[i * 9 + 6] = r;
@@ -108,31 +121,48 @@ public readonly struct STLModel
                 colors[i * 9 + 2] = colors[i * 9 + 5] = colors[i * 9 + 8] = b;
             }
             else
-                br.BaseStream.Position += 2;
+            {
+                reader.BaseStream.Position += 2;
+            }
+        }
+
+        void AddAttribute(int location, float* ptr)
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[location] = GL.GenBuffer());
+            GL.BufferData(BufferTarget.ArrayBuffer, attributesCount * sizeof(float), (nint)ptr, BufferUsageHint.DynamicDraw);
+            GL.VertexAttribPointer(location, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(location);
         }
 
         fixed (float* ptr = &MemoryMarshal.GetReference(vertices))
-        {
-            GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[0] = GL.GenBuffer());
-            GL.BufferData(BufferTarget.ArrayBuffer, attributesCount * sizeof(float), (nint)ptr, BufferUsageHint.DynamicDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            GL.EnableVertexAttribArray(0);
-        }
-        
+            AddAttribute(0, ptr);
+
         if (colors != null)
         {
-            fixed (byte* ptr = &MemoryMarshal.GetReference(colors))
-            {
-                GL.BindBuffer(BufferTarget.ArrayBuffer, bufferHandles[1] = GL.GenBuffer());
-                GL.BufferData(BufferTarget.ArrayBuffer, attributesCount * sizeof(byte), (nint)ptr, BufferUsageHint.DynamicDraw);
-                GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Byte, false, 3 * sizeof(byte), 0);
-                GL.EnableVertexAttribArray(1);
-            }
+            fixed (float* ptr = &MemoryMarshal.GetReference(colors))
+                AddAttribute(1, ptr);
+        }
+
+        if (normals != null)
+        {
+            fixed (float* ptr = &MemoryMarshal.GetReference(normals))
+                AddAttribute(2, ptr);
         }
 
         unsafe
         {
             mesh = new([modelPrimitive], bufferHandles) { Matrix = null };
         }
+    }
+
+    Mesh[] IModel.GetMeshes() => [mesh];
+
+    void IModel.RebuildShaders(uint renderKeys) => mesh.RebuildShaders(renderKeys, 0);
+
+    bool IModel.UseMeshMatrix() => false;
+
+    public void Dispose()
+    {
+        mesh.Dispose();
     }
 }
