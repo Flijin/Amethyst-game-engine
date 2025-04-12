@@ -12,13 +12,13 @@ uniform mat4 _view;
 uniform mat4 _projection;
 
 #ifdef USE_VERTEX_COLORS
-out vec4 VertexColor;
-layout (location = 1) in vec3 _vertexColor;
+lowp out vec4 VertexColor;
+lowp layout (location = 1) in vec3 _vertexColor;
 #endif
 
 #ifdef USE_ALBEDO_MAP
-out vec2 AlbedoCoords;
-layout (location = 2) in vec2 _albedoCoords;
+mediump out vec2 AlbedoCoords;
+mediump layout (location = 2) in vec2 _albedoCoords;
 #endif
 
 #ifdef USE_LIGHTING

@@ -2,47 +2,47 @@
 
 
 struct SpotLight {
-    vec3 position;
-    vec3 direction;
-    vec3 color;
-    float intensity;
-    float innerCutOff;
-    float outerCutOff;
-    float constant;
-    float linear;
-    float quadratic;
+    highp vec3 position;
+    highp vec3 direction;
+    lowp vec3 color;
+    mediump float intensity;
+    mediump float innerCutOff;
+    mediump float outerCutOff;
+    mediump float constant;
+    mediump float linear;
+    mediump float quadratic;
 };
 
 struct PointLight {
-    vec3 position;
-    vec3 color;
-    float intensity;
-    float constant;
-    float linear;
-    float quadratic;
+    highp vec3 position;
+    lowp vec3 color;
+    mediump float intensity;
+    mediump float constant;
+    mediump float linear;
+    mediump float quadratic;
 };
 
 struct DirectionalLight {
-    vec3 direction;
-    vec3 color;
-    float intensity;
+    highp vec3 direction;
+    lowp vec3 color;
+    mediump float intensity;
 };
 
 #ifdef USE_ALBEDO_MAP
-uniform sampler2D _albedoTexture;
-in vec2 AlbedoCoords;
+lowp uniform sampler2D _albedoTexture;
+highp in vec2 AlbedoCoords;
 #endif
 
 #ifdef USE_BASE_COLOR_FACTOR
-uniform vec4 _baseColorFactor;
+lowp uniform vec4 _baseColorFactor;
 #endif
 
 #ifdef USE_METALLIC_FACTOR
-uniform float _metallicFactor;
+lowp uniform float _metallicFactor;
 #endif
 
 #ifdef USE_ROUGHNESS_FACTOR
-uniform float _roughnessFactor;
+lowp uniform float _roughnessFactor;
 #endif
 
 #ifdef USE_VERTEX_COLORS
@@ -51,15 +51,15 @@ in vec4 VertexColor;
 
 #ifdef USE_LIGHTING
 
-int shininess = MAX_SHININESS;
+mediump int shininess = MAX_SHININESS;
 
-in vec3 Normal;
-in vec3 FragPos;
+highp in vec3 Normal;
+highp in vec3 FragPos;
 
-uniform int _numSpotLights;
-uniform int _numPointLights;
-uniform int _numDirectionalLights;
-uniform vec3 _cameraPos;
+mediump uniform int _numSpotLights;
+mediump uniform int _numPointLights;
+mediump uniform int _numDirectionalLights;
+highp uniform vec3 _cameraPos;
 
 layout(std140, binding = 0) uniform DirectionalLights{
     DirectionalLight[DIRECTIONAL_LIGHTS_COUNT] _directionalLights;
@@ -75,9 +75,9 @@ layout(std140, binding = 2) uniform SpotLights{
 
 #endif
 
-out vec4 FragColor;
+lowp out vec4 FragColor;
 
-vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, mediump int shininess) {
     vec3 L = normalize(light.position - fragPos);
     float theta = dot(L, normalize(light.direction));
 
@@ -159,10 +159,10 @@ resultFragColor = vec4(0.5, 0.5, 0.5, 1.0);
 
 #ifdef USE_LIGHTING
 
-float ambientStrength = AMBIENT_STHENGTH;
+lowp float ambientStrength = AMBIENT_STHENGTH;
 
-vec3 resColorVec3 = vec3(0);
-vec3 temp;
+lowp vec3 resColorVec3 = vec3(0);
+lowp vec3 temp;
 
 for (int i = 0; i < _numDirectionalLights; i++) {
     if (_directionalLights[i].color.x != -1.0) {

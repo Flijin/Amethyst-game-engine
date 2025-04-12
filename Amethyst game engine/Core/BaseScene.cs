@@ -3,9 +3,7 @@ using Amethyst_game_engine.Core.GameObjects;
 using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
-using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Xml.Linq;
 
 namespace Amethyst_game_engine.Core;
 

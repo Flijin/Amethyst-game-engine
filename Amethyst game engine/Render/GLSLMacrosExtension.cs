@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Amethyst_game_engine.Render;
 
-internal static class GLSLMacrosExtensions
+internal static class GLSLMacrosExtension
 {
 #if DEBUG_MODE
     private static int _timesCalled;
