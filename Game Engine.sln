@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Amethyst game engine", "Amethyst game engine\Amethyst game engine.csproj", "{6DDFA25F-A164-4512-90EF-B17F0BD4B41B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "..\..\Client\Client.csproj", "{4D59D107-AD79-B639-2D97-59C805ABE546}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{6DDFA25F-A164-4512-90EF-B17F0BD4B41B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6DDFA25F-A164-4512-90EF-B17F0BD4B41B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6DDFA25F-A164-4512-90EF-B17F0BD4B41B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4D59D107-AD79-B639-2D97-59C805ABE546}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D59D107-AD79-B639-2D97-59C805ABE546}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D59D107-AD79-B639-2D97-59C805ABE546}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D59D107-AD79-B639-2D97-59C805ABE546}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
