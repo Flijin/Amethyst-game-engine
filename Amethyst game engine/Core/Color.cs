@@ -16,6 +16,8 @@ public readonly struct Color
     public static Color Black => new(0, 0, 0);
     public static Color White => new(255, 255, 255);
     public static Color Gray => new(127, 127, 127);
+    public static Color Violet => new(127, 0, 255);
+    public static Color Orange => new(255, 127, 0);
 
     public int R { get; }
     public int G { get; }
