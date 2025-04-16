@@ -174,7 +174,7 @@ for (int i = 0; i < _numDirectionalLights; i++) {
 
 for (int i = 0; i < _numPointLights; i++) {
     if (_pointLights[i].color.x != -1.0) {
-        temp = CalculatePointLight(_pointLights[0], Normal, FragPos, _cameraPos, 1.0, shininess);
+        temp = CalculatePointLight(_pointLights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
         temp *= vec3(resultFragColor);
         resColorVec3 += temp;
     }
