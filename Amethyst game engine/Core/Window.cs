@@ -15,6 +15,7 @@ public class Window : GameWindow
     private static BaseScene? _scene;
     private static float _aspectRatio;
     private static RenderSettings _renderSettings = RenderSettings.All;
+    private static ShadingModels _shadingModels = ShadingModels.BLINN_PHONG_SHADING_MODEL;
 
     internal static int GL_MAX_UNIFORM_BLOCK_SIZE;
     internal static int GL_MAX_UNIFORM_BLOCKS_PER_FRAGMENT_SHADER;
@@ -50,8 +51,19 @@ public class Window : GameWindow
 
         set
         {
-            _scene?.ChangeGlobalRenderSettings((uint)value);
             _renderSettings = value;
+            _scene?.UpdateShaders();
+        }
+    }
+
+    public static ShadingModels ShadingModel
+    {
+        get => _shadingModels;
+
+        set
+        {
+            _shadingModels = value;
+            _scene?.UpdateShaders();
         }
     }
 

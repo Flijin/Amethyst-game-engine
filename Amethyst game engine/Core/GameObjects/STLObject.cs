@@ -16,7 +16,7 @@ public class STLObject : GameObject
         set
         {
             _objectPrimitive.Material = value;
-            _objectPrimitive.BuildShader(value.materialKey & _localRenderSettings & (uint)Window.RenderKeys, 0);
+            _objectPrimitive.BuildShader(_localRenderSettings, 0);
         }
     }
 

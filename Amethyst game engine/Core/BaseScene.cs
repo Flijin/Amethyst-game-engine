@@ -3,9 +3,7 @@ using Amethyst_game_engine.Core.GameObjects;
 using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
-using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Xml.Linq;
 
 namespace Amethyst_game_engine.Core;
 
@@ -41,7 +39,7 @@ public abstract class BaseScene : IDisposable
 
     private readonly int _dirLightsUBO = GL.GenBuffer();
     private readonly int _pointLightsUBO = GL.GenBuffer();
-    private readonly int _spotLightsUBO = GL.GenBuffer();
+    private readonly int _spotlightsUBO = GL.GenBuffer();
 
     public float AspectRatio { get; } = Window.AspectRatio;
 
@@ -127,12 +125,12 @@ public abstract class BaseScene : IDisposable
 
         GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 1, _pointLightsUBO);
 
-        GL.BindBuffer(BufferTarget.UniformBuffer, _spotLightsUBO);
+        GL.BindBuffer(BufferTarget.UniformBuffer, _spotlightsUBO);
         GL.BufferData(BufferTarget.UniformBuffer,
-                      Marshal.SizeOf<Spotlight>() * LightManager.MaxSpotLights,
+                      Marshal.SizeOf<Spotlight>() * LightManager.MaxSpotlights,
                       nint.Zero, BufferUsageHint.DynamicDraw);
 
-        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 2, _spotLightsUBO);
+        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 2, _spotlightsUBO);
     }
 
     #region group of methods with cameras
@@ -244,7 +242,7 @@ public abstract class BaseScene : IDisposable
 
         if (_spotlightsFreeSpaces.Count != 0)
             AddLight(_spotlightsFreeSpaces.Dequeue());
-        else if (_countOfSpotlights < LightManager.MaxSpotLights)
+        else if (_countOfSpotlights < LightManager.MaxSpotlights)
             AddLight(_unicSpotlightsNames.Count);
         else
             throw new IndexOutOfRangeException("Error. The limit on the number of spotlight sources has been reached");
@@ -274,13 +272,13 @@ public abstract class BaseScene : IDisposable
             _spotlightsNames[index] = name;
             _unicSpotlightsNames.Add(name);
 
-            GL.BindBuffer(BufferTarget.UniformBuffer, _spotLightsUBO);
+            GL.BindBuffer(BufferTarget.UniformBuffer, _spotlightsUBO);
             GL.BufferSubData(BufferTarget.UniformBuffer,
                             Marshal.SizeOf<Spotlight>() * index,
                             Marshal.SizeOf<Spotlight>(),
                             ref _spotlights[index]);
 
-            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 2, _spotLightsUBO);
+            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 2, _spotlightsUBO);
 
             _countOfSpotlights++;
         }
@@ -421,11 +419,11 @@ public abstract class BaseScene : IDisposable
 
     #endregion
 
-    internal void ChangeGlobalRenderSettings(uint globalSettings)
+    internal void UpdateShaders()
     {
         foreach (var obj in _objects)
         {
-            obj.ChangeGlobalRenderSettings(globalSettings);
+            obj.UpdateShaders();
         }
     }
 

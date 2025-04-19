@@ -1,0 +1,37 @@
+vec3 CalculateSpotlight(Spotlight light, vec3 normal, vec3 fragPos) {
+	vec3 N = normalize(normal);
+	vec3 L = normalize(light.position - fragPos);
+
+	float theta = dot(L, normalize(light.direction));//Проверь потом
+	float epsilon = light.innerCutOff - light.outerCutOff;
+	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
+	vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+
+	float dist = length(light.position - fragPos);
+	float attenuation = 1.0 / (light.constant + light.linear * dist +
+		light.quadratic * dist * dist);
+
+	return diffuse * attenuation * intensity;
+}
+
+vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos) {
+	vec3 N = normalize(normal);
+	vec3 L = normalize(light.position - fragPos);
+
+	vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+	float dist = length(light.position - fragPos);
+
+	float attenuation = 1.0 / (light.constant + light.linear * dist +
+		light.quadratic * dist * dist);
+
+	return diffuse * attenuation;
+}
+
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal) {
+	vec3 N = normalize(normal);
+	vec3 L = normalize(-light.direction);
+	vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+	
+	return diffuse;
+}

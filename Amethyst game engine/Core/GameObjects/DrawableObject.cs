@@ -81,7 +81,7 @@ public abstract class DrawableObject : IDisposable
 
     internal abstract void DrawObject(Camera? cam, int countOfDirLights, int countOfPointLights, int countOfSpotLights);
     public abstract void ChangeRenderSettings(RenderSettings settings);
-    internal abstract void ChangeGlobalRenderSettings(uint globalSettings);
+    internal abstract void UpdateShaders();
 
     public virtual void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
     {

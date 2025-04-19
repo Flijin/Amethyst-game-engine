@@ -1,0 +1,49 @@
+vec3 CalculateSpotlight(Spotlight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+    vec3 L = normalize(light.position - fragPos);
+    float theta = dot(L, normalize(light.direction));
+
+    float epsilon = light.innerCutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
+    float dist = length(vec3(light.position) - fragPos);
+    float attenuation = 1.0 / (light.constant + light.linear * dist +
+    light.quadratic * (dist * dist));
+
+    vec3 N = normalize(normal);
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(L + V);
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+
+    return (diffuse + specular) * attenuation * intensity;
+}
+
+vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+    vec3 L = normalize(light.position - fragPos);
+    float dist = length(L);
+
+    float attenuation = 1.0 / (light.constant + light.linear * dist +
+    light.quadratic * dist * dist);
+
+    vec3 N = normalize(normal);
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(V + L);
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+
+    return (diffuse + specular) * attenuation;
+}
+
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+    vec3 N = normalize(normal);
+    vec3 L = normalize(-light.direction);
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(V + L);
+
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+
+    return diffuse + specular;
+}

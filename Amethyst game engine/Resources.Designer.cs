@@ -61,25 +61,49 @@ namespace Amethyst_game_engine {
         }
         
         /// <summary>
+        ///   Поиск локализованного ресурса типа System.Byte[].
+        /// </summary>
+        internal static byte[] BlinnPhongFuncs {
+            get {
+                object obj = ResourceManager.GetObject("BlinnPhongFuncs", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Byte[].
+        /// </summary>
+        internal static byte[] LambertianFuncs {
+            get {
+                object obj = ResourceManager.GetObject("LambertianFuncs", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.Byte[].
+        /// </summary>
+        internal static byte[] Structures {
+            get {
+                object obj = ResourceManager.GetObject("Structures", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на #version 330 core
         ///
-        ///#ifdef USE_COLOR
-        ///in vec4 color;
-        ///#endif
+        ///#ifdef USE_LIGHTING
         ///
-        ///out vec4 FragColor;
+        ///vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+        ///    vec3 L = normalize(light.position - fragPos);
+        ///    float theta = dot(L, normalize(light.direction));
         ///
-        ///void main()
-        ///{
-        ///#ifdef USE_COLOR
-        ///    FragColor = color;
-        ///#endif
+        ///    float epsilon = light.innerCutOff - light.outerCutOff;
+        ///    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
         ///
-        ///#ifndef USE_COLOR
-        ///    FragColor = vec4(0.5, 0.5, 0.5, 1);
-        ///#endif
-        ///}
-        ///.
+        ///    float dist = length(vec3(light.position) - fragPos);
+        ///    float attenuation = 1.0 / (light. [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string UniversalFragmentShader {
             get {
@@ -92,32 +116,30 @@ namespace Amethyst_game_engine {
         ///
         ///layout (location = 0) in vec3 _position;
         ///
-        ///#ifdef USE_COLOR
-        ///layout (location = 1) in vec4 _color;
-        ///#endif
-        ///
         ///#ifdef USE_MESH_MATRIX
-        ///uniform mat4 mesh;
+        ///uniform mat4 _mesh;
         ///#endif
         ///
-        ///uniform mat4 model;
-        ///uniform mat4 view;
-        ///uniform mat4 projection;
+        ///uniform mat4 _model;
+        ///uniform mat4 _view;
+        ///uniform mat4 _projection;
         ///
-        ///#ifdef USE_COLOR
-        ///out vec4 color;
+        ///#ifdef USE_VERTEX_COLORS
+        ///out vec4 VertexColor;
+        ///layout (location = 1) in vec3 _vertexColor;
         ///#endif
         ///
-        ///void main()
-        ///{
-        ///#ifdef USE_COLOR
-        ///    color = _color;
+        ///#ifdef USE_ALBEDO_MAP
+        ///out vec2 AlbedoCoords;
+        ///layout (location = 2) in vec2 _albedoCoords;
         ///#endif
         ///
-        ///#ifdef USE_MESH_MATRIX
-        ///    gl_Position = vec4(_position, 1.0) * mesh * model * view * projection;
-        ///#else
-        ///    gl_Position = vec4(_position, 1.0) * [остаток строки не уместился]&quot;;.
+        ///#ifdef USE_LIGHTING
+        ///    layout (location = 3) in vec3 _normal;
+        ///
+        ///    #if defined(USE_GOURAND_SHADING_MODEL)
+        ///
+        /// [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string UniversalVertexShader {
             get {

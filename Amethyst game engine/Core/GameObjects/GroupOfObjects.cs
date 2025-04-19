@@ -109,11 +109,11 @@ public class GroupOfObjects : DrawableObject, IDisposable
         }
     }
 
-    internal sealed override void ChangeGlobalRenderSettings(uint globalSettings)
+    internal sealed override void UpdateShaders()
     {
         foreach (var gameObject in _gameObjects)
         {
-            gameObject.ChangeGlobalRenderSettings(globalSettings);
+            gameObject.UpdateShaders();
         }
     }
 

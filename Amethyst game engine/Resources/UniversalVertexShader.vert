@@ -1,6 +1,5 @@
 ﻿#version 330 core
 
-
 layout (location = 0) in vec3 _position;
 
 #ifdef USE_MESH_MATRIX
@@ -22,19 +21,42 @@ layout (location = 2) in vec2 _albedoCoords;
 #endif
 
 #ifdef USE_LIGHTING
-out vec3 Normal;
-out vec3 FragPos;
+    layout (location = 3) in vec3 _normal;
 
-layout (location = 3) in vec3 _normal;
+    #ifdef USE_GOURAND_SHADING_MODEL
+
+        int shininess = MAX_SHININESS;
+
+        uniform int _numSpotlights;
+        uniform int _numPointLights;
+        uniform int _numDirectionalLights;
+        uniform vec3 _cameraPos;
+
+        layout(std140, binding = 0) uniform DirectionalLights{
+            DirectionalLight[DIRECTIONAL_LIGHTS_COUNT] _directionalLights;
+        };
+
+        layout(std140, binding = 1) uniform PointLights{
+            PointLight[POINT_LIGHTS_COUNT] _pointLights;
+        };
+
+        layout(std140, binding = 2) uniform Spotlights{
+            Spotlight[SPOTLIGHT_COUNT] _spotlights;
+        };
+
+        out vec3 DiffuseSpecular;
+    #else
+        out vec3 Normal;
+        out vec3 FragPos;
+    #endif
+
 #endif
 
 void main() {
-#ifdef USE_ALBEDO_MAP
-    AlbedoCoords = _albedoCoords;
-#endif
 
-#ifdef USE_VERTEX_COLORS
-    VertexColor = vec4(_vertexColor, 1.0);
+#ifdef USE_GOURAND_SHADING_MODEL
+    vec3 Normal;
+    vec3 FragPos;
 #endif
 
 #ifdef USE_MESH_MATRIX
@@ -51,4 +73,37 @@ void main() {
         FragPos = vec3(_model * vec4(_position, 1.0));
     #endif
 #endif
+
+#ifdef USE_ALBEDO_MAP
+    AlbedoCoords = _albedoCoords;
+#endif
+
+#ifdef USE_VERTEX_COLORS
+    VertexColor = vec4(_vertexColor, 1.0);
+#endif
+
+#ifdef USE_GOURAND_SHADING_MODEL
+
+    DiffuseSpecular = vec3(0);
+
+    for (int i = 0; i < _numDirectionalLights; i++) {
+        if (_directionalLights[i].color.x != -1.0) {
+            DiffuseSpecular += CalculateDirectionalLight(_directionalLights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
+        }
+    }
+
+    for (int i = 0; i < _numPointLights; i++) {
+        if (_pointLights[i].color.x != -1.0) {
+            DiffuseSpecular += CalculatePointLight(_pointLights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
+        }
+    }
+
+    for (int i = 0; i < _numSpotlights; i++) {
+        if (_spotlights[i].color.x != -1.0) {
+            DiffuseSpecular += CalculateSpotlight(_spotlights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
+        }
+    }
+
+#endif
+
 }

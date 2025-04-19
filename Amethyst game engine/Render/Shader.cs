@@ -1,5 +1,7 @@
-﻿using Amethyst_game_engine.Core.Light;
-using OpenTK.Graphics.ES30;
+﻿#define DEBUG_MODE
+
+using Amethyst_game_engine.Core.Light;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -12,12 +14,12 @@ internal class Shader : IDisposable
 
     public int Handle { get; private set; }
 
-    public Shader(uint shaderFlags)
+    public Shader(uint shaderFlags, uint shadingModel)
     {
         Handle = GL.CreateProgram();
 
-        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, shaderFlags);
-        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, shaderFlags);
+        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, shaderFlags, shadingModel);
+        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, shaderFlags, shadingModel);
 
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
@@ -34,6 +36,8 @@ internal class Shader : IDisposable
             GL.DetachShader(Handle, descriptor);
             GL.DeleteShader(descriptor);
         }
+
+        GL.GetString(StringNameIndexed.ShadingLanguageVersion, 0);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,9 +81,9 @@ internal class Shader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetVector4(string name, Vector4 vec4) => GL.Uniform4(_uniformLocations[name], vec4);
 
-    private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags)
+    private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags, uint shadingModel)
     {
-        StringBuilder defines = ValidateFlags(shaderFlags);
+        StringBuilder injectedCode = ValidateFlags(shaderFlags, shadingModel, type);
         StringBuilder sourse;
 
         if (type == ShaderType.VertexShader)
@@ -87,10 +91,16 @@ internal class Shader : IDisposable
         else
             sourse = new(Resources.UniversalFragmentShader);
 
-        sourse.Insert(21, defines.ToString());
+        sourse.Insert(21, injectedCode.ToString());
         
         var shaderDescriptor = GL.CreateShader(type);
 
+#if DEBUG_MODE
+        using (StreamWriter writer = new(new FileStream(Environment.CurrentDirectory + $"\\{type}.txt", FileMode.OpenOrCreate)))
+        {
+            writer.Write(sourse);
+        }
+#endif
         GL.ShaderSource(shaderDescriptor, sourse.ToString());
         CompileShader(shaderDescriptor);
         GL.AttachShader(handle, shaderDescriptor);
@@ -98,17 +108,32 @@ internal class Shader : IDisposable
         return shaderDescriptor;
     }
 
-    private static StringBuilder ValidateFlags(uint shaderFlags)
+    private static StringBuilder ValidateFlags(uint shaderFlags, uint shadingModel, ShaderType type)
     {
+        var useLighting = (shaderFlags & 2) != 0;
+
         StringBuilder target = new();
+        target.AppendLine(GLSLMacrosBuilder.GetBuildData(shaderFlags, shadingModel, useLighting));
 
-        target.AppendLine(shaderFlags.ToMacrosString());
+        if (useLighting)
+        {
+            target.AppendLine(Encoding.UTF8.GetString(Resources.Structures));
 
-        if ((shaderFlags & 2) != 0)
-            target.AppendLine(LightManager.GetDefines());
+            if ((shadingModel == 0 && type == ShaderType.FragmentShader) || (shadingModel == 1 && type == ShaderType.VertexShader))
+                target.AppendLine(Encoding.UTF8.GetString(Resources.BlinnPhongFuncs));
+            else if (shadingModel == 2 && type == ShaderType.FragmentShader)
+                target.AppendLine(Encoding.UTF8.GetString(Resources.LambertianFuncs));
+        }
 
         return target;
     }
+
+    //-----ВРЕМЕННАЯ ПОМЕТКА-----//
+    //BLINN_PHONG_SHADING_MODEL = 0,
+    //GOURAND_SHADING_MODEL = 1,
+    //lAMBERTIAN_SHADING_MODEL = 2,
+    //OREN_NAYAR_SHADING_MODEL = 3,
+    //DISNEY_BRDF_SHADING_MODEL = 4
 
     private static void CompileShader(int descriptor)
     {

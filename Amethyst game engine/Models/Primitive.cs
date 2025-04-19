@@ -50,28 +50,29 @@ internal struct Primitive(int vao, Material material)
 
     public Material Material { get; set; } = material;
 
-    public void BuildShader(uint renderSettings, uint useMeshMatrixKey)
+    public void BuildShader(uint localSettings, uint useMeshMatrixKey)
     {
-        var flags = Material.materialKey & renderSettings;
+        var flags = Material.materialKey & localSettings;
 
         if ((flags & (1 << 1)) != 0)
             _useLightning = true;
         else
             _useLightning = false;
 
-        activeShader = ShadersPool.GetShader(flags | useMeshMatrixKey);
-        LimitShaderData(renderSettings);
+        activeShader = ShadersPool.GetShader(flags & (uint)Window.RenderKeys | useMeshMatrixKey, (uint)Window.ShadingModel);
+        LimitShaderData(localSettings);
     }
 
     public readonly void DrawPrimitive(Vector3 cameraPos, int countOfDirLights, int countOfPointLights, int countOfSpotLights)
     {
         if (_useLightning)
         {
-            activeShader.SetVector3("_cameraPos", cameraPos);
+            if (Window.ShadingModel != ShadingModels.lAMBERTIAN_SHADING_MODEL)
+                activeShader.SetVector3("_cameraPos", cameraPos);
 
             activeShader.SetInt("_numDirectionalLights", countOfDirLights);
             activeShader.SetInt("_numPointLights", countOfPointLights);
-            activeShader.SetInt("_numSpotLights", countOfSpotLights);
+            activeShader.SetInt("_numSpotlights", countOfSpotLights);
         }
 
         activeShader.SetFloats(_uniforms_float);

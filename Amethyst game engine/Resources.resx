@@ -124,4 +124,13 @@
   <data name="UniversalFragmentShader" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\UniversalFragmentShader.frag;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="Structures" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Structures.txt;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="BlinnPhongFuncs" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\BlinnPhongFuncs.txt;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="LambertianFuncs" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\LambertianFuncs.txt;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

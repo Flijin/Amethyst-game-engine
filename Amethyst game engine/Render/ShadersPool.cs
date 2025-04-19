@@ -6,7 +6,7 @@ internal static class ShadersPool
 {
     private static readonly Dictionary<uint, Shader> _shaders = [];
 
-    public static Shader GetShader(uint flags)
+    public static Shader GetShader(uint flags, uint shadingModel)
     {
         if (_shaders.TryGetValue(flags, out Shader? result))
         {
@@ -14,7 +14,7 @@ internal static class ShadersPool
         }
         else
         {
-            Shader shader = new(flags);
+            Shader shader = new(flags, shadingModel);
             _shaders.Add(flags, shader);
 
 #if DEBUG_MODE
