@@ -1,4 +1,4 @@
-﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.CameraModule;
 using Amethyst_game_engine.Core.GameObjects;
 using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.ES30;

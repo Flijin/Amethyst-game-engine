@@ -1,9 +1,9 @@
-﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Core;
 using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Amethyst_game_engine.CameraModules;
+namespace Amethyst_game_engine.CameraModule;
 
 public class Camera : IDisposable
 {

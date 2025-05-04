@@ -1,4 +1,4 @@
-﻿namespace Amethyst_game_engine.CameraModules;
+namespace Amethyst_game_engine.CameraModule;
 
 public enum CameraTypes : byte
 {

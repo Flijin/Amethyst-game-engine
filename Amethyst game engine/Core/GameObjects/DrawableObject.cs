@@ -1,4 +1,4 @@
-﻿using Amethyst_game_engine.CameraModules;
+using Amethyst_game_engine.CameraModule;
 using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
 using System.Runtime.InteropServices;

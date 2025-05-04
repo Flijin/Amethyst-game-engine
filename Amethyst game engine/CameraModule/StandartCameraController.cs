@@ -1,8 +1,8 @@
-﻿using OpenTK.Mathematics;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Window = Amethyst_game_engine.Core.Window;
 
-namespace Amethyst_game_engine.CameraModules;
+namespace Amethyst_game_engine.CameraModule;
 
 public class StandartCameraController
 {
