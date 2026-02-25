@@ -1,109 +1,181 @@
-﻿#version 330 core
+﻿#version 420
 
-layout (location = 0) in vec3 _position;
+struct Spotlight {
+    vec3 position;
+    vec3 direction;
+    vec3 color;
+    float intensity;
+    float innerCutOff;
+    float outerCutOff;
+    float constant;
+    float linear;
+    float quadratic;
+	float radius;
+};
 
-#ifdef USE_MESH_MATRIX
-uniform mat4 _mesh;
-#endif
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    float intensity;
+    float constant;
+    float linear;
+    float quadratic;
+	float radius;
+};
 
-uniform mat4 _model;
-uniform mat4 _view;
-uniform mat4 _projection;
+struct DirectionalLight {
+    vec3 direction;
+    vec3 color;
+    float intensity;
+};
 
-#ifdef USE_VERTEX_COLORS
-out vec4 VertexColor;
-layout (location = 1) in vec3 _vertexColor;
-#endif
-
-#ifdef USE_ALBEDO_MAP
-out vec2 AlbedoCoords;
-layout (location = 2) in vec2 _albedoCoords;
-#endif
+layout (location = 0) in vec3 aPosition;
 
 #ifdef USE_LIGHTING
-    layout (location = 3) in vec3 _normal;
+layout (location = 1) in vec3 aNormal;
 
-    #ifdef USE_GOURAND_SHADING_MODEL
-
-        int shininess = MAX_SHININESS;
-
-        uniform int _numSpotlights;
-        uniform int _numPointLights;
-        uniform int _numDirectionalLights;
-        uniform vec3 _cameraPos;
-
-        layout(std140, binding = 0) uniform DirectionalLights{
-            DirectionalLight[DIRECTIONAL_LIGHTS_COUNT] _directionalLights;
-        };
-
-        layout(std140, binding = 1) uniform PointLights{
-            PointLight[POINT_LIGHTS_COUNT] _pointLights;
-        };
-
-        layout(std140, binding = 2) uniform Spotlights{
-            Spotlight[SPOTLIGHT_COUNT] _spotlights;
-        };
-
-        out vec3 DiffuseSpecular;
-    #else
-        out vec3 Normal;
-        out vec3 FragPos;
-    #endif
-
-#endif
-
-void main() {
-
-#ifdef USE_GOURAND_SHADING_MODEL
-    vec3 Normal;
-    vec3 FragPos;
+	#ifndef USE_GOURAND
+	out vec3 normal;
+	out vec3 fragPos;
+	#endif
 #endif
 
 #ifdef USE_MESH_MATRIX
-    gl_Position = _projection * _view * _model * _mesh * vec4(_position, 1.0);
-    #ifdef USE_LIGHTING
-        mat4 modelView = _model * _mesh;
-        Normal = mat3(transpose(inverse(modelView))) * _normal;
-        FragPos = vec3(modelView * vec4(_position, 1.0));
-    #endif
-#else
-    gl_Position = _projection * _view * _model * vec4(_position, 1.0);
-    #ifdef USE_LIGHTING
-        Normal = mat3(transpose(inverse(_model))) * _normal;
-        FragPos = vec3(_model * vec4(_position, 1.0));
-    #endif
+uniform mat4 meshMatrix;
+#endif
+
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+
+#ifdef USE_VERTEX_COLORS
+layout (location = 2) in vec4 aVertexColor;
+out vec4 vertexColor;
 #endif
 
 #ifdef USE_ALBEDO_MAP
-    AlbedoCoords = _albedoCoords;
+layout (location = 3) in vec2 anAlbedoCoords;
+out vec2 albedoCoords;
 #endif
 
-#ifdef USE_VERTEX_COLORS
-    VertexColor = vec4(_vertexColor, 1.0);
+#ifdef USE_EMISSIVE_MAP
+layout (location = 4) in vec2 anEmissiveCoords;
+out vec2 emissiveCoords;
 #endif
 
-#ifdef USE_GOURAND_SHADING_MODEL
+#ifdef USE_NORMAL_MAP
+layout (location = 5) in vec2 aNormalCoords;
+out vec2 normalCoords;
+#endif
 
-    DiffuseSpecular = vec3(0);
+#ifdef USE_METALLIC_ROUGHNESS_MAP
+layout (location = 6) in vec2 aMetallicRoughnessCoords;
+out vec2 metallicRoughnessCoords;
+#endif
 
-    for (int i = 0; i < _numDirectionalLights; i++) {
-        if (_directionalLights[i].color.x != -1.0) {
-            DiffuseSpecular += CalculateDirectionalLight(_directionalLights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
-        }
-    }
+#ifdef USE_OCCLUSION_MAP
+layout (location = 7) in vec2 anOcclusionCoords;
+out vec2 occlusionCoords;
+#endif
 
-    for (int i = 0; i < _numPointLights; i++) {
-        if (_pointLights[i].color.x != -1.0) {
-            DiffuseSpecular += CalculatePointLight(_pointLights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
-        }
-    }
+#if defined(USE_LIGHTING) && defined(USE_GOURAND)
+int shininess = MAX_SHININESS;
+uniform vec3 cameraPos;
 
-    for (int i = 0; i < _numSpotlights; i++) {
-        if (_spotlights[i].color.x != -1.0) {
-            DiffuseSpecular += CalculateSpotlight(_spotlights[i], Normal, FragPos, _cameraPos, 1.0, shininess);
-        }
-    }
+layout (std430, binding = 0) buffer DirectionLights {
+	int numOfDirectionalLights;
+	DirectionalLight directionalLights[];
+} directionalLights;
+
+layout (std430, binding = 1) buffer PointLights {
+	int numOfPointLights;
+	PointLight pointLights[];
+} pointLights;
+
+layout (std430, binding = 2) buffer Spotlights {
+	int numOfSpotlights;
+	Spotlight spotlights[];
+} spotlights;
+
+out vec3 diffuseSpecular;
 
 #endif
 
+void main(void) {
+	#ifdef USE_GOURAND
+		vec3 normal;
+		vec3 vertexPos;
+	#endif
+
+	#ifdef USE_ALBEDO_MAP
+		albedoCoords = anAlbedoCoords;
+	#endif
+
+	#ifdef USE_EMISSIVE_MAP
+		emissiveCoords = anEmissiveCoords;
+	#endif
+
+	#ifdef USE_NORMAL_MAP
+		normalCoords = aNormalCoords;
+	#endif
+
+	#ifdef USE_METALLIC_ROUGHNESS_MAP
+		metallicRoughnessCoords = aMetallicRoughnessCoords;
+	#endif
+
+	#ifdef USE_OCCLUSION_MAP
+		occlusionCoords = anOcclusionCoords;
+	#endif
+
+	#ifdef USE_MESH_MATRIX
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * meshMatrix * vec4(aPosition, 1.0);
+		#ifdef USE_LIGHTING
+			mat4 modelViewMatrix = modelMatrix * meshMatrix;
+			normal = mat3(transpose(inverse(modelViewMatrix))) * aNormal;
+
+			#ifdef USE_GOURAND
+				vertexPos = vec3(modelViewMatrix * vec4(aPosition, 1.0));
+			#else
+				fragPos = vec3(modelViewMatrix * vec4(aPosition, 1.0));
+			#endif
+		#endif
+	#else
+		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(aPosition, 1.0);
+		#ifdef USE_LIGHTING
+			normal = mat3(transpose(inverse(modelMatrix))) * aNormal;
+
+			#ifdef USE_GOURAND
+				vertexPos = vec3(modelMatrix * vec4(aPosition, 1.0));
+			#else
+				fragPos = vec3(modelMatrix * vec4(aPosition, 1.0));
+			#endif
+		#endif
+	#endif
+
+	#ifdef USE_GOURAND
+    	diffuseSpecular = vec3(0);
+
+		for (int i = 0; i < directionalLights.numOfDirectionalLights; i++) {
+			diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
+														normal, vertexPos, cameraPos, 1.0, shininess);
+		}
+
+		for (int i = 0; i < pointLights.numOfPointLights; i++) {
+			float dist = distance(vertexPos, pointLights.pointLights[i].position);
+
+			if (dist <= pointLights.pointLights[i].radius) {
+				diffuseSpecular += CalculatePointLight(pointLights.pointLights[i],
+													   normal, vertexPos, cameraPos, 1.0, shininess);
+			}
+		}
+
+		for (int i = 0; i < spotlights.numOfSpotlights; i++) {
+			float dist = distance(vertexPos, spotlights.spotlights[i].position);
+
+			if (dist <= spotlights.spotlights[i].radius) {
+				diffuseSpecular += CalculateSpotlight(spotlights.spotlights[i],
+													  normal, vertexPos, cameraPos, 1.0, shininess);
+			}
+        }
+	#endif	
 }
