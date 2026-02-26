@@ -1,4 +1,4 @@
-﻿#version 420 core
+﻿#version 420
 
 #pragma optimize(on)
 #pragma debug(on)
@@ -73,13 +73,13 @@ in vec4 vertexColor;
         uniform float occlusionStrength;
     #endif
 
-    #ifndef USE_GOURAND
+    #ifndef USE_GOURAUD
         in vec3 normal;
         in vec3 fragPos;
     #endif
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_PBR)
+#if defined(USE_LIGHTING) && defined(USE_PBR_METALLIC_ROUGHNESS)
     #ifdef USE_METALLIC_ROUGHNESS_MAP
         uniform sampler2D _metallicRoughnessTexture;
         in vec2 metallicRoughnessCoords;
@@ -94,11 +94,11 @@ in vec4 vertexColor;
     #endif
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_GOURAND)
+#if defined(USE_LIGHTING) && defined(USE_GOURAUD)
     in vec3 diffuseSpecular;
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_GOURAND) == false
+#if defined(USE_LIGHTING) && defined(USE_GOURAUD) == false
 int shininess = MAX_SHININESS;
 uniform vec3 _cameraPos;
 
@@ -160,8 +160,9 @@ void main(void) {
 		        diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
 													        normal, fragPos, _cameraPos, 1.0, shininess);
 	        }
+
             for (int i = 0; i < pointLights.numOfPointLights; i++) {
-			    float dist = distance(vertexPos, pointLights.pointLights[i].position);
+			    float dist = distance(fragPos, pointLights.pointLights[i].position);
 
 			    if (dist <= pointLights.pointLights[i].radius) {
 				    diffuseSpecular += CalculatePointLight(pointLights.pointLights[i],
@@ -170,7 +171,7 @@ void main(void) {
 		    }
 
 		    for (int i = 0; i < spotlights.numOfSpotlights; i++) {
-			    float dist = distance(vertexPos, spotlights.spotlights[i].position);
+			    float dist = distance(fragPos, spotlights.spotlights[i].position);
 
 			    if (dist <= spotlights.spotlights[i].radius) {
 				    diffuseSpecular += CalculateSpotlight(spotlights.spotlights[i],

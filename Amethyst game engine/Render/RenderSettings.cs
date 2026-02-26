@@ -4,7 +4,7 @@
 public enum RenderSettings : uint
 {
     None = 0,
-    VertexColors = 1,
+    VertexColors = 1 << 0,
     Lighting = 1 << 1,
 
     AlbedoMap = 1 << 2,
@@ -18,8 +18,5 @@ public enum RenderSettings : uint
     RoughnessFactor = 1 << 9,
     EmissiveFactor = 1 << 10,
 
-    OcclusionStrength = 1 << 11,
-    NormalScale = 1 << 12,
-
-    All = 0b_00011111_11111111
+    All = (1 << 11) - 1
 }

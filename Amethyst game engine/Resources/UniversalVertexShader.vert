@@ -1,5 +1,8 @@
 ﻿#version 420
 
+#pragma optimize(on)
+#pragma debug(on)
+
 struct Spotlight {
     vec3 position;
     vec3 direction;
@@ -34,7 +37,7 @@ layout (location = 0) in vec3 aPosition;
 #ifdef USE_LIGHTING
 layout (location = 1) in vec3 aNormal;
 
-	#ifndef USE_GOURAND
+	#ifndef USE_GOURAUD
 	out vec3 normal;
 	out vec3 fragPos;
 	#endif
@@ -78,7 +81,7 @@ layout (location = 7) in vec2 anOcclusionCoords;
 out vec2 occlusionCoords;
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_GOURAND)
+#if defined(USE_LIGHTING) && defined(USE_GOURAUD)
 int shininess = MAX_SHININESS;
 uniform vec3 cameraPos;
 
@@ -102,7 +105,7 @@ out vec3 diffuseSpecular;
 #endif
 
 void main(void) {
-	#ifdef USE_GOURAND
+	#ifdef USE_GOURAUD
 		vec3 normal;
 		vec3 vertexPos;
 	#endif
@@ -133,7 +136,7 @@ void main(void) {
 			mat4 modelViewMatrix = modelMatrix * meshMatrix;
 			normal = mat3(transpose(inverse(modelViewMatrix))) * aNormal;
 
-			#ifdef USE_GOURAND
+			#ifdef USE_GOURAUD
 				vertexPos = vec3(modelViewMatrix * vec4(aPosition, 1.0));
 			#else
 				fragPos = vec3(modelViewMatrix * vec4(aPosition, 1.0));
@@ -144,7 +147,7 @@ void main(void) {
 		#ifdef USE_LIGHTING
 			normal = mat3(transpose(inverse(modelMatrix))) * aNormal;
 
-			#ifdef USE_GOURAND
+			#ifdef USE_GOURAUD
 				vertexPos = vec3(modelMatrix * vec4(aPosition, 1.0));
 			#else
 				fragPos = vec3(modelMatrix * vec4(aPosition, 1.0));
@@ -152,7 +155,7 @@ void main(void) {
 		#endif
 	#endif
 
-	#ifdef USE_GOURAND
+	#ifdef USE_GOURAUD
     	diffuseSpecular = vec3(0);
 
 		for (int i = 0; i < directionalLights.numOfDirectionalLights; i++) {

@@ -31,7 +31,15 @@ public readonly struct Color
     internal readonly float b;
     internal readonly float a;
 
-    public Color() => isNoneColor = true;
+    public Color()
+    {
+        isNoneColor = true;
+
+        R = -1;
+        G = -1;
+        B = -1;
+        A = -1;
+    }
 
     public Color(float r, float g, float b) : this(r, g, b, 1.0f) { }
 
@@ -72,5 +80,5 @@ public readonly struct Color
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal Vector4 GetColorInVectorForm() => new(r, g, b, a);
+    internal Vector4 ConvertColorToVector() => new(r, g, b, a);
 }

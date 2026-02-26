@@ -19,7 +19,7 @@ namespace Amethyst_game_engine {
     // с помощью такого средства, как ResGen или Visual Studio.
     // Чтобы добавить или удалить член, измените файл .ResX и снова запустите ResGen
     // с параметром /str или перестройте свой проект VS.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -71,39 +71,37 @@ namespace Amethyst_game_engine {
         }
         
         /// <summary>
-        ///   Поиск локализованного ресурса типа System.Byte[].
-        /// </summary>
-        internal static byte[] LambertianFuncs {
-            get {
-                object obj = ResourceManager.GetObject("LambertianFuncs", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Byte[].
-        /// </summary>
-        internal static byte[] Structures {
-            get {
-                object obj = ResourceManager.GetObject("Structures", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на #version 330 core
+        ///   Ищет локализованную строку, похожую на #version 420 core
         ///
-        ///#ifdef USE_LIGHTING
+        ///#pragma optimize(on)
+        ///#pragma debug(on)
         ///
-        ///vec3 CalculateSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
-        ///    vec3 L = normalize(light.position - fragPos);
-        ///    float theta = dot(L, normalize(light.direction));
+        ///struct Spotlight {
+        ///    vec3 position;
+        ///    vec3 direction;
+        ///    vec3 color;
+        ///    float intensity;
+        ///    float innerCutOff;
+        ///    float outerCutOff;
+        ///    float constant;
+        ///    float linear;
+        ///    float quadratic;
+        ///	float radius;
+        ///};
         ///
-        ///    float epsilon = light.innerCutOff - light.outerCutOff;
-        ///    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+        ///struct PointLight {
+        ///    vec3 position;
+        ///    vec3 color;
+        ///    float intensity;
+        ///    float constant;
+        ///    float linear;
+        ///    float quadratic;
+        ///	float radius;
+        ///};
         ///
-        ///    float dist = length(vec3(light.position) - fragPos);
-        ///    float attenuation = 1.0 / (light. [остаток строки не уместился]&quot;;.
+        ///struct DirectionalLight {
+        ///    vec3 direction;
+        ///     [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string UniversalFragmentShader {
             get {
@@ -112,34 +110,37 @@ namespace Amethyst_game_engine {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на #version 330 core
+        ///   Ищет локализованную строку, похожую на #version 420
         ///
-        ///layout (location = 0) in vec3 _position;
+        ///#pragma optimize(on)
+        ///#pragma debug(on)
         ///
-        ///#ifdef USE_MESH_MATRIX
-        ///uniform mat4 _mesh;
-        ///#endif
+        ///struct Spotlight {
+        ///    vec3 position;
+        ///    vec3 direction;
+        ///    vec3 color;
+        ///    float intensity;
+        ///    float innerCutOff;
+        ///    float outerCutOff;
+        ///    float constant;
+        ///    float linear;
+        ///    float quadratic;
+        ///	float radius;
+        ///};
         ///
-        ///uniform mat4 _model;
-        ///uniform mat4 _view;
-        ///uniform mat4 _projection;
+        ///struct PointLight {
+        ///    vec3 position;
+        ///    vec3 color;
+        ///    float intensity;
+        ///    float constant;
+        ///    float linear;
+        ///    float quadratic;
+        ///	float radius;
+        ///};
         ///
-        ///#ifdef USE_VERTEX_COLORS
-        ///out vec4 VertexColor;
-        ///layout (location = 1) in vec3 _vertexColor;
-        ///#endif
-        ///
-        ///#ifdef USE_ALBEDO_MAP
-        ///out vec2 AlbedoCoords;
-        ///layout (location = 2) in vec2 _albedoCoords;
-        ///#endif
-        ///
-        ///#ifdef USE_LIGHTING
-        ///    layout (location = 3) in vec3 _normal;
-        ///
-        ///    #if defined(USE_GOURAND_SHADING_MODEL)
-        ///
-        /// [остаток строки не уместился]&quot;;.
+        ///struct DirectionalLight {
+        ///    vec3 direction;
+        ///    vec3  [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string UniversalVertexShader {
             get {

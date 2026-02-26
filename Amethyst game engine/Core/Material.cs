@@ -1,119 +1,166 @@
 ﻿using Amethyst_game_engine.Render;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Core;
 
 public struct Material
 {
-    private readonly Dictionary<uint, float> _materialValues = new()
+    internal enum TexturesType : byte
     {
-        //----Default values----//
-        [1 << 2] = -1,
-        [1 << 3] = -1,
-        [1 << 4] = -1,
-        [1 << 5] = -1,
-        [1 << 6] = -1,
-        [1 << 7] = -1,
-        [1 << 8] = -1,
-        [1 << 9] = -1,
-        [1 << 11] = -1,
-        [1 << 12] = -1,
-        [1 << 13] = -1
-    };
+        AlbedoMap = 0,
+        MetallicRoughnessMap = 1,
+        NormalMap = 2,
+        OcclusionMap = 3,
+        EmissiveMap = 4,
+    }
 
-    private Color baseColorFactor = Color.NoneColor;
-
-    internal uint materialKey;
-
-    public Color BaseColorFactor
+    internal enum FactorsType : byte
     {
-        readonly get => baseColorFactor;
+        BaseColorFactor = 0,
+        MetallicFactor = 1,
+        RoughnessFactor = 2,
+        EmissiveFactor = 3,
+    }
+
+    internal RenderSettings materialKey;
+
+    internal readonly (RenderSettings settings, Texture? texture)[] textures = new (RenderSettings, Texture?)[5];
+    internal readonly (RenderSettings settings, object factor)[] factors = new (RenderSettings, object)[4];
+
+    internal Texture? this[TexturesType type]
+    {
+        readonly get => textures[(int)type].texture;
 
         set
         {
-            baseColorFactor = value;
-
-            if (value.isNoneColor)
-                materialKey |= ~(uint)RenderSettings.BaseColorFactor;
-            else
-                materialKey |= (uint)RenderSettings.BaseColorFactor;
+            textures[(int)type] = (GetSettingsByTextureType(type), value);
+            UpdateTexturesFlags(type, value != null);
         }
+    }
+
+    internal object this[FactorsType factor]
+    {
+        readonly get => factors[(int)factor].factor;
+
+        set
+        {
+            factors[(int)factor] = (GetSettingsByFactorType(factor), value);
+            UpdateFactorsFlags(factor, value is float val ? val >= 0 : ((Color)value).isNoneColor == false);
+        }
+    }
+
+    internal Texture? AlbedoTexture
+    {
+        readonly get => this[TexturesType.AlbedoMap];
+
+        set => this[TexturesType.AlbedoMap] = value;
+    }
+
+    internal Texture? MetallicRoughnessMap
+    {
+        readonly get => this[TexturesType.MetallicRoughnessMap];
+
+        set => this[TexturesType.MetallicRoughnessMap] = value;
+    }
+
+    internal Texture? NormalMap
+    {
+        readonly get => this[TexturesType.NormalMap];
+
+        set => this[TexturesType.NormalMap] = value;
+    }
+
+    internal Texture? OcclusionMap
+    {
+        readonly get => this[TexturesType.OcclusionMap];
+
+        set => this[TexturesType.OcclusionMap] = value;
+    }
+
+    internal Texture? EmissiveMap
+    {
+        readonly get => this[TexturesType.EmissiveMap];
+
+        set => this[TexturesType.EmissiveMap] = value;
+    }
+
+    public Color BaseColorFactor
+    {
+        readonly get => (Color)this[FactorsType.BaseColorFactor];
+
+        set => this[FactorsType.BaseColorFactor] = value;
     }
 
     public float MetallicFactor
     {
-        readonly get => _materialValues[(uint)RenderSettings.MetallicFactor];
+        readonly get => (float)this[FactorsType.MetallicFactor];
 
-        set
-        {
-            var key = (uint)RenderSettings.MetallicFactor;
-
-            if (value >= 0)
-            {
-                var clamptedValue = value <= 1f ? value : 1f;
-
-                _materialValues[key] = clamptedValue;
-                materialKey |= key;
-            }
-            else
-            {
-                _materialValues[key] = -1f;
-                materialKey &= ~key;
-            }
-        }
+        set => this[FactorsType.MetallicFactor] = value;
     }
 
     public float RoughnessFactor
     {
-        readonly get => _materialValues[(uint)RenderSettings.RoughnessFactor];
+        readonly get => (float)this[FactorsType.RoughnessFactor];
 
-        set
-        {
-            var key = (uint)RenderSettings.RoughnessFactor;
-
-            if (value >= 0)
-            {
-                var clamptedValue = value <= 1f ? value : 1f;
-
-                _materialValues[key] = clamptedValue;
-                materialKey |= key;
-            }
-            else
-            {
-                _materialValues[key] = -1f;
-                materialKey &= ~key;
-            }
-        }
+        set => this[FactorsType.RoughnessFactor] = value;
     }
 
-    public float EmissiveFactor
+    public Color EmissiveFactor
     {
-        readonly get => _materialValues[(uint)RenderSettings.EmissiveFactor];
+        readonly get => (Color)this[FactorsType.EmissiveFactor];
 
-        set
-        {
-            var key = (uint)RenderSettings.EmissiveFactor;
-
-            if (value >= 0)
-            {
-                var clamptedValue = value <= 1f ? value : 1f;
-
-                _materialValues[key] = clamptedValue;
-                materialKey |= key;
-            }
-            else
-            {
-                _materialValues[key] = -1f;
-                materialKey &= ~key;
-            }
-        }
+        set => this[FactorsType.EmissiveFactor] = value;
     }
 
-    public Material(){ }
-
-    internal readonly float this[uint key]
+    private void UpdateTexturesFlags(TexturesType type, bool condition)
     {
-        get => _materialValues[key];
+        var renderSetting = GetSettingsByTextureType(type);
 
-        set => _materialValues[key] = value;
+        if (condition)
+            materialKey |= renderSetting;
+        else
+            materialKey &= ~renderSetting;
+    }
+
+    private void UpdateFactorsFlags(FactorsType type, bool condition)
+    {
+        var renderSetting = GetSettingsByFactorType(type);
+
+        if (condition)
+            materialKey |= renderSetting;
+        else
+            materialKey &= ~renderSetting;
+    }
+    
+    private static RenderSettings GetSettingsByTextureType(TexturesType type)
+    {
+        return type switch
+        {
+            TexturesType.AlbedoMap => RenderSettings.AlbedoMap,
+            TexturesType.MetallicRoughnessMap => RenderSettings.MetallicRoughnessMap,
+            TexturesType.NormalMap => RenderSettings.NormalMap,
+            TexturesType.OcclusionMap => RenderSettings.OcclusionMap,
+            TexturesType.EmissiveMap => RenderSettings.EmissiveMap,
+
+            _ => RenderSettings.None
+        };
+    }
+
+    private static RenderSettings GetSettingsByFactorType(FactorsType type)
+    {
+        return type switch
+        {
+            FactorsType.BaseColorFactor => RenderSettings.BaseColorFactor,
+            FactorsType.MetallicFactor => RenderSettings.MetallicFactor,
+            FactorsType.RoughnessFactor => RenderSettings.RoughnessFactor,
+            FactorsType.EmissiveFactor => RenderSettings.EmissiveFactor,
+
+            _ => RenderSettings.None
+        };
+    }
+
+    public Material()
+    {
+        materialKey = RenderSettings.None;
     }
 }
