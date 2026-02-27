@@ -32,5 +32,5 @@ internal class Texture
         GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 
-    public void ActivateTexture(Shader shader, TextureUnit unit) => TextureActivator.ActivateTexture(this, shader, unit);
+    public void UseTexture(Shader shader, TextureUnit unit) => TextureActivator.UseTexture(this, shader, unit);
 }

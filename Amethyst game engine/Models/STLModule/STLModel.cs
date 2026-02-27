@@ -21,7 +21,7 @@ public readonly struct STLModel : IModel
     public unsafe STLModel(string path, RenderSettings settings, Material material)
     {
         uint settings_uint = (uint)settings & (uint)Window.RenderKeys;
-        material.materialKey &= settings_uint;
+        //material.materialKey &= settings_uint;
 
         using BinaryReader reader = new(File.OpenRead(path));
 
@@ -41,14 +41,14 @@ public readonly struct STLModel : IModel
 
         if ((settings_uint & 0b_0001) != 0)
         {
-            material.materialKey |= 0b_0001;
+            //material.materialKey |= 0b_0001;
             bytesCount += bufferLenght;
             usedBuffers += 1;
         }
 
         if ((settings_uint & 0b_0010) != 0)
         {
-            material.materialKey |= 0b_0010;
+            //material.materialKey |= 0b_0010;
             bytesCount += bufferLenght;
             usedBuffers += 1;
         }
@@ -58,7 +58,7 @@ public readonly struct STLModel : IModel
         GL.BindVertexArray(vertexArrayObject);
 
         var modelPrimitive = new Primitive(vertexArrayObject, material);
-        modelPrimitive.BuildShader(material.materialKey & (uint)Window.RenderKeys, 0);
+        //modelPrimitive.BuildShader(material.materialKey & (uint)Window.RenderKeys, 0);
 
         var attributesCount = TrianglesCount * 9;
 

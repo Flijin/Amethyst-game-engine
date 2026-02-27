@@ -27,7 +27,7 @@ public abstract class GameObject : DrawableObject
         _useMeshMatrix = _objectModel.UseMeshMatrix();
     }
 
-    internal override unsafe sealed void DrawObject(Camera? cam, int countOfDirLights, int countOfPointLights, int countOfSpotLights)
+    internal override unsafe sealed void DrawObject(Camera? cam)
     {
         var meshes = _objectModel.GetMeshes();
 
@@ -59,10 +59,7 @@ public abstract class GameObject : DrawableObject
                 if (_useMeshMatrix)
                     primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
 
-                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero,
-                                        countOfDirLights,
-                                        countOfPointLights,
-                                        countOfSpotLights);
+                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero);
             }
         }
     }

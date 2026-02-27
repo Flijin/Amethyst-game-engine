@@ -39,12 +39,12 @@ internal struct Primitive
     {
         CalculateRenderKeys();
 
-        if ((_currentRenderKeys & (1 << 1)) != 0)
-            _useLightning = true;
-        else
-            _useLightning = false;
+        //if ((_currentRenderKeys & (1 << 1)) != 0)
+        //    _useLightning = true;
+        //else
+        //    _useLightning = false;
 
-        activeShader = ShadersPool.GetShader(_currentRenderKeys, (uint)Window.ShadingModel);
+        //activeShader = ShadersPool.GetShader(_currentRenderKeys, (uint)Window.ShadingModel);
     }
 
     public unsafe readonly void DrawPrimitive(Vector3 cameraPos)
@@ -56,7 +56,6 @@ internal struct Primitive
 
         GL.BindVertexArray(vao);
 
-        activeShader.SetMatrix4();
 
         if (isIndexedGeometry)
             GL.DrawElements(mode, count, (DrawElementsType)drawElementsType, 0);
@@ -77,7 +76,7 @@ internal struct Primitive
 
     }
 
-    private void BindTextures()
+    private void UseTextures()
     {
 
     }

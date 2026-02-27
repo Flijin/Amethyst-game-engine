@@ -1,4 +1,5 @@
-﻿#version 420
+﻿#version 430
+
 
 #pragma optimize(on)
 #pragma debug(on)
@@ -46,11 +47,6 @@ in vec4 vertexColor;
 #endif
 
 #ifdef USE_LIGHTING
-    #ifdef USE_EMISSIVE_MAP
-        uniform sampler2D _emissiveTexture;
-        in vec2 emissiveCoords;
-    #endif
-
     #ifdef USE_NORMAL_MAP
         uniform sampler2D _normalTexture;
         in vec2 normalCoords;
@@ -59,6 +55,11 @@ in vec4 vertexColor;
     #ifdef USE_OCCLUSION_MAP
         uniform sampler2D _occlusionTexture;
         in vec2 occlusionCoords;
+    #endif
+
+    #ifdef USE_EMISSIVE_MAP
+        uniform sampler2D _emissiveTexture;
+        in vec2 emissiveCoords;
     #endif
 
     #ifdef USE_EMISSIVE_FACTOR
@@ -145,6 +146,56 @@ vec4 GetPixelBaseColor() {
     #endif
 
     return baseColor;
+}
+
+vec3 CalculateSpotlight(Spotlight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+    vec3 L = normalize(light.position - fragPos);
+    float theta = dot(L, normalize(light.direction));
+
+    float epsilon = light.innerCutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
+    float dist = length(vec3(light.position) - fragPos);
+    float attenuation = 1.0 / (light.constant + light.linear * dist +
+    light.quadratic * (dist * dist));
+
+    vec3 N = normalize(normal);
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(L + V);
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+
+    return (diffuse + specular) * attenuation * intensity;
+}
+
+vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+    vec3 lightDir = light.position - fragPos;
+    float dist = length(lightDir);
+    vec3 L = normalize(lightDir);
+    
+    float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * dist * dist);
+    
+    vec3 N = normalize(normal);
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+    
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(V + L);
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+    
+    return (diffuse + specular) * attenuation;
+}
+
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
+    vec3 N = normalize(normal);
+    vec3 L = normalize(-light.direction);
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 H = normalize(V + L);
+
+    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+
+    return diffuse + specular;
 }
 
 void main(void) {

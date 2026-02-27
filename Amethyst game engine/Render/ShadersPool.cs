@@ -14,14 +14,15 @@ internal static class ShadersPool
         }
         else
         {
-            Shader shader = new(flags, shadingModel);
-            _shaders.Add(flags, shader);
+            //Shader shader = new(flags, shadingModel);
+            //_shaders.Add(flags, shader);
 
 #if DEBUG_MODE
             System.Diagnostics.Debug.WriteLine($"A shader was built, key: {Convert.ToString(flags, 2)}");
 #endif
 
-            return shader;
+            //return shader;
+            return null;
         }
     }
 

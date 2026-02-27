@@ -12,10 +12,25 @@ namespace Amethyst_game_engine.Core;
 
 public class Window : GameWindow
 {
+    public void TestMethod()
+    {
+        Shader shader = new(new ShaderBuildingProps()
+        {
+            RenderSettings = RenderSettings.AlbedoMap | RenderSettings.NormalMap,
+            SpecialSettings = SpecialSettings.UseNormalScale,
+            ShadingModel = ShadingModels.BlinnPhong,
+            GlobalSettings = new GlobalRenderSettings()
+            {
+                AmbientStrength = 1.0f,
+                MaxShininess = 32,
+            }
+        });
+    }
+
     private static BaseScene? _scene;
     private static float _aspectRatio;
     private static RenderSettings _renderSettings = RenderSettings.All;
-    private static ShadingModels _shadingModels = ShadingModels.BLINN_PHONG_SHADING_MODEL;
+    private static ShadingModels _shadingModels = ShadingModels.BlinnPhong;
 
     internal static int GL_MAX_UNIFORM_BLOCK_SIZE;
     internal static int GL_MAX_UNIFORM_BLOCKS_PER_FRAGMENT_SHADER;

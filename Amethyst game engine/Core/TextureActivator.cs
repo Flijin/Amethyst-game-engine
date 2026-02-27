@@ -1,12 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Amethyst_game_engine.Render;
+﻿using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Core;
 
 internal class TextureActivator
 {
-    [AllowNull]
     private static readonly Dictionary<TextureUnit, Texture> _lastTextures = [];
 
     private static readonly Dictionary<TextureUnit, string> _samplers = new()
@@ -20,7 +18,7 @@ internal class TextureActivator
 
     public static void ResetTexture() => _lastTextures.Clear();
 
-    public static void ActivateTexture(Texture texture, Shader shader, TextureUnit unit)
+    public static void UseTexture(Texture texture, Shader shader, TextureUnit unit)
     {
         if (_lastTextures.TryGetValue(unit, out Texture? value) && value.id == texture.id)
             return;

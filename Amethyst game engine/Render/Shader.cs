@@ -1,6 +1,5 @@
 ﻿#define DEBUG_MODE
 
-using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
@@ -10,21 +9,25 @@ namespace Amethyst_game_engine.Render;
 
 internal class Shader : IDisposable
 {
+    private const int START_WRITE = 16;
+
     private readonly Dictionary<string, int> _uniformLocations;
+    internal readonly ShadingModel shadingModel;
+    internal readonly RenderSettings renderSettings;
 
     public int Handle { get; private set; }
 
-    public Shader(uint shaderFlags, uint shadingModel)
+    public Shader(ShaderBuildingProps props)
     {
         Handle = GL.CreateProgram();
 
-        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, shaderFlags, shadingModel);
-        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, shaderFlags, shadingModel);
+        var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, props);
+        var fragmentDescriptor = CreateAndAttachShader(ShaderType.FragmentShader, Handle, props);
 
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
 
-        if (code == 0) SystemSettings.PrintMessage("Error. " + GL.GetShaderInfoLog(Handle), Core.MessageTypes.ErrorMessage);
+        if (code == 0) SystemSettings.PrintMessage(GL.GetShaderInfoLog(Handle), Core.MessageTypes.ErrorMessage);
 
         ClearShader(vertexDescriptor);
         ClearShader(fragmentDescriptor);
@@ -81,9 +84,9 @@ internal class Shader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetVector4(string name, Vector4 vec4) => GL.Uniform4(_uniformLocations[name], vec4);
 
-    private static int CreateAndAttachShader(ShaderType type, int handle, uint shaderFlags, uint shadingModel)
+    private static int CreateAndAttachShader(ShaderType type, int handle, ShaderBuildingProps props)
     {
-        StringBuilder injectedCode = ValidateFlags(shaderFlags, shadingModel, type);
+        StringBuilder injectedCode = ValidateFlags(props, type);
         StringBuilder sourse;
 
         if (type == ShaderType.VertexShader)
@@ -91,12 +94,12 @@ internal class Shader : IDisposable
         else
             sourse = new(Resources.UniversalFragmentShader);
 
-        sourse.Insert(21, injectedCode.ToString());
+        sourse.Insert(START_WRITE, injectedCode.ToString());
         
         var shaderDescriptor = GL.CreateShader(type);
 
 #if DEBUG_MODE
-        using (StreamWriter writer = new(new FileStream(Environment.CurrentDirectory + $"\\{type}.txt", FileMode.OpenOrCreate)))
+        using (StreamWriter writer = new(new FileStream(Environment.CurrentDirectory + $"\\{type}.txt", FileMode.Create)))
         {
             writer.Write(sourse);
         }
@@ -108,39 +111,20 @@ internal class Shader : IDisposable
         return shaderDescriptor;
     }
 
-    private static StringBuilder ValidateFlags(uint shaderFlags, uint shadingModel, ShaderType type)
+    private static StringBuilder ValidateFlags(ShaderBuildingProps props, ShaderType type)
     {
-        var useLighting = (shaderFlags & 2) != 0;
-
         StringBuilder target = new();
-        target.AppendLine(GLSLMacrosBuilder.GetBuildData(shaderFlags, shadingModel, useLighting));
-
-        if (useLighting)
-        {
-            target.AppendLine(Encoding.UTF8.GetString(Resources.Structures));
-
-            if ((shadingModel == 0 && type == ShaderType.FragmentShader) || (shadingModel == 1 && type == ShaderType.VertexShader))
-                target.AppendLine(Encoding.UTF8.GetString(Resources.BlinnPhongFuncs));
-            else if (shadingModel == 2 && type == ShaderType.FragmentShader)
-                target.AppendLine(Encoding.UTF8.GetString(Resources.LambertianFuncs));
-        }
+        GLSLMacrosBuilder.BuildMacrosByFlags(props, target);
 
         return target;
     }
-
-    //-----ВРЕМЕННАЯ ПОМЕТКА-----//
-    //BLINN_PHONG_SHADING_MODEL = 0,
-    //GOURAND_SHADING_MODEL = 1,
-    //lAMBERTIAN_SHADING_MODEL = 2,
-    //OREN_NAYAR_SHADING_MODEL = 3,
-    //DISNEY_BRDF_SHADING_MODEL = 4
 
     private static void CompileShader(int descriptor)
     {
         GL.CompileShader(descriptor);
         GL.GetShader(descriptor, ShaderParameter.CompileStatus, out int code);
 
-        if (code == 0) SystemSettings.PrintMessage("Error. " + GL.GetShaderInfoLog(descriptor), Core.MessageTypes.ErrorMessage);
+        if (code == 0) SystemSettings.PrintMessage(GL.GetShaderInfoLog(descriptor), Core.MessageTypes.ErrorMessage);
     }
 
     private Dictionary<string, int> GetUniforms()

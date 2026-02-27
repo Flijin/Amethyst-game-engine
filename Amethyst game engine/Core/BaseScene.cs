@@ -102,7 +102,7 @@ public abstract class BaseScene : IDisposable
         {
             foreach (var gameObj in _objects)
             {
-                gameObj.DrawObject(camera, _countOfDirLights, _countOfPointLights, _countOfSpotlights);
+                //gameObj.DrawObject(camera, _countOfDirLights, _countOfPointLights, _countOfSpotlights);
             }
         }
 
