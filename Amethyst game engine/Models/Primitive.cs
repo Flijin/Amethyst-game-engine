@@ -39,6 +39,7 @@ internal struct Primitive
     {
         CalculateRenderKeys();
 
+        //activeShader = ShadersPool.GetShader();
         //if ((_currentRenderKeys & (1 << 1)) != 0)
         //    _useLightning = true;
         //else

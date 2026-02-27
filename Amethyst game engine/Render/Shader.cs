@@ -7,18 +7,18 @@ using System.Text;
 
 namespace Amethyst_game_engine.Render;
 
-internal class Shader : IDisposable
+internal sealed class Shader : IDisposable
 {
     private const int START_WRITE = 16;
 
     private readonly Dictionary<string, int> _uniformLocations;
-    internal readonly ShadingModel shadingModel;
-    internal readonly RenderSettings renderSettings;
+    internal readonly ShaderBuildingProps _shaderProps;
 
     public int Handle { get; private set; }
 
     public Shader(ShaderBuildingProps props)
     {
+        _shaderProps = props;
         Handle = GL.CreateProgram();
 
         var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, props);
@@ -48,26 +48,6 @@ internal class Shader : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose() => GL.DeleteProgram(Handle);
-
-    public void SetFloats(Dictionary<string, float> data)
-    {
-        var pairs = data.ToArray();
-
-        for (int i = 0; i < pairs.Length; i++)
-        {
-            GL.Uniform1(_uniformLocations[pairs[i].Key], pairs[i].Value);
-        }
-    }
-
-    public void SetInts(Dictionary<string, int> data)
-    {
-        var pairs = data.ToArray();
-
-        for (int i = 0; i < pairs.Length; i++)
-        {
-            GL.Uniform1(_uniformLocations[pairs[i].Key], pairs[i].Value);
-        }
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void SetMatrix4(string name, float* matrixPtr) => GL.UniformMatrix4(_uniformLocations[name], 1, true, matrixPtr);

@@ -1,5 +1,6 @@
 ﻿namespace Amethyst_game_engine.Render;
 
+[Flags]
 internal enum SpecialSettings : byte
 {
     [GLSLMacros("")]

@@ -1,6 +1,7 @@
 ﻿
 namespace Amethyst_game_engine.Render;
 
+[Flags]
 public enum ShadingModels : byte
 {
     [GLSLMacros("#define USE_BLINN_PHONG")]

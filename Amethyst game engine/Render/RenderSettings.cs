@@ -42,15 +42,3 @@ public enum RenderSettings : uint
     [GLSLMacros(true)]
     All = (1 << 11) - 1
 }
-
-        //"#define USE_VERTEX_COLORS",
-        //"#define USE_LIGHTING",
-        //"#define USE_ALBEDO_MAP",
-        //"#define USE_METALLIC_ROUGHNESS_MAP",
-        //"#define USE_NORMAL_MAP",
-        //"#define USE_OCCLUSION_MAP",
-        //"#define USE_EMISSIVE_MAP",
-        //"#define USE_BASE_COLOR_FACTOR",
-        //"#define USE_METALLIC_FACTOR",
-        //"#define USE_ROUGHNESS_FACTOR",
-        //"#define USE_EMISSIVE_MAP"
