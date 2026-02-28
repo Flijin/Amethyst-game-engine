@@ -24,22 +24,12 @@ public readonly struct Color
     public int B { get; }
     public int A { get; }
 
-    internal readonly bool isNoneColor;
-
     internal readonly float r;
     internal readonly float g;
     internal readonly float b;
     internal readonly float a;
 
-    public Color()
-    {
-        isNoneColor = true;
-
-        R = -1;
-        G = -1;
-        B = -1;
-        A = -1;
-    }
+    public Color() => throw new InvalidOperationException("You need to initialize the color");
 
     public Color(float r, float g, float b) : this(r, g, b, 1.0f) { }
 
@@ -80,5 +70,8 @@ public readonly struct Color
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal Vector4 ConvertColorToVector() => new(r, g, b, a);
+    internal Vector4 ConvertColorToVector4() => new(r, g, b, a);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal Vector3 ConvertColorToVector3() => new(r, g, b);
 }

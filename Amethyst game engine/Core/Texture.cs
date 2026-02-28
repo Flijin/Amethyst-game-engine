@@ -8,9 +8,12 @@ internal class Texture
 {
     public readonly Guid id;
     public readonly int textureHandle;
+    public readonly TextureUnit unit;
 
-    public Texture(byte[] data, TextureParams parameters)
+    public Texture(byte[] data, TextureParams parameters, TextureUnit unit)
     {
+        this.unit = unit;
+
         textureHandle = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, textureHandle);
 

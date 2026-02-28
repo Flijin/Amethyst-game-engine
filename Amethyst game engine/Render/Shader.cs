@@ -12,13 +12,14 @@ internal sealed class Shader : IDisposable
     private const int START_WRITE = 16;
 
     private readonly Dictionary<string, int> _uniformLocations;
-    internal readonly ShaderBuildingProps _shaderProps;
+
+    public ShaderBuildingProps Props { get; }
 
     public int Handle { get; private set; }
 
     public Shader(ShaderBuildingProps props)
     {
-        _shaderProps = props;
+        Props = props;
         Handle = GL.CreateProgram();
 
         var vertexDescriptor = CreateAndAttachShader(ShaderType.VertexShader, Handle, props);

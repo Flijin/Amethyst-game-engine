@@ -1,7 +1,7 @@
-﻿using Amethyst_game_engine.Render;
+﻿using Amethyst_game_engine.Core;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Amethyst_game_engine.Core;
+namespace Amethyst_game_engine.Render;
 
 internal class TextureActivator
 {
@@ -18,15 +18,15 @@ internal class TextureActivator
 
     public static void ResetTexture() => _lastTextures.Clear();
 
-    public static void UseTexture(Texture texture, Shader shader, TextureUnit unit)
+    public static void UseTexture(Texture texture, Shader shader)
     {
-        if (_lastTextures.TryGetValue(unit, out Texture? value) && value.id == texture.id)
+        if (_lastTextures.TryGetValue(texture.unit, out Texture? value) && value.id == texture.id)
             return;
 
-        _lastTextures[unit] = texture;
-        GL.ActiveTexture(unit);
+        _lastTextures[texture.unit] = texture;
+        GL.ActiveTexture(texture.unit);
         GL.BindTexture(TextureTarget.Texture2D, texture.textureHandle);
 
-        shader.SetInt(_samplers[unit], (int)unit - (int)TextureUnit.Texture0);
+        shader.SetInt(_samplers[texture.unit], (int)texture.unit - (int)TextureUnit.Texture0);
     }
 }

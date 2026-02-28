@@ -27,7 +27,7 @@ public abstract class GameObject : DrawableObject
         _useMeshMatrix = _objectModel.UseMeshMatrix();
     }
 
-    internal override unsafe sealed void DrawObject(Camera? cam)
+    internal override unsafe sealed void DrawObject(Camera? cam, int[] ssbo)
     {
         var meshes = _objectModel.GetMeshes();
 
@@ -49,8 +49,6 @@ public abstract class GameObject : DrawableObject
         {
             foreach (var primitive in mesh.primitives)
             {
-                GL.BindVertexArray(primitive.vao);
-
                 primitive.activeShader.Use();
                 primitive.activeShader.SetMatrix4("_model", ModelMatrix);
                 primitive.activeShader.SetMatrix4("_view", viewMatrix);
@@ -59,7 +57,7 @@ public abstract class GameObject : DrawableObject
                 if (_useMeshMatrix)
                     primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
 
-                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero);
+                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero, ssbo);
             }
         }
     }

@@ -1,5 +1,5 @@
 ﻿using Amethyst_game_engine.Render;
-using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core;
 
@@ -25,7 +25,7 @@ public struct Material
     internal RenderSettings materialKey;
 
     internal readonly (RenderSettings settings, Texture? texture)[] textures = new (RenderSettings, Texture?)[5];
-    internal readonly (RenderSettings settings, object factor)[] factors = new (RenderSettings, object)[4];
+    internal readonly (RenderSettings settings, object? factor)[] factors = new (RenderSettings, object?)[4];
 
     internal Texture? this[TexturesType type]
     {
@@ -38,14 +38,14 @@ public struct Material
         }
     }
 
-    internal object this[FactorsType factor]
+    internal object? this[FactorsType factor]
     {
         readonly get => factors[(int)factor].factor;
 
         set
         {
             factors[(int)factor] = (GetSettingsByFactorType(factor), value);
-            UpdateFactorsFlags(factor, value is float val ? val >= 0 : ((Color)value).isNoneColor == false);
+            UpdateFactorsFlags(factor, value is not null);
         }
     }
 
@@ -84,30 +84,30 @@ public struct Material
         set => this[TexturesType.EmissiveMap] = value;
     }
 
-    public Color BaseColorFactor
+    public Vector4? BaseColorFactor
     {
-        readonly get => (Color)this[FactorsType.BaseColorFactor];
+        readonly get => (Vector4?)this[FactorsType.BaseColorFactor];
 
         set => this[FactorsType.BaseColorFactor] = value;
     }
 
-    public float MetallicFactor
+    public float? MetallicFactor
     {
-        readonly get => (float)this[FactorsType.MetallicFactor];
+        readonly get => (float?)this[FactorsType.MetallicFactor];
 
         set => this[FactorsType.MetallicFactor] = value;
     }
 
-    public float RoughnessFactor
+    public float? RoughnessFactor
     {
-        readonly get => (float)this[FactorsType.RoughnessFactor];
+        readonly get => (float?)this[FactorsType.RoughnessFactor];
 
         set => this[FactorsType.RoughnessFactor] = value;
     }
 
-    public Color EmissiveFactor
+    public Vector3? EmissiveFactor
     {
-        readonly get => (Color)this[FactorsType.EmissiveFactor];
+        readonly get => (Vector3?)this[FactorsType.EmissiveFactor];
 
         set => this[FactorsType.EmissiveFactor] = value;
     }

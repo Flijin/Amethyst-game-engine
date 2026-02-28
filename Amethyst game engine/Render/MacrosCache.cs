@@ -2,13 +2,13 @@
 
 namespace Amethyst_game_engine.Render;
 
-internal static class ShaderPropsCache
+internal static class MacrosCache
 {
     public static readonly Dictionary<uint, string> renderSettingsCache = [];
     public static readonly Dictionary<byte, string> shadingModelCache = [];
     public static readonly Dictionary<uint, string> specialSettingsCache = [];
 
-    static ShaderPropsCache()
+    static MacrosCache()
     {
         InitRenderSettingsCache();
         InitShadingModelCache();

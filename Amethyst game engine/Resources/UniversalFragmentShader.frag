@@ -67,11 +67,11 @@ in vec4 vertexColor;
     #endif
 
     #ifdef NORMAL_SCALE
-        uniform float normalScale;
+        uniform float _normalScale;
     #endif
 
     #ifdef USE_OCCLUSION_STRENGTH
-        uniform float occlusionStrength;
+        uniform float _occlusionStrength;
     #endif
 
     #ifndef USE_GOURAUD

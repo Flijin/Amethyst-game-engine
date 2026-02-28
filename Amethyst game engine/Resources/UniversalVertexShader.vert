@@ -84,7 +84,7 @@ out vec2 occlusionCoords;
 
 #if defined(USE_LIGHTING) && defined(USE_GOURAUD)
 int shininess = MAX_SHININESS;
-uniform vec3 cameraPos;
+uniform vec3 _cameraPos;
 
 layout (std430, binding = 0) buffer DirectionLights {
 	int numOfDirectionalLights;
@@ -211,7 +211,7 @@ void main(void) {
 
 		for (int i = 0; i < directionalLights.numOfDirectionalLights; i++) {
 			diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
-														normal, vertexPos, cameraPos, 1.0, shininess);
+														normal, vertexPos, _cameraPos, 1.0, shininess);
 		}
 
 		for (int i = 0; i < pointLights.numOfPointLights; i++) {
@@ -219,7 +219,7 @@ void main(void) {
 
 			if (dist <= pointLights.pointLights[i].radius) {
 				diffuseSpecular += CalculatePointLight(pointLights.pointLights[i],
-													   normal, vertexPos, cameraPos, 1.0, shininess);
+													   normal, vertexPos, _cameraPos, 1.0, shininess);
 			}
 		}
 
@@ -228,7 +228,7 @@ void main(void) {
 
 			if (dist <= spotlights.spotlights[i].radius) {
 				diffuseSpecular += CalculateSpotlight(spotlights.spotlights[i],
-													  normal, vertexPos, cameraPos, 1.0, shininess);
+													  normal, vertexPos, _cameraPos, 1.0, shininess);
 			}
         }
 	#endif	

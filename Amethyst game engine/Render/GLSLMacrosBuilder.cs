@@ -21,7 +21,7 @@ internal static class GLSLMacrosBuilder
         {
             if ((currentFlag & (uint)settings) != 0)
             {
-                builder.AppendLine(ShaderPropsCache.renderSettingsCache[currentFlag]);
+                builder.AppendLine(MacrosCache.renderSettingsCache[currentFlag]);
             }
 
             currentFlag <<= 1;
@@ -30,7 +30,7 @@ internal static class GLSLMacrosBuilder
 
     private static void IncludeShadingModel(StringBuilder builder, ShadingModels model)
     {
-        builder.AppendLine(ShaderPropsCache.shadingModelCache[(byte)model]);
+        builder.AppendLine(MacrosCache.shadingModelCache[(byte)model]);
     }
 
     private static void IncludeSpecialSettings(StringBuilder builder, SpecialSettings settings)
@@ -41,7 +41,7 @@ internal static class GLSLMacrosBuilder
         while (currentFlag <= maxValue)
         {
             if ((currentFlag - (byte)settings) == 0)
-                builder.AppendLine(ShaderPropsCache.specialSettingsCache[currentFlag]);
+                builder.AppendLine(MacrosCache.specialSettingsCache[currentFlag]);
 
             currentFlag <<= 1;
         }
