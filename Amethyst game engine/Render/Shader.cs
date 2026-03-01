@@ -28,7 +28,7 @@ internal sealed class Shader : IDisposable
         GL.LinkProgram(Handle);
         GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int code);
 
-        if (code == 0) SystemSettings.PrintMessage(GL.GetShaderInfoLog(Handle), Core.MessageTypes.ErrorMessage);
+        if (code == 0) System.PrintMessage(GL.GetShaderInfoLog(Handle), Core.MessageTypes.ErrorMessage);
 
         ClearShader(vertexDescriptor);
         ClearShader(fragmentDescriptor);
@@ -105,7 +105,7 @@ internal sealed class Shader : IDisposable
         GL.CompileShader(descriptor);
         GL.GetShader(descriptor, ShaderParameter.CompileStatus, out int code);
 
-        if (code == 0) SystemSettings.PrintMessage(GL.GetShaderInfoLog(descriptor), Core.MessageTypes.ErrorMessage);
+        if (code == 0) System.PrintMessage(GL.GetShaderInfoLog(descriptor), Core.MessageTypes.ErrorMessage);
     }
 
     private Dictionary<string, int> GetUniforms()

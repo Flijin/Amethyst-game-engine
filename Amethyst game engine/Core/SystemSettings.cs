@@ -1,11 +1,10 @@
 ﻿using Amethyst_game_engine.Core;
-using OpenTK.Graphics.ES30;
 using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine;
 
-public static partial class SystemSettings
+public static partial class System
 {
     public const int SW_HIDE = 0b_0000;
     public const int SW_SHOW = 0b_0101;

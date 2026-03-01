@@ -8,7 +8,7 @@ namespace Amethyst_game_engine.Models;
 
 internal sealed class Primitive(int vao, Material material, Primitive.Options options)
 {
-    internal struct Options
+    public struct Options
     {
         public int Count { get; set; }
         public DrawElementsType DrawElementsType { get; set; }

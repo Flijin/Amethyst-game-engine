@@ -56,7 +56,7 @@ internal readonly struct Mesh : IDisposable
             GL.DeleteBuffer(buffer);
 
         foreach (var primitive in primitives)
-            GL.DeleteVertexArray(primitive.vao);
+            //GL.DeleteVertexArray(primitive.vao);
 
         unsafe { Marshal.FreeHGlobal((nint)_matrix); }
     }

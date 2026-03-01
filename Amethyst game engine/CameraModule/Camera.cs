@@ -7,6 +7,8 @@ namespace Amethyst_game_engine.CameraModule;
 
 public class Camera : IDisposable
 {
+    public float AspectRatio;
+
     private bool _disposed = false;
 
     private float _yaw = -float.Pi / 2;
@@ -163,7 +165,7 @@ public class Camera : IDisposable
     ~Camera()
     {
         if (_disposed == false)
-            SystemSettings.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
+            System.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
     }
 
     private void CalculateVectors()

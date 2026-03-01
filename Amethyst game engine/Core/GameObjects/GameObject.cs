@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.GameObjects;
 
-public abstract class GameObject : DrawableObject
+public abstract class GameObject : New_classes.DrawableObject
 {
     private bool _disposed = false;
     private protected uint _localRenderSettings = (uint)RenderSettings.All;

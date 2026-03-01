@@ -86,12 +86,12 @@ public class GLBImporter
         var asset = (Dictionary<string, object>)_jsonChunk["asset"];
 
         if (((string)asset["version"])[0] != '2')
-            SystemSettings.PrintMessage($"The file glTF is { asset["version"] } version. Max 2.0 is supported.", MessageTypes.WarningMessage);
+            System.PrintMessage($"The file glTF is { asset["version"] } version. Max 2.0 is supported.", MessageTypes.WarningMessage);
 
         if (asset.TryGetValue("minVersion", out object? minVersion) &&
             float.Parse((string)minVersion) > MAX_SUPPORTED_VERSION)
         {
-            SystemSettings.PrintMessage($"Error. The file requires glTF {minVersion} support. Max 2.0 is supported.", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. The file requires glTF {minVersion} support. Max 2.0 is supported.", MessageTypes.ErrorMessage);
         }
 
         if (asset.TryGetValue("generator", out object? generagor))
@@ -106,12 +106,12 @@ public class GLBImporter
     private static void ReadFile(BinaryReader reader)
     {
         if (reader.ReadUInt32() != 0x46546C67)
-            SystemSettings.PrintMessage($"Error. GLB-file is invalid", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. GLB-file is invalid", MessageTypes.ErrorMessage);
 
         var version = reader.ReadUInt32();
 
         if (version != 2)
-            SystemSettings.PrintMessage($"Error. Unsupported GLB-file version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. Unsupported GLB-file version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
 
         reader.ReadUInt32();
     }

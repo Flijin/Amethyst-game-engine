@@ -12,7 +12,7 @@ namespace Amethyst_game_engine.Core;
 
 public class Window : GameWindow
 {
-    private static BaseScene? _scene;
+    //private static BaseScene? _scene;
     private static float _aspectRatio;
     private static RenderSettings _renderSettings = RenderSettings.All;
     private static ShadingModels _shadingModels = ShadingModels.BlinnPhong;
@@ -52,7 +52,7 @@ public class Window : GameWindow
         set
         {
             _renderSettings = value;
-            _scene?.UpdateShaders();
+           // _scene?.UpdateShaders();
         }
     }
 
@@ -63,20 +63,20 @@ public class Window : GameWindow
         set
         {
             _shadingModels = value;
-            _scene?.UpdateShaders();
+            //_scene?.UpdateShaders();
         }
     }
 
-    public static BaseScene? Scene
-    {
-        set
-        {
-            _scene?.Dispose();
-            _scene = value;
-        }
-    }
+    //public static BaseScene? Scene
+    //{
+    //    set
+    //    {
+    //        _scene?.Dispose();
+    //        _scene = value;
+    //    }
+    //}
 
-    static Window() => SystemSettings.Init();
+    static Window() => System.Init();
 
     public Window(int width, int height, string title)
         : base(GameWindowSettings.Default, new NativeWindowSettings()
@@ -84,7 +84,7 @@ public class Window : GameWindow
             ClientSize = new Vector2i(width, height),
         })
     {
-        SystemSettings.ShowWindow(SystemSettings.SW_HIDE);
+        System.ShowWindow(System.SW_HIDE);
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
@@ -101,11 +101,11 @@ public class Window : GameWindow
         GL_MAX_UNIFORM_BLOCKS_PER_FRAGMENT_SHADER = GL.GetInteger(GetPName.MaxFragmentUniformBlocks);
         GL_MAX_UNIFORM_BUFFER_BINDINGS = GL.GetInteger(GetPName.MaxUniformBufferBindings);
 
-        LightManager.SetLimitsOfLightSourses(GL_MAX_UNIFORM_BLOCK_SIZE);
+        //LightManager.SetLimitsOfLightSourses(GL_MAX_UNIFORM_BLOCK_SIZE);
     }
 
     public Window(string title)
-        : this(SystemSettings.ScreenResolution.X, SystemSettings.ScreenResolution.Y, title) { }
+        : this(System.ScreenResolution.X, System.ScreenResolution.Y, title) { }
 
     public static void ChangeBackgroundColor(Vector3 color) => GL.ClearColor(color.X, color.Y, color.Z, 1.0f);
 
@@ -121,7 +121,7 @@ public class Window : GameWindow
         base.OnRenderFrame(args);
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        _scene?.DrawScene();
+        //_scene?.DrawScene();
         DeltaTime = (float)args.Time;
 
         SwapBuffers();

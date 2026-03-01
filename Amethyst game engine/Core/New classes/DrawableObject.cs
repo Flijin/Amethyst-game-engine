@@ -3,7 +3,7 @@ using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 
-namespace Amethyst_game_engine.Core.GameObjects;
+namespace Amethyst_game_engine.Core.New_classes;
 
 public abstract class DrawableObject : IDisposable
 {
@@ -76,10 +76,17 @@ public abstract class DrawableObject : IDisposable
     ~DrawableObject()
     {
         if (_disposed == false)
-            SystemSettings.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
+            System.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
     }
 
-    internal abstract void DrawObject(Camera? cam);
+    public abstract void OnStart();
+    public abstract void Update(float deltaTime);
+    public abstract void FixedUpdate(float fixedDeltaTime);
+    public abstract void OnExit();
+    public abstract void OnPause();
+    public abstract void OnResume();
+
+    internal abstract void DrawObject(Camera? cam, int[] ssbo);
     public abstract void ChangeRenderSettings(RenderSettings settings);
     internal abstract void UpdateShaders();
 
