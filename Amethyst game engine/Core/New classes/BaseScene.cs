@@ -27,6 +27,8 @@ public class BaseScene : IDisposable
     public void Dispose()
     {
         _gameObjectManager.Dispose();
+        _cameraManager.Dispose();
+
         GC.SuppressFinalize(this);
     }
 }

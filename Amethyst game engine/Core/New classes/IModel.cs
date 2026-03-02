@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Amethyst_game_engine.Models;
+namespace Amethyst_game_engine.Core.New_classes;
 
 internal interface IModel : IDisposable
 {

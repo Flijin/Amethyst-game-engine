@@ -1,10 +1,11 @@
 ﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Buffer = System.Buffer;
 
-namespace Amethyst_game_engine.Models;
+namespace Amethyst_game_engine.Core.New_classes;
 
 internal readonly struct Mesh : IDisposable
 {
@@ -42,7 +43,7 @@ internal readonly struct Mesh : IDisposable
         }
     }
 
-    public void RebuildShaders(uint renderSettings, uint useMeshMatrixKey)
+    public void RebuildShaders(ShaderBuildingProps props)
     {
         foreach (var primitive in primitives)
         {

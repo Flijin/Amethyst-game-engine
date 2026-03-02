@@ -4,15 +4,16 @@ namespace Amethyst_game_engine.Render;
 
 internal static class MacrosCache
 {
-    public static readonly Dictionary<uint, string> renderSettingsCache = [];
-    public static readonly Dictionary<byte, string> shadingModelCache = [];
-    public static readonly Dictionary<uint, string> specialSettingsCache = [];
+    private static readonly Dictionary<uint, string> _renderSettingsCache = [];
+    private static readonly Dictionary<byte, string> _shadingModelCache = [];
+
+    public static IReadOnlyDictionary<uint, string> RenderSettingsCache => _renderSettingsCache;
+    public static IReadOnlyDictionary<byte, string> ShadingModelCache => _shadingModelCache;
 
     static MacrosCache()
     {
         InitRenderSettingsCache();
         InitShadingModelCache();
-        InitSpecialSettingsCache();
     }
 
     private static void InitRenderSettingsCache()
@@ -24,7 +25,7 @@ internal static class MacrosCache
         {
             FieldInfo field = typeof(RenderSettings).GetField(((RenderSettings)currentFlag).ToString())!;
 
-            renderSettingsCache[currentFlag] = field.GetCustomAttribute<GLSLMacrosAttribute>()!.Macro;
+            _renderSettingsCache[currentFlag] = field.GetCustomAttribute<GLSLMacrosAttribute>()!.Macro;
 
             currentFlag <<= 1;
         }
@@ -39,24 +40,9 @@ internal static class MacrosCache
         {
             FieldInfo field = typeof(ShadingModels).GetField(((ShadingModels)currentFlag).ToString())!;
 
-            shadingModelCache[currentFlag] = field.GetCustomAttribute<GLSLMacrosAttribute>()!.Macro;
+            _shadingModelCache[currentFlag] = field.GetCustomAttribute<GLSLMacrosAttribute>()!.Macro;
 
             currentFlag++;
-        }
-    }
-
-    private static void InitSpecialSettingsCache()
-    {
-        uint currentFlag = 1;
-        var maxValue = (uint)SpecialSettings.UseMeshMatrix;
-
-        while (currentFlag <= maxValue)
-        {
-            FieldInfo field = typeof(SpecialSettings).GetField(((SpecialSettings)currentFlag).ToString())!;
-
-            specialSettingsCache[currentFlag] = field.GetCustomAttribute<GLSLMacrosAttribute>()!.Macro;
-
-            currentFlag <<= 1;
         }
     }
 }

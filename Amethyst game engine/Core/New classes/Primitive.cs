@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Amethyst_game_engine.Core;
 using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace Amethyst_game_engine.Models;
+namespace Amethyst_game_engine.Core.New_classes;
 
 internal sealed class Primitive(int vao, Material material, Primitive.Options options)
 {
@@ -31,7 +30,16 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
     [MemberNotNull(nameof(activeShader))]
     public void BuildShader(ShaderBuildingProps props)
     {
-        props.RenderSettings &= Material.materialKey;
+        var systemFlags = (RenderSettings.VertexColors | RenderSettings.Lighting) & props.RenderSettings;
+
+        if (props.ShadingModel != ShadingModels.PBR_MetallicRoughness)
+        {
+            props.RenderSettings &= ~(RenderSettings.MetallicRoughnessMap |
+                                     RenderSettings.MetallicFactor |
+                                     RenderSettings.RoughnessFactor);
+        }
+
+        props.RenderSettings = props.RenderSettings & Material.MaterialKey | systemFlags;
         activeShader = ShadersPool.GetShader(props);
     }
 
@@ -46,27 +54,7 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
         if ((activeShaderSettings & RenderSettings.Lighting) != 0)
             activeShader.SetVector3("_cameraPos", cameraPos);
 
-        foreach (var factor in Material.factors)
-        {
-            if ((factor.settings & activeShaderSettings) == 0 || factor.factor is null)
-                continue;
-
-            if (UniformsCache.TryGetUniformName(factor.settings, out string? name) == false)
-                continue;
-
-            switch (factor.factor)
-            {
-                case float floatVar:
-                        activeShader.SetFloat(name!, floatVar);
-                    break;
-                case Vector3 vector3Var:
-                        activeShader.SetVector3(name!, vector3Var);
-                    break;
-                case Vector4 vector4Var:
-                        activeShader.SetVector4(name!, vector4Var);
-                    break;
-            }
-        }
+        SetFactors();
 
         UseSSBO(ssbo, activeShaderSettings);
 
@@ -83,6 +71,21 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
 
         for (int i = 0; i < ssboArray.Length; i++)
             GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, i, ssboArray[i]);
+    }
+
+    private void SetFactors()
+    {
+        if ((activeShader.Props.RenderSettings & RenderSettings.BaseColorFactor) != 0)
+            activeShader.SetVector4("_baseColorFactor", Material.BaseColorFactor.ConvertColorToVector4());
+
+        if ((activeShader.Props.RenderSettings & RenderSettings.MetallicFactor) != 0)
+            activeShader.SetFloat("_metallicFactor", Material.MetallicFactor);
+
+        if ((activeShader.Props.RenderSettings & RenderSettings.RoughnessFactor) != 0)
+            activeShader.SetFloat("_roughnessFactor", Material.RoughnessFactor);
+
+        if ((activeShader.Props.RenderSettings & RenderSettings.EmissiveFactor) != 0)
+            activeShader.SetVector3("_emissiveFactor", Material.BaseColorFactor.ConvertColorToVector3());
     }
 
     private void SetTextures(RenderSettings activeShaderSettings)

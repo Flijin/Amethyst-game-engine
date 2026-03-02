@@ -3,6 +3,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
@@ -35,6 +36,8 @@ public class GameApplication(NativeWindowSettings settings, float tickTime = 1f 
 
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        _renderSystem.Init();
     }
 
     protected override void OnUnload()
@@ -85,7 +88,7 @@ public class GameApplication(NativeWindowSettings settings, float tickTime = 1f 
     protected override void OnRenderFrame(FrameEventArgs args)
     {
         base.OnRenderFrame(args);
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        
         var currentScene = _sceneManager.CurrentScene;
 
         if (currentScene != null)

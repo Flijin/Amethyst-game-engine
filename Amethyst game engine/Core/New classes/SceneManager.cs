@@ -126,7 +126,7 @@ public sealed class SceneManager : ISceneManager, IDisposable
             scene.Dispose();
 
         _scenesRegistry.Clear();
-
+        
         SceneChanged = null;
         SceneLoaded = null;
         SceneUnloaded = null;

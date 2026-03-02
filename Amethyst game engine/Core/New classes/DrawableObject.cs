@@ -1,82 +1,32 @@
+using System.Diagnostics.CodeAnalysis;
 using Amethyst_game_engine.CameraModule;
-using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
-using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
 public abstract class DrawableObject : IDisposable
 {
-    private bool _disposed = false;
-    private Quaternion _rotationQuaternion;
+    public bool useCamera;
+    public BaseScene? _baseScene;
 
-    private protected Vector3 _position;
-    private protected Vector3 _rotation;
-    private protected Vector3 _scale;
+    private readonly Mesh[] _meshes;
+    private readonly Transform _transform;
+    private bool _useMeshMatrix;
+    private bool _useCamera;
 
-    private readonly unsafe float* _positionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private readonly unsafe float* _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private readonly unsafe float* _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-    private readonly unsafe float* _resultMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+    public Transform Transform => _transform;
 
-    public virtual unsafe float* ModelMatrix
+    internal DrawableObject(Mesh[] meshes)
     {
-        get
-        {
-            float* temp = stackalloc float[16];
-            Mathematics.MultiplyMatrices4(_positionMatrix, _rotationMatrix, temp);
-            Mathematics.MultiplyMatrices4(temp, _scaleMatrix, _resultMatrix);
-            return _resultMatrix;
-        }
+        _meshes = meshes;
+        _transform = new();
     }
 
-    public virtual unsafe Vector3 Position
+    public bool UseCamera
     {
-        get => _position;
+        get => _useCamera;
 
-        set
-        {
-            _position = value;
-            Mathematics.CreateTranslationMatrix4(value.X, value.Y, value.Z, _positionMatrix);
-        }
-    }
-
-    public virtual Vector3 Rotation
-    {
-        get => _rotation;
-
-        set
-        {
-            _rotation = value;
-            _rotationQuaternion = new(value.X, value.Y, value.Z);
-
-            unsafe { _rotationQuaternion.GetRotationMatrix(_rotationMatrix); }
-        }
-    }
-
-    public virtual Vector3 Scale
-    {
-        get => _scale;
-
-        set
-        {
-            _scale = value;
-
-            unsafe { Mathematics.CreateScaleMatrix4(value.X, value.Y, value.Z, _scaleMatrix); }
-        }
-    }
-
-    unsafe protected DrawableObject()
-    {
-        Buffer.MemoryCopy(Mathematics.IDENTITY_MATRIX, _positionMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
-        Buffer.MemoryCopy(Mathematics.IDENTITY_MATRIX, _rotationMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
-        Buffer.MemoryCopy(Mathematics.IDENTITY_MATRIX, _scaleMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
-    }
-
-    ~DrawableObject()
-    {
-        if (_disposed == false)
-            System.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
+        set => _useCamera = value;
     }
 
     public abstract void OnStart();
@@ -86,29 +36,45 @@ public abstract class DrawableObject : IDisposable
     public abstract void OnPause();
     public abstract void OnResume();
 
-    internal abstract void DrawObject(Camera? cam, int[] ssbo);
-    public abstract void ChangeRenderSettings(RenderSettings settings);
-    internal abstract void UpdateShaders();
+    [MemberNotNull(nameof(_baseScene))]
+    internal void SetScene(BaseScene scene) => _baseScene = scene;
 
-    public virtual void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
+    internal unsafe void DrawObject(Camera? cam, int[] ssbo)
     {
-        Position = position;
-        Rotation = rotation;
-        Scale = scale;
+        float* viewMatrix;
+        float* projectionMatrix;
+
+        if (cam is null || _useCamera == false)
+        {
+            viewMatrix = Mathematics.IDENTITY_MATRIX;
+            projectionMatrix = Mathematics.IDENTITY_MATRIX;
+        }
+        else
+        {
+            viewMatrix = cam.ViewMatrix;
+            projectionMatrix = cam.ProjectionMatrix;
+        }
+
+        foreach (var mesh in _meshes)
+        {
+            foreach (var primitive in mesh.primitives)
+            {
+                primitive.activeShader.Use();
+                primitive.activeShader.SetMatrix4("modelMatrix", Transform.ModelMatrix);
+                primitive.activeShader.SetMatrix4("viewMatrix", viewMatrix);
+                primitive.activeShader.SetMatrix4("projectionMatrix", projectionMatrix);
+
+                if (_useMeshMatrix)
+                    primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
+
+                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero, ssbo);
+            }
+        }
     }
 
-    public virtual unsafe void Dispose()
+    public void Dispose()
     {
-        if (_disposed == false)
-        {
-            Marshal.FreeHGlobal((nint)_positionMatrix);
-            Marshal.FreeHGlobal((nint)_rotationMatrix);
-            Marshal.FreeHGlobal((nint)_scaleMatrix);
-            Marshal.FreeHGlobal((nint)_resultMatrix);
-
-            GC.SuppressFinalize(this);
-
-            _disposed = true;
-        }
+        _transform.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

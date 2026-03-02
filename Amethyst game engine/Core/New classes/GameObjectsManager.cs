@@ -3,6 +3,7 @@
 public sealed class GameObjectsManager
 {
     private readonly List<DrawableObject> _gameObjects = [];
+    internal IReadOnlyList<DrawableObject> GameObjects => _gameObjects;
 
     public int Count => _gameObjects.Count;
 
@@ -38,6 +39,19 @@ public sealed class GameObjectsManager
     {
         foreach (var gameObj in _gameObjects)
             gameObj.OnResume();
+    }
+
+    public IEnumerable<T> GetComponents<T>() where T: class
+    {
+        if (typeof(T) == typeof(MeshRenderer))
+            return (_gameObjects.Select(obj => obj.MeshRenderer) as IEnumerable<T>)!;
+        else if (typeof(T) == typeof(Transform))
+            return (_gameObjects.Select(obj => obj.MeshRenderer) as IEnumerable<T>)!;
+        else
+        {
+            System.PrintMessage($"Component {typeof(T)} not found");
+            return [];
+        }
     }
 
     public void AddGameObject(DrawableObject obj) => _gameObjects.Add(obj);

@@ -1,14 +1,17 @@
 ﻿using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using StbImageSharp;
 
 namespace Amethyst_game_engine.Core;
 
-internal class Texture
+internal sealed class Texture : IDisposable
 {
     public readonly Guid id;
     public readonly int textureHandle;
     public readonly TextureUnit unit;
+
+    public Vector2i Size { get; }
 
     public Texture(byte[] data, TextureParams parameters, TextureUnit unit)
     {
@@ -20,6 +23,8 @@ internal class Texture
         id = Guid.NewGuid();
 
         ImageResult image = ImageResult.FromMemory(data, parameters.Componets);
+
+        Size = new(image.Width, image.Height);
 
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, parameters.WrapS);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, parameters.WrapT);
@@ -35,5 +40,11 @@ internal class Texture
         GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 
-    public void UseTexture(Shader shader, TextureUnit unit) => TextureActivator.UseTexture(this, shader);
+    public void UseTexture(Shader shader) => TextureActivator.UseTexture(this, shader);
+
+    public void Dispose()
+    {
+        GL.DeleteTexture(textureHandle);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
+    }
 }

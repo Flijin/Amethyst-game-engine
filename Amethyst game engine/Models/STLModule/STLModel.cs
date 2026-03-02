@@ -1,4 +1,5 @@
 ﻿using Amethyst_game_engine.Core;
+using Amethyst_game_engine.Core.New_classes;
 using Amethyst_game_engine.Render;
 using OpenTK.Graphics.ES30;
 using System.Runtime.InteropServices;
@@ -157,7 +158,7 @@ public readonly struct STLModel : IModel
 
     Mesh[] IModel.GetMeshes() => [mesh];
 
-    void IModel.RebuildShaders(uint renderKeys) => mesh.RebuildShaders(renderKeys, 0);
+    void IModel.RebuildShaders(uint renderKeys) { }//mesh.RebuildShaders(renderKeys, 0);
 
     bool IModel.UseMeshMatrix() => false;
 

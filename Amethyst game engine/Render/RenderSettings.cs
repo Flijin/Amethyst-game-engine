@@ -48,6 +48,14 @@ public enum RenderSettings : uint
     [GLSLMacros("#define USE_EMISSIVE_FACTOR")]
     EmissiveFactor = 1 << 10,
 
+    [UniformName("_normalScale")]
+    [GLSLMacros("#define USE_NORMAL_SCALE")]
+    UseNormalScale = 1 << 11,
+
+    [UniformName("_occlusionStrength")]
+    [GLSLMacros("#define USE_OCCLUSION_STRENGTH")]
+    UseOcclusionStrength = 1 << 12,
+
     [GLSLMacros(true)]
-    All = (1 << 11) - 1
+    All = (1 << 13) - 1
 }

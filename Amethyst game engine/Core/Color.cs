@@ -6,6 +6,15 @@ namespace Amethyst_game_engine.Core;
 
 public readonly struct Color
 {
+    internal readonly float r;
+    internal readonly float g;
+    internal readonly float b;
+    internal readonly float a;
+
+    private readonly bool _isNoneColor;
+
+    public bool IsNoneColor => _isNoneColor;
+
     public static Color NoneColor => new();
     public static Color Red => new(255, 0, 0);
     public static Color Green => new(0, 255, 0);
@@ -24,12 +33,15 @@ public readonly struct Color
     public int B { get; }
     public int A { get; }
 
-    internal readonly float r;
-    internal readonly float g;
-    internal readonly float b;
-    internal readonly float a;
+    public Color()
+    {
+        _isNoneColor = true;
 
-    public Color() => throw new InvalidOperationException("You need to initialize the color");
+        r = -1.0f;
+        g = -1.0f;
+        b = -1.0f;
+        a = -1.0f;
+    }
 
     public Color(float r, float g, float b) : this(r, g, b, 1.0f) { }
 

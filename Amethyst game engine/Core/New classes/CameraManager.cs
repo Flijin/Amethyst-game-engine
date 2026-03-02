@@ -72,11 +72,6 @@ public sealed class CameraManager : IDisposable
 
     public void Dispose()
     {
-        foreach (var camera in _cameras)
-        {
-            camera.Dispose();
-        }
-
         _cameras.Clear();
     }
 }

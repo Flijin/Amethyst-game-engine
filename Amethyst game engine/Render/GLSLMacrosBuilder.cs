@@ -8,8 +8,10 @@ internal static class GLSLMacrosBuilder
     {
         IncludeRenderSetingsMacros(builder, props.RenderSettings);
         IncludeShadingModel(builder, props.ShadingModel);
-        IncludeSpecialSettings(builder, props.SpecialSettings);
         IncludeGlobalSetttings(builder, props.GlobalSettings);
+
+        if (props.UseMeshMatrix)
+            builder.AppendLine("#define USE_MESH_MATRIX");
     }
 
     private static void IncludeRenderSetingsMacros(StringBuilder builder, RenderSettings settings)
@@ -21,7 +23,7 @@ internal static class GLSLMacrosBuilder
         {
             if ((currentFlag & (uint)settings) != 0)
             {
-                builder.AppendLine(MacrosCache.renderSettingsCache[currentFlag]);
+                builder.AppendLine(MacrosCache.RenderSettingsCache[currentFlag]);
             }
 
             currentFlag <<= 1;
@@ -30,21 +32,7 @@ internal static class GLSLMacrosBuilder
 
     private static void IncludeShadingModel(StringBuilder builder, ShadingModels model)
     {
-        builder.AppendLine(MacrosCache.shadingModelCache[(byte)model]);
-    }
-
-    private static void IncludeSpecialSettings(StringBuilder builder, SpecialSettings settings)
-    {
-        uint currentFlag = 1;
-        uint maxValue = (uint)SpecialSettings.UseMeshMatrix;
-
-        while (currentFlag <= maxValue)
-        {
-            if ((currentFlag - (byte)settings) == 0)
-                builder.AppendLine(MacrosCache.specialSettingsCache[currentFlag]);
-
-            currentFlag <<= 1;
-        }
+        builder.AppendLine(MacrosCache.ShadingModelCache[(byte)model]);
     }
 
     private static void IncludeGlobalSetttings(StringBuilder builder, GlobalRenderSettings settings)

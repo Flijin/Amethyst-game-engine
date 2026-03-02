@@ -2,11 +2,11 @@
 
 namespace Amethyst_game_engine.Render;
 
-internal static class UniformsCache
+internal static class MaterialUniformsCache
 {
     public static readonly Dictionary<RenderSettings, string> uniforms = [];
 
-    static UniformsCache()
+    static MaterialUniformsCache()
     {
         Type enumType = typeof(RenderSettings);
 
