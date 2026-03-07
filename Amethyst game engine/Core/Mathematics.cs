@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -88,5 +89,24 @@ internal static class Mathematics
         };
 
         Buffer.MemoryCopy(temp, res, MATRIX_SIZE, MATRIX_SIZE);
+    }
+
+    public static float CalculateLightRadius(float constant, float linear, float quadratic, float threshold = 0.001f)
+    {
+        float target = 1.0f / threshold;
+
+        float a = quadratic;
+        float b = linear;
+        float c = constant - target;
+
+        float discriminant = b * b - 4 * a * c;
+
+        float sqrtDisc = MathF.Sqrt(discriminant);
+        float d1 = (-b + sqrtDisc) / (2 * a);
+        float d2 = (-b - sqrtDisc) / (2 * a);
+
+        float radius = MathF.Max(d1, d2);
+
+        return radius > 0 ? radius : float.PositiveInfinity;
     }
 }

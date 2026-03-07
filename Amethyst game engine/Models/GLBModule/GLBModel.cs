@@ -1,40 +1,42 @@
-﻿namespace Amethyst_game_engine.Models.GLBModule;
+﻿using Amethyst_game_engine.Core.New_classes;
 
-//public readonly struct GLBModel : IModel
-//{
-//	private readonly NodeInfo[] _nodes;
-//	private readonly Mesh[] meshes;
+namespace Amethyst_game_engine.Models.GLBModule;
 
-//    public string Name { readonly get; init; } = "None";
+public readonly struct GLBModel : IModel
+{
+    private readonly NodeInfo[] _nodes;
+    private readonly Mesh[] meshes;
 
-//    internal GLBModel(NodeInfo[] nodes, Mesh[] meshes)
-//	{
-//		_nodes = nodes;
-//		this.meshes = meshes;
-//	}
+    public string Name { readonly get; init; } = "None";
 
-//    Mesh[] IModel.GetMeshes() => meshes;
+    internal GLBModel(NodeInfo[] nodes, Mesh[] meshes)
+    {
+        _nodes = nodes;
+        this.meshes = meshes;
+    }
 
-//    bool IModel.UseMeshMatrix() => true;
+    Mesh[] IModel.GetMeshes() => meshes;
 
-//    void IModel.RebuildShaders(uint renderKeys)
-//    {
-//        foreach (var mesh in meshes)
-//        {
-//            mesh.RebuildShaders(renderKeys, 1 << 24);
-//        }
-//    }
+    bool IModel.UseMeshMatrix() => true;
 
-//    public void Dispose()
-//    {
-//        foreach (var mesh in meshes)
-//        {
-//            mesh.Dispose();
-//        }
+    void IModel.RebuildShaders(uint renderKeys)
+    {
+        foreach (var mesh in meshes)
+        {
+            //mesh.RebuildShaders(renderKeys, 1 << 24);
+        }
+    }
 
-//        foreach (var node in _nodes)
-//        {
-//            node.Dispose();
-//        }
-//    }
-//}
+    public void Dispose()
+    {
+        foreach (var mesh in meshes)
+        {
+            mesh.Dispose();
+        }
+
+        foreach (var node in _nodes)
+        {
+            node.Dispose();
+        }
+    }
+}

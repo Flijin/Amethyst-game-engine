@@ -15,5 +15,8 @@ internal struct PointLightData
     public float linear;
 
     public float quadratic;
+
     public float radius;
+
+    public int isActive;
 }

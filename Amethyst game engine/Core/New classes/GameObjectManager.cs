@@ -1,10 +1,13 @@
-﻿namespace Amethyst_game_engine.Core.New_classes;
+﻿using System.Diagnostics.CodeAnalysis;
 
-public sealed class GameObjectsManager
+namespace Amethyst_game_engine.Core.New_classes;
+
+public sealed class GameObjectManager
 {
     private readonly List<DrawableObject> _gameObjects = [];
-    internal IReadOnlyList<DrawableObject> GameObjects => _gameObjects;
+    private BaseScene? _scene;
 
+    public IReadOnlyList<DrawableObject> GameObjects => _gameObjects;
     public int Count => _gameObjects.Count;
 
     internal void OnStart()
@@ -12,11 +15,13 @@ public sealed class GameObjectsManager
         foreach (var gameObj in _gameObjects)
             gameObj.OnStart();
     }
+
     internal void Update(float deltaTime)
     {
         foreach (var gameObj in _gameObjects)
             gameObj.Update(deltaTime);
     }
+
     internal void FixedUpdate(float fixedDeltaTime)
     {
         foreach (var gameObj in _gameObjects)
@@ -41,34 +46,16 @@ public sealed class GameObjectsManager
             gameObj.OnResume();
     }
 
-    public IEnumerable<T> GetComponents<T>() where T: class
+    public void Clear() => _gameObjects.Clear();
+    public int RemoveGameObjects(Predicate<DrawableObject> condition) => _gameObjects.RemoveAll(condition);
+
+    [MemberNotNull(nameof(_scene))]
+    internal void SetBaseScene(BaseScene scene) => _scene = scene;
+
+    public void AddGameObject(DrawableObject obj)
     {
-        if (typeof(T) == typeof(MeshRenderer))
-            return (_gameObjects.Select(obj => obj.MeshRenderer) as IEnumerable<T>)!;
-        else if (typeof(T) == typeof(Transform))
-            return (_gameObjects.Select(obj => obj.MeshRenderer) as IEnumerable<T>)!;
-        else
-        {
-            System.PrintMessage($"Component {typeof(T)} not found");
-            return [];
-        }
-    }
-
-    public void AddGameObject(DrawableObject obj) => _gameObjects.Add(obj);
-    public int RemoveGameObject(Predicate<DrawableObject> condition)
-    {
-        int RemovedCount = 0;
-
-        for (int i = _gameObjects.Count - 1; i >= 0; i--)
-        {
-            if (condition(_gameObjects[i]))
-            {
-                _gameObjects.RemoveAt(i);
-                RemovedCount++;
-            }
-        }
-
-        return RemovedCount;
+        _gameObjects.Add(obj);
+        obj.SetScene(_scene!);
     }
 
     public bool RemoveGameObjectByIndex(int index)
@@ -76,6 +63,7 @@ public sealed class GameObjectsManager
         if (index >= 0 && index < _gameObjects.Count)
         {
             _gameObjects.RemoveAt(index);
+
             return true;
         }
 
@@ -91,7 +79,7 @@ public sealed class GameObjectsManager
         }
     }
 
-    public DrawableObject? GetGameObjectByIndex(int index)
+    public DrawableObject? GetGameObjectAt(int index)
     {
         if (index >= 0 && index < _gameObjects.Count)
             return _gameObjects[index];
@@ -99,16 +87,10 @@ public sealed class GameObjectsManager
             return null;
     }
 
-    public void Clear()
+    public void Dispose()
     {
         foreach (var gameObject in _gameObjects)
             gameObject.Dispose();
 
-        _gameObjects.Clear();
-    }
-
-    public void Dispose()
-    {
-        Clear();
     }
 }

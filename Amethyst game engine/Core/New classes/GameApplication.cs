@@ -3,27 +3,48 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-public class GameApplication(NativeWindowSettings settings, float tickTime = 1f / 60f) : GameWindow(GameWindowSettings.Default, settings)
+public sealed class GameApplication(NativeWindowSettings settings, float tickTime = 1f / 60f) : GameWindow(GameWindowSettings.Default, settings)
 {
-    private readonly RenderSystem _renderSystem = new();
+    private struct FPSCounter
+    {
+        public int FrameCount { get; private set; }
+        public float FpsTime { get; private set; }
+
+        public void Reset()
+        {
+            FrameCount = 0;
+            FpsTime = 0;
+        }
+
+        public void UpdateValues(float fpsTime)
+        {
+            FrameCount++;
+            FpsTime += fpsTime;
+        }
+
+        public readonly float GetFPS() => FpsTime / FrameCount;
+    }
+
     private readonly SceneManager _sceneManager = new();
+    private readonly RenderSystem _renderSystem = new();
 
     private float _accumulator;
-    private readonly float _tickTime = tickTime;
+    private readonly float _tickTime = Mathematics.Clamp(tickTime, 1f / 300f, 1f);
 
     public bool IsSceneLoaded => _sceneManager.CurrentScene != null;
+    public ISceneManager SceneManager => _sceneManager;
 
 #if DEBUG_MODE
-    private int _frameCounter;
-    private float _fpsTimer;
+    private FPSCounter _counter;
+
 #endif
 
     public void LoadScene(BaseScene scene) => _sceneManager.LoadScene(scene);
     public void UnloadScene() => _sceneManager.UnloadScene();
+    public void SetBackgroundColor(Color color) => _renderSystem.BackgroundColor = color;
 
     public void SetVSync(bool enabled) => VSync = enabled ? VSyncMode.On : VSyncMode.Off;
 
@@ -36,8 +57,6 @@ public class GameApplication(NativeWindowSettings settings, float tickTime = 1f 
 
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        _renderSystem.Init();
     }
 
     protected override void OnUnload()
@@ -63,15 +82,13 @@ public class GameApplication(NativeWindowSettings settings, float tickTime = 1f 
         float deltaTime = (float)args.Time;
 
 #if DEBUG_MODE
-        _fpsTimer += deltaTime;
-        _frameCounter++;
+        _counter.UpdateValues((float)args.Time);
 
-        if (_fpsTimer >= 1)
+        if (_counter.FpsTime >= 1)
         {
-            Console.WriteLine($"FPS: {_frameCounter / _fpsTimer}");
+            Console.WriteLine($"FPS: {_counter.GetFPS()}");
 
-            _fpsTimer = 0;
-            _frameCounter = 0;
+            _counter.Reset();
         }
 #endif
         _accumulator += deltaTime;

@@ -103,9 +103,9 @@ in vec4 vertexColor;
 int shininess = MAX_SHININESS;
 uniform vec3 _cameraPos;
 
-layout (std430, binding = 0) buffer DirectionLights {
 	int numOfDirectionalLights;
-	DirectionalLight directionalLights[];
+layout (std430, binding = 0) buffer DirectionLights {
+	DirectionalLight directionalLights;
 } directionalLights;
 
 layout (std430, binding = 1) buffer PointLights {

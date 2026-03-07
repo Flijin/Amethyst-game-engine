@@ -11,8 +11,8 @@ public sealed class SceneManager : ISceneManager, IDisposable
     private readonly Dictionary<string, BaseScene> _scenesRegistry = [];
     private bool _scenePaused;
 
-    public string? SceneName => _currentScene?.GetType().Name;
-    public BaseScene? CurrentScene => _currentScene;
+    public string? CurrentSceneName => _currentScene?.GetType().Name;
+    public IBaseScene? CurrentScene => _currentScene;
 
     public bool ScenePaused
     {
@@ -32,13 +32,13 @@ public sealed class SceneManager : ISceneManager, IDisposable
         }
     }
 
-    public void Update(float deltaTime)
+    internal void Update(float deltaTime)
     {
         if (_scenePaused == false)
             _currentScene?.Update(deltaTime);
     }
 
-    public void FixedUpdate(float fixedDeltaTime)
+    internal void FixedUpdate(float fixedDeltaTime)
     {
         if (_scenePaused == false)
             _currentScene?.FixedUpdate(fixedDeltaTime);
@@ -109,7 +109,7 @@ public sealed class SceneManager : ISceneManager, IDisposable
         if (_sceneHistory.Count != 0)
             LoadScene(_sceneHistory.Pop());
         else
-            System.PrintMessage("Warning. No scenes in history");
+            System.PrintMessage("Warning. No scenes in history", MessageTypes.WarningMessage);
     }
 
     public void Dispose()
@@ -125,8 +125,8 @@ public sealed class SceneManager : ISceneManager, IDisposable
         foreach (var scene in _scenesRegistry.Values)
             scene.Dispose();
 
-        _scenesRegistry.Clear();
-        
+        _currentScene?.Dispose();
+
         SceneChanged = null;
         SceneLoaded = null;
         SceneUnloaded = null;

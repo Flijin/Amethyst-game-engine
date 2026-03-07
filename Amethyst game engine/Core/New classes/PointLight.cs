@@ -3,52 +3,30 @@ using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-public class PointLight(string tag)
+public class PointLight
 {
-    public string Tag { get; } = tag;
+    private readonly Transform _transform = new();
 
-    public Vector3 Position { get; set; } = Vector3.Zero;
+    public Transform Transform => _transform;
+    public string? Tag { get; set; }
+
     public Vector3 Color { get; set; } = Core.Color.White.ConvertColorToVector3();
     public float Intensity { get; set; } = 1.0f;
     public float Constant { get; set; } = 1.0f;
     public float Linear { get; set; } = 0.09f;
     public float Quadratic { get; set; } = 0.032f;
-    public float Radius { get; set; }
-
-    public PointLight() : this(string.Empty) {    }
 
     internal PointLightData GetLightData()
     {
         return new PointLightData()
         {
-            position = Position,
+            position = _transform.Position,
             color = Color,
             intensity = Intensity,
             constant = Constant,
             linear = Linear,
             quadratic = Quadratic,
-            radius = Radius,
+            radius = Mathematics.CalculateLightRadius(Constant, Linear, Quadratic),
         };
-    }
-
-    internal void CalculateRadius(float threshold = 0.001f)
-    {
-        float target = 1f / threshold;
-
-        float a = Quadratic;
-        float b = Linear;
-        float c = Constant - target;
-
-        float discriminant = b * b - 4 * a * c;
-
-        if (discriminant < 0)
-            Radius = float.PositiveInfinity;
-
-        float sqrtDisc = MathF.Sqrt(discriminant);
-        float d1 = (-b + sqrtDisc) / (2 * a);
-        float d2 = (-b - sqrtDisc) / (2 * a);
-
-        float radius = MathF.Max(d1, d2);
-        Radius =  radius > 0 ? radius : float.PositiveInfinity;
     }
 }

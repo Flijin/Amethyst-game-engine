@@ -23,4 +23,6 @@ internal struct SpotlightData
     public float quadratic;
 
     public float radius;
+
+    public int isActive;
 }

@@ -43,7 +43,7 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
         activeShader = ShadersPool.GetShader(props);
     }
 
-    public void DrawPrimitive(Vector3 cameraPos, int[] ssbo)
+    public void DrawPrimitive(Vector3 cameraPos)
     {
         activeShader.Use();
         GL.BindVertexArray(_vao);
@@ -56,21 +56,10 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
 
         SetFactors();
 
-        UseSSBO(ssbo, activeShaderSettings);
-
         if (_isIndexedGeometry)
             GL.DrawElements(_mode, _count, _drawElementsType, 0);
         else
             GL.DrawArrays(_mode, 0, _count);
-    }
-
-    private static void UseSSBO(int[] ssboArray, RenderSettings settings)
-    {
-        if ((settings & RenderSettings.Lighting) == 0)
-            return;
-
-        for (int i = 0; i < ssboArray.Length; i++)
-            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, i, ssboArray[i]);
     }
 
     private void SetFactors()
@@ -78,14 +67,14 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
         if ((activeShader.Props.RenderSettings & RenderSettings.BaseColorFactor) != 0)
             activeShader.SetVector4("_baseColorFactor", Material.BaseColorFactor.ConvertColorToVector4());
 
+        if ((activeShader.Props.RenderSettings & RenderSettings.EmissiveFactor) != 0)
+            activeShader.SetVector3("_emissiveFactor", Material.BaseColorFactor.ConvertColorToVector3());
+
         if ((activeShader.Props.RenderSettings & RenderSettings.MetallicFactor) != 0)
             activeShader.SetFloat("_metallicFactor", Material.MetallicFactor);
 
         if ((activeShader.Props.RenderSettings & RenderSettings.RoughnessFactor) != 0)
             activeShader.SetFloat("_roughnessFactor", Material.RoughnessFactor);
-
-        if ((activeShader.Props.RenderSettings & RenderSettings.EmissiveFactor) != 0)
-            activeShader.SetVector3("_emissiveFactor", Material.BaseColorFactor.ConvertColorToVector3());
     }
 
     private void SetTextures(RenderSettings activeShaderSettings)
@@ -94,9 +83,9 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
 
         foreach (var texture in currentTextures)
         {
-            if ((texture.settings & activeShaderSettings) != 0 && texture.texture != null)
+            if (texture != null && (texture.textureSetting & activeShaderSettings) != 0)
             {
-                TextureActivator.UseTexture(texture.texture, activeShader);
+                TextureActivator.UseTexture(texture, activeShader);
             }
         }
     }

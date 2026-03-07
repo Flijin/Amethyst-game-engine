@@ -22,6 +22,7 @@ public class Camera : IDisposable
     private readonly unsafe float* _viewMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
     private readonly unsafe float* _projectionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
+    public string? Tag { get; set; }
     public float Near { get; set; }
     public float Far { get; set; }
     public Vector3 Position { get; set; }

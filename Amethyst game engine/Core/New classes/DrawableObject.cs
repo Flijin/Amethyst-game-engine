@@ -1,26 +1,22 @@
 using System.Diagnostics.CodeAnalysis;
-using Amethyst_game_engine.CameraModule;
 using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-public abstract class DrawableObject : IDisposable
+public class DrawableObject : IDisposable
 {
-    public bool useCamera;
-    public BaseScene? _baseScene;
+    private BaseScene? _baseScene;
 
-    private readonly Mesh[] _meshes;
-    private readonly Transform _transform;
+    private readonly Transform _transform = new();
+
+    [AllowNull]
+    private Mesh[] _meshes;
     private bool _useMeshMatrix;
     private bool _useCamera;
 
     public Transform Transform => _transform;
-
-    internal DrawableObject(Mesh[] meshes)
-    {
-        _meshes = meshes;
-        _transform = new();
-    }
+    public string? Tag { get; set; }
+    public IBaseScene? BaseScene => _baseScene;
 
     public bool UseCamera
     {
@@ -29,45 +25,66 @@ public abstract class DrawableObject : IDisposable
         set => _useCamera = value;
     }
 
-    public abstract void OnStart();
-    public abstract void Update(float deltaTime);
-    public abstract void FixedUpdate(float fixedDeltaTime);
-    public abstract void OnExit();
-    public abstract void OnPause();
-    public abstract void OnResume();
+    internal bool UseMeshMatrix
+    {
+        get => _useMeshMatrix;
+
+        set => _useMeshMatrix = value;
+    }
+
+    internal Mesh[] Meshes
+    {
+        get => _meshes;
+
+        set => _meshes = value;
+    }
+
+    public virtual void OnStart() { }
+    public virtual void Update(float deltaTime) { }
+    public virtual void FixedUpdate(float fixedDeltaTime) { }
+    public virtual void OnExit() { }
+    public virtual void OnPause() { }
+    public virtual void OnResume() { }
 
     [MemberNotNull(nameof(_baseScene))]
     internal void SetScene(BaseScene scene) => _baseScene = scene;
 
-    internal unsafe void DrawObject(Camera? cam, int[] ssbo)
+    internal unsafe void DrawObject()
     {
-        float* viewMatrix;
-        float* projectionMatrix;
+        var cams = _baseScene?.CameraManager.Cameras;
 
-        if (cam is null || _useCamera == false)
+        if (_useCamera)
         {
-            viewMatrix = Mathematics.IDENTITY_MATRIX;
-            projectionMatrix = Mathematics.IDENTITY_MATRIX;
+            foreach (var camera in cams!)
+            {
+                DrawObject([camera.ViewMatrix, camera.ProjectionMatrix], camera.Position);
+            }
         }
         else
         {
-            viewMatrix = cam.ViewMatrix;
-            projectionMatrix = cam.ProjectionMatrix;
+            float* viewMatrix = Mathematics.IDENTITY_MATRIX;
+            float* projectionMatrix = Mathematics.IDENTITY_MATRIX;
+
+            DrawObject([viewMatrix, projectionMatrix], Vector3.Zero);
         }
 
+    }
+
+    private unsafe void DrawObject(float*[] matrices, Vector3 camPosition)
+    {
         foreach (var mesh in _meshes)
         {
             foreach (var primitive in mesh.primitives)
             {
                 primitive.activeShader.Use();
                 primitive.activeShader.SetMatrix4("modelMatrix", Transform.ModelMatrix);
-                primitive.activeShader.SetMatrix4("viewMatrix", viewMatrix);
-                primitive.activeShader.SetMatrix4("projectionMatrix", projectionMatrix);
+                primitive.activeShader.SetMatrix4("viewMatrix", matrices[0]);
+                primitive.activeShader.SetMatrix4("projectionMatrix", matrices[1]);
 
                 if (_useMeshMatrix)
                     primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
 
-                primitive.DrawPrimitive(cam is not null ? cam.Position : Vector3.Zero, ssbo);
+                primitive.DrawPrimitive(camPosition);
             }
         }
     }

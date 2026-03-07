@@ -43,7 +43,7 @@ internal readonly struct Mesh : IDisposable
         }
     }
 
-    public void RebuildShaders(ShaderBuildingProps props)
+    public void BuildShader(ShaderBuildingProps props)
     {
         foreach (var primitive in primitives)
         {
@@ -55,9 +55,6 @@ internal readonly struct Mesh : IDisposable
     {
         foreach (var buffer in _buffers)
             GL.DeleteBuffer(buffer);
-
-        foreach (var primitive in primitives)
-            //GL.DeleteVertexArray(primitive.vao);
 
         unsafe { Marshal.FreeHGlobal((nint)_matrix); }
     }

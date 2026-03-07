@@ -10,12 +10,14 @@ internal sealed class Texture : IDisposable
     public readonly Guid id;
     public readonly int textureHandle;
     public readonly TextureUnit unit;
+    public readonly RenderSettings textureSetting;
 
     public Vector2i Size { get; }
 
-    public Texture(byte[] data, TextureParams parameters, TextureUnit unit)
+    public Texture(byte[] data, TextureParams parameters, TextureUnit unit, RenderSettings textureSetting)
     {
         this.unit = unit;
+        this.textureSetting = textureSetting;
 
         textureHandle = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, textureHandle);
