@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace Amethyst_game_engine.Models.New_classes;
 
-internal class PrimitiveData
+internal sealed class PrimitiveData
 {
+    public required byte[] Vertices { get; set; }
+    public byte[]? Normals { get; set; }
+    public byte[]? Colors { get; set; }
+    public MaterialData? Material { get; set; }
 }

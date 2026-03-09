@@ -72,12 +72,15 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
     public void AddLight(T light)
     {
         _lightCount++;
+
+        var sizeofT = Marshal.SizeOf<T>();
+
         var dirty = false;
 
         if (_lightCount > _lightCapacity)
         {
             _lightCapacity *= 2;
-            var newSize = (nuint)(Marshal.SizeOf<T>() * _lightCapacity + sizeof(int));
+            var newSize = (nuint)(sizeofT * _lightCapacity + sizeof(int));
             _lightData = NativeMemory.Realloc(_lightData, newSize);
             dirty = true;
         }
@@ -98,12 +101,12 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
                     break;
                 }
 
-                offset += Marshal.SizeOf<T>();
+                offset += sizeofT;
             }
         }
 
         if (found == false)
-            offset = Marshal.SizeOf<T>() * (_lightCount - 1) + sizeof(int);
+            offset = sizeofT * (_lightCount - 1) + sizeof(int);
 
         var dest = (nint)((byte*)_lightData + offset);
 
@@ -115,15 +118,12 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
         if (dirty)
         {
             GL.BufferData(BufferTarget.ShaderStorageBuffer,
-                          Marshal.SizeOf<T>() * _lightCapacity + sizeof(int),
+                          sizeofT * _lightCapacity + sizeof(int),
                           (nint)_lightData, BufferUsageHint.DynamicDraw);
         }
         else
         {
-            GL.BufferSubData(BufferTarget.ShaderStorageBuffer,
-                             offset,
-                             Marshal.SizeOf<T>(),
-                             dest);
+            GL.BufferSubData(BufferTarget.ShaderStorageBuffer, offset, sizeofT, dest);
 
             GL.BufferSubData(BufferTarget.ShaderStorageBuffer,
                              0, sizeof(int), (nint)_lightData);

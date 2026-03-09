@@ -1,4 +1,6 @@
-﻿namespace Amethyst_game_engine.Core.New_classes;
+﻿using OpenTK.Windowing.Common;
+
+namespace Amethyst_game_engine.Core.New_classes;
 
 public sealed class SceneManager : ISceneManager, IDisposable
 {
@@ -6,6 +8,7 @@ public sealed class SceneManager : ISceneManager, IDisposable
     public event Action<BaseScene>? SceneLoaded;
     public event Action<BaseScene>? SceneUnloaded;
 
+    private GameApplication? _gameApplication;
     private BaseScene? _currentScene;
     private readonly Stack<BaseScene> _sceneHistory = new();
     private readonly Dictionary<string, BaseScene> _scenesRegistry = [];
@@ -13,6 +16,7 @@ public sealed class SceneManager : ISceneManager, IDisposable
 
     public string? CurrentSceneName => _currentScene?.GetType().Name;
     public IBaseScene? CurrentScene => _currentScene;
+    public IGameApplication? Application => _gameApplication;
 
     public bool ScenePaused
     {
@@ -32,6 +36,8 @@ public sealed class SceneManager : ISceneManager, IDisposable
         }
     }
 
+    internal void SetGameApplication(GameApplication app) => _gameApplication = app;
+
     internal void Update(float deltaTime)
     {
         if (_scenePaused == false)
@@ -43,6 +49,12 @@ public sealed class SceneManager : ISceneManager, IDisposable
         if (_scenePaused == false)
             _currentScene?.FixedUpdate(fixedDeltaTime);
     }
+
+    internal void OnKeyDown(KeyboardKeyEventArgs e) { }
+    internal void OnKeyUp(KeyboardKeyEventArgs e) { }
+    internal void OnMouseDown(MouseButtonEventArgs e) { }
+    internal void OnMouseUp(MouseButtonEventArgs e) { }
+    internal void OnMouseWheel(MouseWheelEventArgs e) { }
 
     public void LoadSceneByName(string name)
     {
@@ -58,10 +70,10 @@ public sealed class SceneManager : ISceneManager, IDisposable
             return;
 
         _currentScene?.OnExit();
-        _currentScene?.Dispose();
+        _currentScene?.Cleanup();
 
         _currentScene = scene;
-        _currentScene.SetSceneManager(this);
+        _currentScene?.SetSceneManager(this);
         _currentScene?.OnStart();
 
         SceneLoaded?.Invoke(scene);
@@ -76,7 +88,7 @@ public sealed class SceneManager : ISceneManager, IDisposable
         var unloadedScene = _currentScene;
 
         _currentScene?.OnExit();
-        _currentScene?.Dispose();
+        _currentScene?.Cleanup();
         _currentScene = null;
 
         SceneUnloaded?.Invoke(unloadedScene);
@@ -112,23 +124,28 @@ public sealed class SceneManager : ISceneManager, IDisposable
             System.PrintMessage("Warning. No scenes in history", MessageTypes.WarningMessage);
     }
 
-    public void Dispose()
+    internal void CleanUp()
     {
         BaseScene poppedScene;
 
         while (_sceneHistory.Count > 0)
         {
             poppedScene = _sceneHistory.Pop();
-            poppedScene.Dispose();
+            poppedScene.Cleanup();
         }
 
         foreach (var scene in _scenesRegistry.Values)
-            scene.Dispose();
+            scene.Cleanup();
 
-        _currentScene?.Dispose();
+        _currentScene?.Cleanup();
 
         SceneChanged = null;
         SceneLoaded = null;
         SceneUnloaded = null;
+    }
+
+    void IDisposable.Dispose()
+    {
+        CleanUp();
     }
 }

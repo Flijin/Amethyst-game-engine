@@ -4,6 +4,20 @@ namespace Amethyst_game_engine.Core.New_classes;
 
 public sealed class LightManager : IDisposable
 {
+    public event Action<DirectionalLight>? DirLightAdded;
+    public event Action<DirectionalLight>? DirLightRemoved;
+    public event Action<DirectionalLight>? DirLightUpdated;
+
+    public event Action<PointLight>? PointLightAdded;
+    public event Action<PointLight>? PointLightRemoved;
+    public event Action<PointLight>? PointLightUpdated;
+
+    public event Action<Spotlight>? SpotlightAdded;
+    public event Action<Spotlight>? SpotlightRemoved;
+    public event Action<Spotlight>? SpotlightUpdated;
+
+    public event Action? OnClear;
+
     private readonly List<DirectionalLight> _dirLights = [];
     private readonly List<PointLight> _pointLights = [];
     private readonly List<Spotlight> _spotlights = [];
@@ -18,18 +32,21 @@ public sealed class LightManager : IDisposable
 
     public void UpdateDirectionalLightAt(DirectionalLight light, int index)
     {
+        DirLightUpdated?.Invoke(_dirLights[index]);
         _dirLights[index] = light;
         _dirLightsManager.UpdateLight(light.GetLightData(), index);
     }
 
     public void UpdatePointLightAt(PointLight light, int index)
     {
+        PointLightUpdated?.Invoke(_pointLights[index]);
         _pointLights[index] = light;
         _pointLightsManager.UpdateLight(light.GetLightData(), index);
     }
 
     public void UpdateSpotlightAt(Spotlight light, int index)
     {
+        SpotlightUpdated?.Invoke(_spotlights[index]);
         _spotlights[index] = light;
         _spotlightsManager.UpdateLight(light.GetLightData(), index);
     }
@@ -40,6 +57,7 @@ public sealed class LightManager : IDisposable
         {
             if (condition(_dirLights[i]))
             {
+                DirLightUpdated?.Invoke(_dirLights[i]);
                 _dirLights[i] = light;
                 _dirLightsManager.UpdateLight(light.GetLightData(), i);
             }
@@ -52,6 +70,7 @@ public sealed class LightManager : IDisposable
         {
             if (condition(_pointLights[i]))
             {
+                PointLightUpdated?.Invoke(_pointLights[i]);
                 _pointLights[i] = light;
                 _pointLightsManager.UpdateLight(light.GetLightData(), i);
             }
@@ -64,6 +83,7 @@ public sealed class LightManager : IDisposable
         {
             if (condition(_spotlights[i]))
             {
+                SpotlightUpdated?.Invoke(_spotlights[i]);
                 _spotlights[i] = light;
                 _spotlightsManager.UpdateLight(light.GetLightData(), i);
             }
@@ -74,18 +94,21 @@ public sealed class LightManager : IDisposable
     {
         _dirLights.Add(light);
         _dirLightsManager.AddLight(light.GetLightData());
+        DirLightAdded?.Invoke(light);
     }
 
     public void AddPointLight(PointLight light)
     {
         _pointLights.Add(light);
         _pointLightsManager.AddLight(light.GetLightData());
+        PointLightAdded?.Invoke(light);
     }
 
     public void AddSpotlight(Spotlight light)
     {
         _spotlights.Add(light);
         _spotlightsManager.AddLight(light.GetLightData());
+        SpotlightAdded?.Invoke(light);
     }
 
     public int RemoveDirectionalLights(Predicate<DirectionalLight> condition)
@@ -93,7 +116,10 @@ public sealed class LightManager : IDisposable
         for (int i = _dirLights.Count - 1; i > 0; i--)
         {
             if (condition(_dirLights[i]))
+            {
+                DirLightRemoved?.Invoke(_dirLights[i]);
                 _dirLightsManager.RemoveLight(i);
+            }
         }
 
         return _dirLights.RemoveAll(condition);
@@ -104,7 +130,10 @@ public sealed class LightManager : IDisposable
         for (int i = _pointLights.Count - 1; i > 0; i--)
         {
             if (condition(_pointLights[i]))
+            {
+                PointLightRemoved?.Invoke(_pointLights[i]);
                 _spotlightsManager.RemoveLight(i);
+            }
         }
 
         return _pointLights.RemoveAll(condition);
@@ -115,18 +144,22 @@ public sealed class LightManager : IDisposable
         for (int i = _spotlights.Count - 1; i > 0; i--)
         {
             if (condition(_spotlights[i]))
+            {
+                SpotlightRemoved?.Invoke(_spotlights[i]);
                 _spotlightsManager.RemoveLight(i);
+            }
         }
 
         return _spotlights.RemoveAll(condition);
     }
 
-    public bool RemoveDirectionalLightByIndex(int index)
+    public bool RemoveDirectionalLightAt(int i)
     {
-        if (index >= 0 && index < _dirLights.Count)
+        if (i >= 0 && i < _dirLights.Count)
         {
-            _dirLights.RemoveAt(index);
-            _dirLightsManager.RemoveLight(index);
+            DirLightRemoved?.Invoke(_dirLights[i]);
+            _dirLights.RemoveAt(i);
+            _dirLightsManager.RemoveLight(i);
 
             return true;
         }
@@ -134,12 +167,13 @@ public sealed class LightManager : IDisposable
         return false;
     }
 
-    public bool RemovePointLightByIndex(int index)
+    public bool RemovePointLightAt(int i)
     {
-        if (index >= 0 && index < _pointLights.Count)
+        if (i >= 0 && i < _pointLights.Count)
         {
-            _pointLights.RemoveAt(index);
-            _pointLightsManager.RemoveLight(index);
+            PointLightRemoved?.Invoke(_pointLights[i]);
+            _pointLights.RemoveAt(i);
+            _pointLightsManager.RemoveLight(i);
 
             return true;
         }
@@ -147,12 +181,13 @@ public sealed class LightManager : IDisposable
         return false;
     }
 
-    public bool RemoveSpotlightByIndex(int index)
+    public bool RemoveSpotlightAt(int i)
     {
-        if (index >= 0 && index < _spotlights.Count)
+        if (i >= 0 && i < _spotlights.Count)
         {
-            _spotlights.RemoveAt(index);
-            _spotlightsManager.RemoveLight(index);
+            SpotlightRemoved?.Invoke(_spotlights[i]);
+            _spotlights.RemoveAt(i);
+            _spotlightsManager.RemoveLight(i);
 
             return true;
         }
@@ -220,12 +255,31 @@ public sealed class LightManager : IDisposable
         _dirLightsManager.Clear();
         _pointLightsManager.Clear();
         _spotlightsManager.Clear();
+
+        OnClear?.Invoke();
     }
 
-    public void Dispose()
+    internal void Cleanup()
     {
         _dirLightsManager.Dispose();
         _pointLightsManager.Dispose();
         _spotlightsManager.Dispose();
+
+        DirLightAdded = null;
+        DirLightRemoved = null;
+        DirLightUpdated = null;
+
+        PointLightAdded = null;
+        PointLightRemoved = null;
+        PointLightUpdated = null;
+
+        SpotlightAdded = null;
+        SpotlightRemoved = null;
+        SpotlightUpdated = null;
+    }
+
+    void IDisposable.Dispose()
+    {
+        Cleanup();
     }
 }

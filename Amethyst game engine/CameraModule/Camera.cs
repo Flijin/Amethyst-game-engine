@@ -5,18 +5,14 @@ using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.CameraModule;
 
-public class Camera : IDisposable
+public sealed class Camera : IDisposable
 {
-    public float AspectRatio;
-
-    private bool _disposed = false;
-
+    private float _aspectRatio;
     private float _yaw = -float.Pi / 2;
     private float _orthographicBorder;
     private float _fov;
     private float _pitch;
 
-    private readonly float _aspectRatio;
     private readonly CameraTypes _type;
 
     private readonly unsafe float* _viewMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
@@ -27,14 +23,20 @@ public class Camera : IDisposable
     public float Far { get; set; }
     public Vector3 Position { get; set; }
 
-    internal Vector3 Up { get; private set; } = Vector3.UnitY;
-    internal Vector3 RightVector { get; private set; } = Vector3.UnitX;
-    internal Vector3 Front { get; private set; } = -Vector3.UnitZ;
+    public Vector3 Up { get; private set; } = Vector3.UnitY;
+    public Vector3 RightVector { get; private set; } = Vector3.UnitX;
+    public Vector3 Front { get; private set; } = -Vector3.UnitZ;
 
-    public float Right { get; set; }
-    public float Left { get; set; }
-    public float Bottom { get; set; }
-    public float Top { get; set; }
+    public float RightSide { get; set; }
+    public float LeftSide { get; set; }
+    public float BottomSide { get; set; }
+    public float TopSide { get; set; }
+
+    public float AspectRatio
+    {
+        get => _aspectRatio;
+        set => _aspectRatio = value;
+    }
 
     public float Fov
     {
@@ -72,10 +74,10 @@ public class Camera : IDisposable
         {
             _orthographicBorder = value;
 
-            Left = -value * _aspectRatio;
-            Right = value * _aspectRatio;
-            Top = -value / _aspectRatio;
-            Bottom = value / _aspectRatio;
+            LeftSide = -value * _aspectRatio;
+            RightSide = value * _aspectRatio;
+            TopSide = value / _aspectRatio;
+            BottomSide = -value / _aspectRatio;
         }
     }
 
@@ -99,10 +101,10 @@ public class Camera : IDisposable
             }
             else
             {
-                *_projectionMatrix = 2 / (Right - Left);
-                *(_projectionMatrix + 3) = -((Right + Left) / (Right - Left));
-                *(_projectionMatrix + 5) = 2 / (Top - Bottom);
-                *(_projectionMatrix + 7) = -((Top + Bottom) / (Top - Bottom));
+                *_projectionMatrix = 2 / (RightSide - LeftSide);
+                *(_projectionMatrix + 3) = -((RightSide + LeftSide) / (RightSide - LeftSide));
+                *(_projectionMatrix + 5) = 2 / (TopSide - BottomSide);
+                *(_projectionMatrix + 7) = -((TopSide + BottomSide) / (TopSide - BottomSide));
                 *(_projectionMatrix + 10) = -(2 / (Far - Near));
                 *(_projectionMatrix + 11) = -((Far + Near) / (Far - Near));
                 *(_projectionMatrix + 15) = 1;
@@ -163,11 +165,6 @@ public class Camera : IDisposable
             _fov = 0.7854f;
     }
 
-    ~Camera()
-    {
-        if (_disposed == false)
-            System.PrintMessage("Warning. The Dispose method was not called, RAM memory leak", MessageTypes.WarningMessage);
-    }
 
     private void CalculateVectors()
     {
@@ -180,19 +177,17 @@ public class Camera : IDisposable
         Up = Vector3.Cross(RightVector, Front);
     }
 
-    public void Dispose()
+    internal void Cleanup()
     {
-        if (_disposed == false)
+        unsafe
         {
-            unsafe
-            {
-                Marshal.FreeHGlobal((nint)_viewMatrix);
-                Marshal.FreeHGlobal((nint)_projectionMatrix);
-            }
-            
-            GC.SuppressFinalize(this);
-
-            _disposed = true;
+            Marshal.FreeHGlobal((nint)_viewMatrix);
+            Marshal.FreeHGlobal((nint)_projectionMatrix);
         }
+    }
+
+    void IDisposable.Dispose()
+    {
+        Cleanup();
     }
 }

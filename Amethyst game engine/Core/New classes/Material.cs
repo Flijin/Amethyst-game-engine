@@ -1,5 +1,4 @@
 ﻿using Amethyst_game_engine.Render;
-using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
@@ -16,7 +15,7 @@ public struct Material
 
     public readonly RenderSettings MaterialKey => _materialKey;
 
-    internal Texture? AlbedoTexture
+    internal Texture? AlbedoMap
     {
         readonly get => textures[0];
 

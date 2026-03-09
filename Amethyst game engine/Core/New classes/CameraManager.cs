@@ -4,41 +4,50 @@ namespace Amethyst_game_engine.Core.New_classes;
 
 public sealed class CameraManager : IDisposable
 {
+    public event Action<Camera>? CameraAdded;
+    public event Action<Camera>? CameraRemoved;
+    public event Action? OnClear;
+
     private readonly List<Camera> _cameras = [];
 
     public IReadOnlyList<Camera> Cameras => _cameras;
     public int CameraCount => _cameras.Count;
 
-    internal void UpdateAspectRatio(float aspectRatio)
-    {
-        foreach (var camera in _cameras)
-        {
-            camera.AspectRatio = aspectRatio;
-        }
-    }
-
     public bool AddCamera(Camera cam)
     {
         if (_cameras.Contains(cam))
         {
-            System.PrintMessage("Warning. This camera is already exists", MessageTypes.WarningMessage);
+            System.PrintMessage("Error. Camera is already exists", MessageTypes.ErrorMessage);
             return false;
         }
 
         _cameras.Add(cam);
+        CameraAdded?.Invoke(cam);
+
         return true;
     }
 
     public int RemoveCamera(Predicate<Camera> condition)
     {
+        for (int i = _cameras.Count - 1; i > 0; i++)
+        {
+            if (condition(_cameras[i]))
+            {
+                CameraRemoved?.Invoke(_cameras[i]);
+                _cameras[i].Cleanup();
+            }
+        }
+
         return _cameras.RemoveAll(condition);
     }
 
-    public bool RemoveCameraByIndex(int index)
+    public bool RemoveCameraAt(int i)
     {
-        if (index >= 0 && index < _cameras.Count)
+        if (i >= 0 && i < _cameras.Count)
         {
-            _cameras.RemoveAt(index);
+            CameraRemoved?.Invoke(_cameras[i]);
+            _cameras.RemoveAt(i);
+
             return true;
         }
 
@@ -54,7 +63,7 @@ public sealed class CameraManager : IDisposable
         }
     }
 
-    public Camera? GetCameraByIndex(int index)
+    public Camera? GetCameraAt(int index)
     {
         if (index >= 0 && index < _cameras.Count)
             return _cameras[index];
@@ -64,14 +73,20 @@ public sealed class CameraManager : IDisposable
 
     public void Clear()
     {
-        foreach (var camera in _cameras)
-            camera.Dispose();
-
+        Cleanup();
         _cameras.Clear();
+
+        OnClear?.Invoke();
     }
 
-    public void Dispose()
+    internal void Cleanup()
     {
-        _cameras.Clear();
+        foreach (var camera in _cameras)
+            camera.Cleanup();
+    }
+
+    void IDisposable.Dispose()
+    {
+        Cleanup();
     }
 }

@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-internal sealed class Primitive(int vao, Material material, Primitive.Options options)
+internal sealed class Primitive(int vao, Primitive.Options options) : IDisposable
 {
     public struct Options
     {
@@ -25,21 +25,42 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
     private readonly PrimitiveType _mode = options.Mode;
     private readonly bool _isIndexedGeometry = options.IsIndexedGeometry;
 
-    public Material Material { get; set; } = material;
+    public Material Material { get; set; }
+    public RenderSettings ImportedFromModel { get; set; }
+    private RenderSettings _currentRenderState;
+
+    [AllowNull]
+    public int[] Buffers { get; set; }
 
     [MemberNotNull(nameof(activeShader))]
     public void BuildShader(ShaderBuildingProps props)
     {
-        var systemFlags = (RenderSettings.VertexColors | RenderSettings.Lighting) & props.RenderSettings;
+        var gourandSettings = RenderSettings.NormalMap |
+                              RenderSettings.OcclusionMap |
+                              RenderSettings.EmissiveMap |
+                              RenderSettings.UseNormalScale |
+                              RenderSettings.UseOcclusionStrength;
 
         if (props.ShadingModel != ShadingModels.PBR_MetallicRoughness)
         {
             props.RenderSettings &= ~(RenderSettings.MetallicRoughnessMap |
-                                     RenderSettings.MetallicFactor |
-                                     RenderSettings.RoughnessFactor);
+                                      RenderSettings.MetallicFactor |
+                                      RenderSettings.RoughnessFactor);
         }
 
-        props.RenderSettings = props.RenderSettings & Material.MaterialKey | systemFlags;
+        if (props.ShadingModel == ShadingModels.Gouraud)
+        {
+            props.RenderSettings &= ~gourandSettings;
+        }
+
+        if (props.ShadingModel == ShadingModels.Unlit)
+        {
+            props.RenderSettings &= ~(gourandSettings | RenderSettings.EmissiveFactor);
+        }
+
+        _currentRenderState = props.RenderSettings & ImportedFromModel;
+        props.RenderSettings = _currentRenderState;
+
         activeShader = ShadersPool.GetShader(props);
     }
 
@@ -87,6 +108,18 @@ internal sealed class Primitive(int vao, Material material, Primitive.Options op
             {
                 TextureActivator.UseTexture(texture, activeShader);
             }
+        }
+    }
+
+    public void Dispose()
+    {
+        foreach (var buffer in Buffers)
+            GL.DeleteBuffer(buffer);
+
+        foreach (var texture in Material.textures)
+        {
+            if (texture != null)
+                GL.DeleteTexture(texture.textureHandle);
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Amethyst_game_engine.Models.New_classes;
 
-namespace Amethyst_game_engine.Models.New_classes;
-
-internal class MeshData
+internal sealed class MeshData
 {
+    private PrimitiveData[] _primitives;
+
+    public MeshData(PrimitiveData[] primitives)
+    {
+        _primitives = primitives;
+    }
 }

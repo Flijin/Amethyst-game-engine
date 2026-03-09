@@ -1,12 +1,23 @@
-﻿using Amethyst_game_engine.Core.New_classes;
+﻿using System.Diagnostics.CodeAnalysis;
 using Amethyst_game_engine.Render;
 
-namespace Amethyst_game_engine.Models.STLModule;
+namespace Amethyst_game_engine.Models.New_classes;
 
-public readonly struct STLModel
+public class STLModel
 {
-    public STLModel(string path, RenderSettings renderSettings = RenderSettings.All, Material? material = null)
+    private readonly MeshData _meshData;
+    private readonly RenderSettings _settings;
+
+    public RenderSettings Settings => _settings;
+    internal MeshData MeshData => _meshData;
+    public int TrianglesCount { get; internal set; }
+
+    [AllowNull]
+    public string Header { get; internal set; }
+
+    internal STLModel(MeshData mesh, RenderSettings settings)
     {
-        StreamReader readeer = new(path);
+         _meshData = mesh;
+        _settings = settings;
     }
 }

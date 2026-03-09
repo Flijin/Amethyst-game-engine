@@ -1,10 +1,9 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Window = Amethyst_game_engine.Core.Window;
 
 namespace Amethyst_game_engine.CameraModule;
 
-public class StandartCameraController
+public class FreeCameraController
 {
     private Camera? _camera;
     private Vector2 _lastMousePosition;
@@ -16,55 +15,39 @@ public class StandartCameraController
     {
         get => _speed;
 
-        set
-        {
-            if (value >= 0)
-                _speed = value;
-            else
-                _speed = 0;
-        }
+        set => _speed = MathF.Max(0, value);
     }
 
     public float Sensivity
     {
         get => _sensivity;
 
-        set
-        {
-            if (value >= 0)
-                _sensivity = value;
-            else
-                _sensivity = 0;
-        }
+        set => _sensivity = MathF.Max(0, value);
     }
 
-    public StandartCameraController(float speed, float sensivity)
+    public FreeCameraController(float speed, float sensivity)
     {
         Speed = speed;
         Sensivity = sensivity;
-
-        Window.KeyPressedEvent += MoveCamera;
-        Window.MouseMoveEvent += RotateCamera;
-        Window.ResetFirstMoveEvent += ResetFirstMove;
     }
 
-    internal void BindCamera(Camera cam) => _camera = cam;
-    internal void ResetFirstMove() => _isFirstMove = true;
-
-    internal void MoveCamera(KeyboardState inputKey, float delta)
+    public void BindCamera(Camera cam) => _camera = cam;
+    public void ResetFirstMove() => _isFirstMove = true;
+        
+    public void MoveCamera(KeyboardState inputKey, float delta)
     {
         if (_camera is not null)
         {
             if (inputKey.IsKeyDown(Keys.W)) _camera.Position += _camera.Front * Speed * delta;
             if (inputKey.IsKeyDown(Keys.S)) _camera.Position -= _camera.Front * Speed * delta;
-            if (inputKey.IsKeyDown(Keys.A)) _camera.Position -= Vector3.Normalize(Vector3.Cross(_camera.Front, Vector3.UnitY)) * Speed * delta;
-            if (inputKey.IsKeyDown(Keys.D)) _camera.Position += Vector3.Normalize(Vector3.Cross(_camera.Front, Vector3.UnitY)) * Speed * delta;
+            if (inputKey.IsKeyDown(Keys.A)) _camera.Position -= _camera.RightVector * Speed * delta;
+            if (inputKey.IsKeyDown(Keys.D)) _camera.Position += _camera.RightVector * Speed * delta;
             if (inputKey.IsKeyDown(Keys.Space)) _camera.Position += Vector3.UnitY * Speed * delta;
             if (inputKey.IsKeyDown(Keys.LeftShift)) _camera.Position -= Vector3.UnitY * Speed * delta;
         }
     }
 
-    internal void RotateCamera(Vector2 mousePos)
+    public void RotateCamera(Vector2 mousePos)
     {
         if (_isFirstMove == true)
         {

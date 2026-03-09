@@ -2,67 +2,57 @@
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-public sealed class GameObjectManager
+public sealed class GameObjectManager: IDisposable
 {
+    public event Action<DrawableObject>? GameObjectAdded;
+    public event Action<DrawableObject>? GameObjectRemoved;
+    public event Action? OnClear;
+
     private readonly List<DrawableObject> _gameObjects = [];
     private BaseScene? _scene;
 
     public IReadOnlyList<DrawableObject> GameObjects => _gameObjects;
     public int Count => _gameObjects.Count;
 
-    internal void OnStart()
-    {
-        foreach (var gameObj in _gameObjects)
-            gameObj.OnStart();
-    }
-
-    internal void Update(float deltaTime)
-    {
-        foreach (var gameObj in _gameObjects)
-            gameObj.Update(deltaTime);
-    }
-
-    internal void FixedUpdate(float fixedDeltaTime)
-    {
-        foreach (var gameObj in _gameObjects)
-            gameObj.FixedUpdate(fixedDeltaTime);
-    }
-
-    internal void OnExit()
-    {
-        foreach (var gameObj in _gameObjects)
-            gameObj.OnExit();
-    }
-
-    internal void OnPause()
-    {
-        foreach (var gameObj in _gameObjects)
-            gameObj.OnPause();
-    }
-
-    internal void OnResume()
-    {
-        foreach (var gameObj in _gameObjects)
-            gameObj.OnResume();
-    }
-
-    public void Clear() => _gameObjects.Clear();
-    public int RemoveGameObjects(Predicate<DrawableObject> condition) => _gameObjects.RemoveAll(condition);
-
     [MemberNotNull(nameof(_scene))]
     internal void SetBaseScene(BaseScene scene) => _scene = scene;
 
-    public void AddGameObject(DrawableObject obj)
+    public int RemoveGameObjects(Predicate<DrawableObject> condition)
     {
-        _gameObjects.Add(obj);
-        obj.SetScene(_scene!);
+        for (int i = _gameObjects.Count - 1; i > 0; i++)
+        {
+            if (condition(_gameObjects[i]))
+            {
+                GameObjectRemoved?.Invoke(_gameObjects[i]);
+                _gameObjects[i].Cleanup();
+            }
+        }
+
+        return _gameObjects.RemoveAll(condition);
     }
 
-    public bool RemoveGameObjectByIndex(int index)
+    public void AddGameObject(DrawableObject obj)
     {
-        if (index >= 0 && index < _gameObjects.Count)
+        if (_gameObjects.Contains(obj))
         {
-            _gameObjects.RemoveAt(index);
+            System.PrintMessage("Error. Game object is already exists");
+            return;
+        }
+
+        _gameObjects.Add(obj);
+        obj.SetScene(_scene!);
+
+        GameObjectAdded?.Invoke(obj);
+    }
+
+    public bool RemoveGameObjectAt(int i)
+    {
+        if (i >= 0 && i < _gameObjects.Count)
+        {
+            GameObjectRemoved?.Invoke(_gameObjects[i]);
+            
+            _gameObjects[i].Cleanup();
+            _gameObjects.RemoveAt(i);
 
             return true;
         }
@@ -87,10 +77,22 @@ public sealed class GameObjectManager
             return null;
     }
 
-    public void Dispose()
+    public void Clear()
+    {
+        Cleanup();
+        _gameObjects.Clear();
+
+        OnClear?.Invoke();
+    }
+
+    internal void Cleanup()
     {
         foreach (var gameObject in _gameObjects)
-            gameObject.Dispose();
+            gameObject.Cleanup();
+    }
 
+    void IDisposable.Dispose()
+    {
+        Cleanup();
     }
 }

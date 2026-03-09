@@ -28,4 +28,12 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\STLModule\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="CameraModule\FreeCameraController.cs" />
+  </ItemGroup>
+
 </Project>

@@ -12,4 +12,7 @@ public enum ShadingModels : byte
 
     [GLSLMacros("#define USE_PBR_METALLIC_ROUGHNESS")]
     PBR_MetallicRoughness = 2,
+
+    [GLSLMacros("#define USE_UNLIT")]
+    Unlit = 3
 }

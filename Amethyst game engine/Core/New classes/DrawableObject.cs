@@ -1,9 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-public class DrawableObject : IDisposable
+public abstract class DrawableObject : IDisposable
 {
     private BaseScene? _baseScene;
 
@@ -13,29 +14,27 @@ public class DrawableObject : IDisposable
     private Mesh[] _meshes;
     private bool _useMeshMatrix;
     private bool _useCamera;
-
+    
     public Transform Transform => _transform;
     public string? Tag { get; set; }
     public IBaseScene? BaseScene => _baseScene;
+    public bool Visible { get; set; } = true;
 
     public bool UseCamera
     {
         get => _useCamera;
-
         set => _useCamera = value;
     }
 
     internal bool UseMeshMatrix
     {
         get => _useMeshMatrix;
-
         set => _useMeshMatrix = value;
     }
 
     internal Mesh[] Meshes
     {
         get => _meshes;
-
         set => _meshes = value;
     }
 
@@ -45,6 +44,11 @@ public class DrawableObject : IDisposable
     public virtual void OnExit() { }
     public virtual void OnPause() { }
     public virtual void OnResume() { }
+    public virtual void OnKeyDown(KeyboardKeyEventArgs e) { }
+    public virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
+    public virtual void OnMouseDown(MouseButtonEventArgs e) { }
+    public virtual void OnMouseUp(MouseButtonEventArgs e) { }
+    public virtual void OnMouseWheel(MouseWheelEventArgs e) { }
 
     [MemberNotNull(nameof(_baseScene))]
     internal void SetScene(BaseScene scene) => _baseScene = scene;
@@ -89,9 +93,16 @@ public class DrawableObject : IDisposable
         }
     }
 
-    public void Dispose()
+#pragma warning disable CA1816
+    internal void Cleanup()
     {
         _transform.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    void IDisposable.Dispose()
+    {
+        Cleanup();
+    }
+#pragma warning restore
 }
