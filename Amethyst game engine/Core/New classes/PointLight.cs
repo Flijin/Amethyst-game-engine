@@ -5,11 +5,9 @@ namespace Amethyst_game_engine.Core.New_classes;
 
 public class PointLight
 {
-    private readonly Transform _transform = new();
-
-    public Transform Transform => _transform;
     public string? Tag { get; set; }
 
+    public Vector3 Position { get; set; } = new();
     public Vector3 Color { get; set; } = Core.Color.White.ConvertColorToVector3();
     public float Intensity { get; set; } = 1.0f;
     public float Constant { get; set; } = 1.0f;
@@ -20,13 +18,14 @@ public class PointLight
     {
         return new PointLightData()
         {
-            position = _transform.Position,
+            position = Position,
             color = Color,
             intensity = Intensity,
             constant = Constant,
             linear = Linear,
             quadratic = Quadratic,
             radius = Mathematics.CalculateLightRadius(Constant, Linear, Quadratic),
+            isActive = 1
         };
     }
 }

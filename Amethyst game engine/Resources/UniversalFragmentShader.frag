@@ -15,6 +15,8 @@ struct Spotlight {
     float linear;
     float quadratic;
 	float radius;
+    int isActive;
+    
 };
 
 struct PointLight {
@@ -25,12 +27,14 @@ struct PointLight {
     float linear;
     float quadratic;
 	float radius;
+    int isActive;
 };
 
 struct DirectionalLight {
     vec3 direction;
     vec3 color;
     float intensity;
+    int isActive;
 };
 
 #ifdef USE_ALBEDO_MAP
@@ -46,7 +50,7 @@ uniform vec4 _baseColorFactor;
 in vec4 vertexColor;
 #endif
 
-#ifdef USE_LIGHTING
+#ifndef USE_UNLIT
     #ifdef USE_NORMAL_MAP
         uniform sampler2D _normalTexture;
         in vec2 normalCoords;
@@ -80,7 +84,7 @@ in vec4 vertexColor;
     #endif
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_PBR_METALLIC_ROUGHNESS)
+#if defined(USE_PBR_METALLIC_ROUGHNESS)
     #ifdef USE_METALLIC_ROUGHNESS_MAP
         uniform sampler2D _metallicRoughnessTexture;
         in vec2 metallicRoughnessCoords;
@@ -95,17 +99,17 @@ in vec4 vertexColor;
     #endif
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_GOURAUD)
+#if defined(USE_GOURAUD)
     in vec3 diffuseSpecular;
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_GOURAUD) == false
+#if defined(USE_BLINN_PHONG) || defined(USE_PBR_METALLIC_ROUGHNESS)
 int shininess = MAX_SHININESS;
 uniform vec3 _cameraPos;
 
-	int numOfDirectionalLights;
 layout (std430, binding = 0) buffer DirectionLights {
-	DirectionalLight directionalLights;
+    int numOfDirectionalLights;
+	DirectionalLight directionalLights[];
 } directionalLights;
 
 layout (std430, binding = 1) buffer PointLights {
@@ -160,11 +164,12 @@ vec3 CalculateSpotlight(Spotlight light, vec3 normal, vec3 fragPos, vec3 viewPos
     light.quadratic * (dist * dist));
 
     vec3 N = normalize(normal);
-    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+    float diffFactor = max(dot(N, L), 0.0);
+    vec3 diffuse = diffFactor * light.color * light.intensity;
 
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(L + V);
-    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength * diffFactor;
 
     return (diffuse + specular) * attenuation * intensity;
 }
@@ -177,11 +182,12 @@ vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewP
     float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * dist * dist);
     
     vec3 N = normalize(normal);
-    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
+    float diffFactor = max(dot(N, L), 0.0);
+    vec3 diffuse = diffFactor * light.color * light.intensity;
     
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(V + L);
-    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength * diffFactor;
     
     return (diffuse + specular) * attenuation;
 }
@@ -189,66 +195,80 @@ vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewP
 vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
     vec3 N = normalize(normal);
     vec3 L = normalize(-light.direction);
+
+    float diffFactor = max(dot(N, L), 0.0);
+
     vec3 V = normalize(viewPos - fragPos);
     vec3 H = normalize(V + L);
-
-    vec3 diffuse = max(dot(N, L), 0.0) * light.color * light.intensity;
-    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength;
-
+    vec3 diffuse = diffFactor * light.color * light.intensity;
+    
+    vec3 specular = pow(max(dot(N, H), 0.0), shininess) * light.color * light.intensity * specularStrength * diffFactor;
+    
     return diffuse + specular;
 }
 
 void main(void) {
-    vec4 fragColorVar;
+    vec4 fragColorVar = GetPixelBaseColor();
 
-    fragColorVar = GetPixelBaseColor();
+    #if defined(USE_BLINN_PHONG) || defined(USE_GOURAUD) || defined(USE_PBR_METALLIC_ROUGHNESS)
+        #ifndef USE_GOURAUD
+            vec3 diffuseSpecular = vec3(0.0);
 
-    #ifdef USE_LIGHTING
-        vec3 diffuseSpecular = vec3(0.0);
-
-        #ifdef USE_BLINN_PHONG
+            int shininess = MAX_SHININESS;
         	for (int i = 0; i < directionalLights.numOfDirectionalLights; i++) {
-		        diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
-													        normal, fragPos, _cameraPos, 1.0, shininess);
+                if (directionalLights.directionalLights[i].isActive != 0) {
+                	diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
+													            normal, fragPos, _cameraPos, 1.0, shininess);
+                }
 	        }
 
             for (int i = 0; i < pointLights.numOfPointLights; i++) {
 			    float dist = distance(fragPos, pointLights.pointLights[i].position);
 
-			    if (dist <= pointLights.pointLights[i].radius) {
+			    if (dist <= pointLights.pointLights[i].radius && pointLights.pointLights[i].isActive != 0) {
 				    diffuseSpecular += CalculatePointLight(pointLights.pointLights[i],
-													       normal, fragPos, _cameraPos, 1.0, shininess);
+													        normal, fragPos, _cameraPos, 1.0, shininess);
 			    }
 		    }
 
 		    for (int i = 0; i < spotlights.numOfSpotlights; i++) {
 			    float dist = distance(fragPos, spotlights.spotlights[i].position);
-
-			    if (dist <= spotlights.spotlights[i].radius) {
+                
+			    if (dist <= spotlights.spotlights[i].radius && spotlights.spotlights[i].isActive != 0) {
 				    diffuseSpecular += CalculateSpotlight(spotlights.spotlights[i],
-													      normal, fragPos, _cameraPos, 1.0, shininess);
+													        normal, fragPos, _cameraPos, 1.0, shininess);
 			    }
             }
+
+        #endif
+
+        vec3 ambient;
+        ambient = vec3(AMBIENT_STRENGTH);
+
+        #ifndef USE_MONOCHROME_AMBIENT
+            ambient *= fragColor.rgb;
         #endif
 
         fragColorVar.rgb *= diffuseSpecular;
+        fragColorVar.rgb += ambient;
 
-        #if defined(USE_EMISSIVE_MAP) || defined(USE_EMISSIVE_FACTOR)
-            vec3 emissive = vec3(0.0);
-            #ifdef USE_EMISSIVE_MAP
-                emissive = texture(_emissiveTexture, emissiveCoords).rgb;
-            #endif
-
-            #ifdef USE_EMISSIVE_FACTOR
-                #ifdef USE_EMISSIVE_MAP
-                    emissive *= _emissiveFactor;
-                #else
-                    emissive = _emissiveFactor;
-                #endif
-            #endif
-                fragColorVar.rgb += emissive;
-        #endif
     #endif
-    
+
+    #if defined(USE_EMISSIVE_MAP) || defined(USE_EMISSIVE_FACTOR)
+        vec3 emissive = vec3(0.0);
+        #ifdef USE_EMISSIVE_MAP
+            emissive = texture(_emissiveTexture, emissiveCoords).rgb;
+        #endif
+
+        #ifdef USE_EMISSIVE_FACTOR
+            #ifdef USE_EMISSIVE_MAP
+                emissive *= _emissiveFactor;
+            #else
+                emissive = _emissiveFactor;
+            #endif
+        #endif
+            fragColorVar.rgb += emissive;
+    #endif
+
     fragColor = fragColorVar;
 }

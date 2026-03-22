@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Amethyst_game_engine.Render;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
@@ -6,18 +7,18 @@ namespace Amethyst_game_engine.Core.New_classes;
 
 public abstract class DrawableObject : IDisposable
 {
-    private BaseScene? _baseScene;
+    private BaseScene? _scene;
 
     private readonly Transform _transform = new();
 
     [AllowNull]
     private Mesh[] _meshes;
-    private bool _useMeshMatrix;
-    private bool _useCamera;
+    private bool _useCamera = true;
     
+    public BaseScene? Scene => _scene;
     public Transform Transform => _transform;
+
     public string? Tag { get; set; }
-    public IBaseScene? BaseScene => _baseScene;
     public bool Visible { get; set; } = true;
 
     public bool UseCamera
@@ -26,36 +27,70 @@ public abstract class DrawableObject : IDisposable
         set => _useCamera = value;
     }
 
-    internal bool UseMeshMatrix
-    {
-        get => _useMeshMatrix;
-        set => _useMeshMatrix = value;
-    }
-
-    internal Mesh[] Meshes
+    private protected Mesh[] Meshes
     {
         get => _meshes;
         set => _meshes = value;
     }
 
-    public virtual void OnStart() { }
-    public virtual void Update(float deltaTime) { }
-    public virtual void FixedUpdate(float fixedDeltaTime) { }
-    public virtual void OnExit() { }
-    public virtual void OnPause() { }
-    public virtual void OnResume() { }
-    public virtual void OnKeyDown(KeyboardKeyEventArgs e) { }
-    public virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
-    public virtual void OnMouseDown(MouseButtonEventArgs e) { }
-    public virtual void OnMouseUp(MouseButtonEventArgs e) { }
-    public virtual void OnMouseWheel(MouseWheelEventArgs e) { }
+    protected internal virtual void OnStart() { }
+    protected internal virtual void Update(float deltaTime) { }
+    protected internal virtual void FixedUpdate(float fixedDeltaTime) { }
+    protected internal virtual void OnExit() { }
+    protected internal virtual void OnPause() { }
+    protected internal virtual void OnResume() { }
+    protected internal virtual void OnKeyDown(KeyboardKeyEventArgs e) { }
+    protected internal virtual void OnKeyUp(KeyboardKeyEventArgs e) { }
+    protected internal virtual void OnMouseDown(MouseButtonEventArgs e) { }
+    protected internal virtual void OnMouseUp(MouseButtonEventArgs e) { }
+    protected internal virtual void OnMouseWheel(MouseWheelEventArgs e) { }
+    protected internal virtual void OnMouseMove(MouseMoveEventArgs e) { }
 
-    [MemberNotNull(nameof(_baseScene))]
-    internal void SetScene(BaseScene scene) => _baseScene = scene;
+    [MemberNotNull(nameof(_scene))]
+    internal void SetScene(BaseScene scene) => _scene = scene;
+
+    public void ChangeRenderSettings(RenderSettings settings)
+    {
+        var app = _scene?.SceneManager?.Application;
+
+        if (app != null)
+        {
+            foreach (var mesh in _meshes)
+            {
+                mesh.BuildShaders(new ShaderBuildingProps()
+                {
+                    RenderSettings = settings,
+                    ShadingModel = app.ShadingModel,
+                    GlobalSettings = app.GlobalSettings,
+                    UseMeshMatrix = mesh.UseMeshMatrix
+                }, app.Settings);
+            }
+        }
+        else
+        {
+            System.PrintMessage("Error. You can change render settings after adding an object to the scene and load scene", MessageTypes.ErrorMessage);
+        }
+    }
+
+    internal void UpdateRenderSettings()
+    {
+        var app = _scene!.SceneManager!.Application!;
+
+        foreach (var mesh in _meshes)
+        {
+            mesh.UpdateShaders(new ShaderBuildingProps()
+            {
+                RenderSettings = app.Settings,
+                ShadingModel = app.ShadingModel,
+                GlobalSettings = app.GlobalSettings,
+                UseMeshMatrix = mesh.UseMeshMatrix
+            });
+        }
+    }
 
     internal unsafe void DrawObject()
     {
-        var cams = _baseScene?.CameraManager.Cameras;
+        var cams = _scene?.CameraManager.Cameras;
 
         if (_useCamera)
         {
@@ -78,14 +113,14 @@ public abstract class DrawableObject : IDisposable
     {
         foreach (var mesh in _meshes)
         {
-            foreach (var primitive in mesh.primitives)
+            foreach (var primitive in mesh.Primitives)
             {
                 primitive.activeShader.Use();
                 primitive.activeShader.SetMatrix4("modelMatrix", Transform.ModelMatrix);
                 primitive.activeShader.SetMatrix4("viewMatrix", matrices[0]);
                 primitive.activeShader.SetMatrix4("projectionMatrix", matrices[1]);
 
-                if (_useMeshMatrix)
+                if (mesh.UseMeshMatrix)
                     primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
 
                 primitive.DrawPrimitive(camPosition);
@@ -97,6 +132,10 @@ public abstract class DrawableObject : IDisposable
     internal void Cleanup()
     {
         _transform.Dispose();
+        
+        foreach (var mesh in _meshes)
+            mesh.Dispose();
+
         GC.SuppressFinalize(this);
     }
 

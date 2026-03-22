@@ -22,7 +22,7 @@ internal class RenderSystem
 
     public RenderSystem() => _backgroundColor = new Color(127, 127, 127);
 
-    public void Render(IBaseScene scene)
+    public void Render(BaseScene scene)
     {
         if (_clearBackground)
         {

@@ -1,12 +1,13 @@
 ﻿#define DEBUG_MODE
 
+using Amethyst_game_engine.Render;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
-public sealed class GameApplication : GameWindow, IGameApplication
+public class GameApplication : GameWindow, IGameApplication
 {
     private struct FPSCounter
     {
@@ -40,13 +41,22 @@ public sealed class GameApplication : GameWindow, IGameApplication
     public float WindowAspectRatio => _windowAspectRatio;
 
     public bool IsSceneLoaded => _sceneManager.CurrentScene is not null;
-    public ISceneManager SceneManager => _sceneManager;
+    public SceneManager SceneManager => _sceneManager;
 
     public bool ClearBackground
     {
         get => _renderSystem.ClearBackground;
         set => _renderSystem.ClearBackground = value;
     }
+
+    public RenderSettings Settings { get; set; } = RenderSettings.All;
+    public ShadingModels ShadingModel { get; set; } = ShadingModels.BlinnPhong;
+    public GlobalRenderSettings GlobalSettings { get; set; } = new()
+    {
+        AmbientStrength = 0.1f,
+        MaxShininess = 32,
+        UseMonochromeAmbient = true,
+    };
 
 #if DEBUG_MODE
     private FPSCounter _counter;
@@ -86,6 +96,8 @@ public sealed class GameApplication : GameWindow, IGameApplication
         _sceneManager.CleanUp();
         ChangedAspectRatio = null;
 
+        ShadersPool.Dispose();
+
         base.OnUnload();
     } 
 
@@ -119,11 +131,11 @@ public sealed class GameApplication : GameWindow, IGameApplication
 
         while (_accumulator >= _tickTime)
         {
-            _sceneManager.FixedUpdate(_tickTime);
+            _sceneManager.CurrentScene?.FixedUpdate(_tickTime);
             _accumulator -= _tickTime;
         }
 
-        _sceneManager.Update(deltaTime);
+        _sceneManager.CurrentScene?.Update(deltaTime);
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -143,30 +155,36 @@ public sealed class GameApplication : GameWindow, IGameApplication
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
-        _sceneManager.OnKeyDown(e);
+        _sceneManager.CurrentScene?.OnKeyDown(e);
     }
 
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
     {
         base.OnKeyUp(e);
-        _sceneManager.OnKeyUp(e);
+        _sceneManager.CurrentScene?.OnKeyUp(e);
     }
 
     protected override void OnMouseDown(MouseButtonEventArgs e)
     {
         base.OnMouseDown(e);
-        _sceneManager.OnMouseDown(e);
+        _sceneManager.CurrentScene?.OnMouseDown(e);
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {
         base.OnMouseUp(e);
-        _sceneManager.OnMouseUp(e);
+        _sceneManager.CurrentScene?.OnMouseUp(e);
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
-        _sceneManager.OnMouseWheel(e);
+        _sceneManager.CurrentScene?.OnMouseWheel(e);
+    }
+
+    protected override void OnMouseMove(MouseMoveEventArgs e)
+    {
+        base.OnMouseMove(e);
+        _sceneManager.CurrentScene?.OnMouseMove(e);
     }
 }

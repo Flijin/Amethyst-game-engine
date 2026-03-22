@@ -1,8 +1,6 @@
-﻿using OpenTK.Windowing.Common;
+﻿namespace Amethyst_game_engine.Core.New_classes;
 
-namespace Amethyst_game_engine.Core.New_classes;
-
-public sealed class SceneManager : ISceneManager, IDisposable
+public sealed class SceneManager : IDisposable
 {
     public event Action<BaseScene?>? SceneChanged;
     public event Action<BaseScene>? SceneLoaded;
@@ -15,8 +13,8 @@ public sealed class SceneManager : ISceneManager, IDisposable
     private bool _scenePaused;
 
     public string? CurrentSceneName => _currentScene?.GetType().Name;
-    public IBaseScene? CurrentScene => _currentScene;
-    public IGameApplication? Application => _gameApplication;
+    public BaseScene? CurrentScene => _currentScene;
+    public GameApplication? Application => _gameApplication;
 
     public bool ScenePaused
     {
@@ -37,24 +35,6 @@ public sealed class SceneManager : ISceneManager, IDisposable
     }
 
     internal void SetGameApplication(GameApplication app) => _gameApplication = app;
-
-    internal void Update(float deltaTime)
-    {
-        if (_scenePaused == false)
-            _currentScene?.Update(deltaTime);
-    }
-
-    internal void FixedUpdate(float fixedDeltaTime)
-    {
-        if (_scenePaused == false)
-            _currentScene?.FixedUpdate(fixedDeltaTime);
-    }
-
-    internal void OnKeyDown(KeyboardKeyEventArgs e) { }
-    internal void OnKeyUp(KeyboardKeyEventArgs e) { }
-    internal void OnMouseDown(MouseButtonEventArgs e) { }
-    internal void OnMouseUp(MouseButtonEventArgs e) { }
-    internal void OnMouseWheel(MouseWheelEventArgs e) { }
 
     public void LoadSceneByName(string name)
     {

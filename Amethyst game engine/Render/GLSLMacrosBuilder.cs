@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 
 namespace Amethyst_game_engine.Render;
 
@@ -38,7 +39,7 @@ internal static class GLSLMacrosBuilder
     private static void IncludeGlobalSetttings(StringBuilder builder, GlobalRenderSettings settings)
     {
         builder.AppendLine($"#define MAX_SHININESS {settings.MaxShininess}");
-        builder.AppendLine($"#define AMBIENT_STRENGTH {settings.AmbientStrength}");
+        builder.AppendLine($"#define AMBIENT_STRENGTH {settings.AmbientStrength.ToString(CultureInfo.InvariantCulture)}");
 
         if (settings.UseMonochromeAmbient)
             builder.AppendLine("#define USE_MONOCHROME_AMBIENT");

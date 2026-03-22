@@ -8,7 +8,7 @@ public class STLModel
     private readonly MeshData _meshData;
     private readonly RenderSettings _settings;
 
-    public RenderSettings Settings => _settings;
+    internal RenderSettings Settings => _settings;
     internal MeshData MeshData => _meshData;
     public int TrianglesCount { get; internal set; }
 

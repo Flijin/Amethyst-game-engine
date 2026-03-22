@@ -91,8 +91,9 @@ internal static class Mathematics
         Buffer.MemoryCopy(temp, res, MATRIX_SIZE, MATRIX_SIZE);
     }
 
-    public static float CalculateLightRadius(float constant, float linear, float quadratic, float threshold = 0.001f)
+    public static float CalculateLightRadius(float constant, float linear, float quadratic)
     {
+        float threshold = 0.025f;
         float target = 1.0f / threshold;
 
         float a = quadratic;

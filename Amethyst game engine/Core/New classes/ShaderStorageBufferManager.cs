@@ -1,10 +1,13 @@
 ﻿using System.Runtime.InteropServices;
+using Amethyst_game_engine.Core.Light;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
 internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T : struct
 {
+    private const int PADDING = 16;
+
     private void* _lightData;
     private int _lightCount;
     private int _lightCapacity;
@@ -17,14 +20,23 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
         _lightCapacity = lightCapacity;
         LightHandler = GL.GenBuffer();
 
+        _lightData = NativeMemory.Alloc((nuint)(lightCapacity * Marshal.SizeOf<T>() + PADDING));
+        *(int*)(_lightData) = 0;
+
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, LightHandler);
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, lightCapacity * Marshal.SizeOf<T>() + PADDING,
+                      (nint)_lightData, BufferUsageHint.DynamicDraw);
+
         GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, bindingPoint, LightHandler);
-        _lightData = NativeMemory.Alloc((nuint)lightCapacity, (nuint)(lightCapacity * Marshal.SizeOf<T>() + sizeof(int)));
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
     }
 
     public void Clear()
     {
         *(int*)_lightData = 0;
         _lightCount = 0;
+
+        GL.BufferData(BufferTarget.ShaderStorageBuffer, PADDING, (nint)_lightData, BufferUsageHint.DynamicDraw);
     }
 
     public void UpdateLight(T light, int index)
@@ -35,7 +47,7 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
             return;
         }
 
-        var offset = Marshal.SizeOf<T>() * index + sizeof(int);
+        var offset = Marshal.SizeOf<T>() * index + PADDING;
         var dest = (nint)((byte*)_lightData + offset);
         Marshal.StructureToPtr(light, dest, false);
 
@@ -57,7 +69,7 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
 
         *(int*)_lightData = _lightCount;
 
-        var offset = Marshal.SizeOf<T>() * index + sizeof(int);
+        var offset = Marshal.SizeOf<T>() * index + PADDING;
         var lightPtr = (byte*)_lightData + offset;
         var fieldOffset = Marshal.OffsetOf<T>("isActive").ToInt32();
         var isActivePtr = (int*)(lightPtr + fieldOffset);
@@ -65,8 +77,9 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
         *isActivePtr = 0;
 
         GL.BindBuffer(BufferTarget.ShaderStorageBuffer, LightHandler);
-        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, offset + fieldOffset, sizeof(int), (nint)isActivePtr);
         GL.BufferSubData(BufferTarget.ShaderStorageBuffer, 0, sizeof(int), (nint)_lightData);
+        GL.BufferSubData(BufferTarget.ShaderStorageBuffer, offset + fieldOffset, sizeof(int), (nint)isActivePtr);
+        GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
     }
 
     public void AddLight(T light)
@@ -80,18 +93,18 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
         if (_lightCount > _lightCapacity)
         {
             _lightCapacity *= 2;
-            var newSize = (nuint)(sizeofT * _lightCapacity + sizeof(int));
+            var newSize = (nuint)(sizeofT * _lightCapacity + PADDING);
             _lightData = NativeMemory.Realloc(_lightData, newSize);
             dirty = true;
         }
 
-        var offset = sizeof(int);
+        var offset = PADDING;
         var fieldOffset = Marshal.OffsetOf<T>("isActive").ToInt32();
         var found = false;
 
         if (_freeSpaces > 0)
         {
-            for (int i = 0; i < _lightCount - 1; i++)
+            for (int i = 0; i < _lightCount; i++)
             {
                 if (*(int*)((byte*)_lightData + offset + fieldOffset) == 0)
                 {
@@ -106,7 +119,7 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
         }
 
         if (found == false)
-            offset = sizeofT * (_lightCount - 1) + sizeof(int);
+            offset = sizeofT * (_lightCount - 1) + PADDING;
 
         var dest = (nint)((byte*)_lightData + offset);
 
@@ -118,7 +131,7 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
         if (dirty)
         {
             GL.BufferData(BufferTarget.ShaderStorageBuffer,
-                          sizeofT * _lightCapacity + sizeof(int),
+                          sizeofT * _lightCapacity + PADDING,
                           (nint)_lightData, BufferUsageHint.DynamicDraw);
         }
         else

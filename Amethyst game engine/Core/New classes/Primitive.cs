@@ -25,21 +25,56 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
     private readonly PrimitiveType _mode = options.Mode;
     private readonly bool _isIndexedGeometry = options.IsIndexedGeometry;
 
-    public Material Material { get; set; }
-    public RenderSettings ImportedFromModel { get; set; }
-    private RenderSettings _currentRenderState;
+    private RenderSettings _currentSettings = RenderSettings.All;
 
-    [AllowNull]
-    public int[] Buffers { get; set; }
+    public Material Material { get; set; } = new();
+    public RenderSettings SettingsFromModel { get; set; }
+    public List<int> GLBuffers { get; } = [];
+
 
     [MemberNotNull(nameof(activeShader))]
-    public void BuildShader(ShaderBuildingProps props)
+    public void BuildShader(ShaderBuildingProps props, RenderSettings global)
+    {
+        _currentSettings = props.RenderSettings;
+
+        props = ValudateFlags(props);
+        props.RenderSettings &= SettingsFromModel & global;
+
+        activeShader = ShadersPool.GetShader(props);
+    }
+
+    [MemberNotNull(nameof(activeShader))]
+    public void UpdateShader(ShaderBuildingProps props)
+    {
+        props = ValudateFlags(props);
+        props.RenderSettings &= _currentSettings & SettingsFromModel;
+
+        activeShader = ShadersPool.GetShader(props);
+    }
+
+    public void DrawPrimitive(Vector3 cameraPos)
+    {
+        GL.BindVertexArray(_vao);
+
+        SetTextures();
+        SetFactors();
+
+        if (activeShader.Props.ShadingModel != ShadingModels.Unlit)
+            activeShader.SetVector3("_cameraPos", cameraPos);
+
+        if (_isIndexedGeometry)
+            GL.DrawElements(_mode, _count, _drawElementsType, 0);
+        else
+            GL.DrawArrays(_mode, 0, _count);
+    }
+
+    private static ShaderBuildingProps ValudateFlags(ShaderBuildingProps props)
     {
         var gourandSettings = RenderSettings.NormalMap |
-                              RenderSettings.OcclusionMap |
-                              RenderSettings.EmissiveMap |
-                              RenderSettings.UseNormalScale |
-                              RenderSettings.UseOcclusionStrength;
+                      RenderSettings.OcclusionMap |
+                      RenderSettings.EmissiveMap |
+                      RenderSettings.UseNormalScale |
+                      RenderSettings.UseOcclusionStrength;
 
         if (props.ShadingModel != ShadingModels.PBR_MetallicRoughness)
         {
@@ -58,29 +93,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
             props.RenderSettings &= ~(gourandSettings | RenderSettings.EmissiveFactor);
         }
 
-        _currentRenderState = props.RenderSettings & ImportedFromModel;
-        props.RenderSettings = _currentRenderState;
-
-        activeShader = ShadersPool.GetShader(props);
-    }
-
-    public void DrawPrimitive(Vector3 cameraPos)
-    {
-        activeShader.Use();
-        GL.BindVertexArray(_vao);
-        RenderSettings activeShaderSettings = activeShader.Props.RenderSettings;
-
-        SetTextures(activeShaderSettings);
-
-        if ((activeShaderSettings & RenderSettings.Lighting) != 0)
-            activeShader.SetVector3("_cameraPos", cameraPos);
-
-        SetFactors();
-
-        if (_isIndexedGeometry)
-            GL.DrawElements(_mode, _count, _drawElementsType, 0);
-        else
-            GL.DrawArrays(_mode, 0, _count);
+        return props;
     }
 
     private void SetFactors()
@@ -98,13 +111,11 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
             activeShader.SetFloat("_roughnessFactor", Material.RoughnessFactor);
     }
 
-    private void SetTextures(RenderSettings activeShaderSettings)
+    private void SetTextures()
     {
-        var currentTextures = Material.textures;
-
-        foreach (var texture in currentTextures)
+        foreach (var texture in Material.textures)
         {
-            if (texture != null && (texture.textureSetting & activeShaderSettings) != 0)
+            if (texture != null && (texture.textureSetting & activeShader.Props.RenderSettings) != 0)
             {
                 TextureActivator.UseTexture(texture, activeShader);
             }
@@ -113,7 +124,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
 
     public void Dispose()
     {
-        foreach (var buffer in Buffers)
+        foreach (var buffer in GLBuffers)
             GL.DeleteBuffer(buffer);
 
         foreach (var texture in Material.textures)

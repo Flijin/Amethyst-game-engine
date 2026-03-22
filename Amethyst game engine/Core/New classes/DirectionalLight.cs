@@ -17,7 +17,8 @@ public class DirectionalLight
         {
             direction = Direction,
             color = Color,
-            intensity = Intensity
+            intensity = Intensity,
+            isActive = 1
         };
     }
 

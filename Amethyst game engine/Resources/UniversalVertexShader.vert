@@ -35,7 +35,7 @@ struct DirectionalLight {
 
 layout (location = 0) in vec3 aPosition;
 
-#ifdef USE_LIGHTING
+#ifndef USE_UNLIT
 layout (location = 1) in vec3 aNormal;
 
 	#ifndef USE_GOURAUD
@@ -82,7 +82,7 @@ layout (location = 7) in vec2 anOcclusionCoords;
 out vec2 occlusionCoords;
 #endif
 
-#if defined(USE_LIGHTING) && defined(USE_GOURAUD)
+#ifdef USE_GOURAUD
 int shininess = MAX_SHININESS;
 uniform vec3 _cameraPos;
 
@@ -183,7 +183,7 @@ void main(void) {
 
 	#ifdef USE_MESH_MATRIX
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * meshMatrix * vec4(aPosition, 1.0);
-		#ifdef USE_LIGHTING
+		#ifndef USE_UNLIT
 			mat4 modelViewMatrix = modelMatrix * meshMatrix;
 			normal = mat3(transpose(inverse(modelViewMatrix))) * aNormal;
 
@@ -195,7 +195,7 @@ void main(void) {
 		#endif
 	#else
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(aPosition, 1.0);
-		#ifdef USE_LIGHTING
+		#ifndef USE_UNLIT
 			normal = mat3(transpose(inverse(modelMatrix))) * aNormal;
 
 			#ifdef USE_GOURAUD
@@ -231,5 +231,9 @@ void main(void) {
 													  normal, vertexPos, _cameraPos, 1.0, shininess);
 			}
         }
-	#endif	
+	#endif
+
+	#ifdef USE_VERTEX_COLORS
+		vertexColor = aVertexColor;
+	#endif
 }

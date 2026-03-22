@@ -1,27 +1,16 @@
-﻿using Amethyst_game_engine.Render;
-using OpenTK.Graphics.ES30;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Buffer = System.Buffer;
+using Amethyst_game_engine.Render;
 
 namespace Amethyst_game_engine.Core.New_classes;
 
 internal class Mesh : IDisposable
 {
-    public readonly Primitive[] primitives;
-    private readonly int[] _buffers;
-    private readonly unsafe float* _matrix;
+    private readonly Primitive[] _primitives;
+    private unsafe float* _matrix;
+    private readonly bool _useMeshMatrix;
 
-    public Mesh(Primitive[] primitives, int[] buffers)
-    {
-        this.primitives = primitives;
-        _buffers = buffers;
-
-        unsafe
-        {
-            _matrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
-        }
-    }
+    public Primitive[] Primitives => _primitives;
 
     public unsafe float* Matrix
     {
@@ -42,19 +31,36 @@ internal class Mesh : IDisposable
         }
     }
 
-    public void BuildShader(ShaderBuildingProps props)
+    public bool UseMeshMatrix => _useMeshMatrix;
+
+    public Mesh(Primitive[] primitives, bool useMeshMatrix)
     {
-        foreach (var primitive in primitives)
+        _primitives = primitives;
+        _useMeshMatrix = useMeshMatrix;
+
+        if (useMeshMatrix)
         {
-            primitive.BuildShader(props);
+            unsafe { _matrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE); }
         }
+    }
+
+    public void BuildShaders(ShaderBuildingProps props, RenderSettings global)
+    {
+        foreach (var primitive in _primitives)
+            primitive.BuildShader(props, global);
+    }
+
+    public void UpdateShaders(ShaderBuildingProps props)
+    {
+        foreach (var primitive in _primitives)
+            primitive.UpdateShader(props);
     }
 
     public void Dispose()
     {
-        foreach (var buffer in _buffers)
-            GL.DeleteBuffer(buffer);
-
         unsafe { Marshal.FreeHGlobal((nint)_matrix); }
+
+        foreach (var primitive in _primitives)
+            primitive.Dispose();
     }
 }

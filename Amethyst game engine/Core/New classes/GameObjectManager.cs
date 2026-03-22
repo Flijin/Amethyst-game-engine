@@ -35,12 +35,13 @@ public sealed class GameObjectManager: IDisposable
     {
         if (_gameObjects.Contains(obj))
         {
-            System.PrintMessage("Error. Game object is already exists");
+            System.PrintMessage("Error. Game object is already exists", MessageTypes.ErrorMessage);
             return;
         }
 
         _gameObjects.Add(obj);
         obj.SetScene(_scene!);
+        obj.UpdateRenderSettings();
 
         GameObjectAdded?.Invoke(obj);
     }

@@ -23,13 +23,13 @@ public static class STLImporter
         }
     }
 
-    public static STLModel? LoadModel(string path, RenderSettings settings = RenderSettings.All)
+    public static STLModel? LoadModel(string path, bool useLighting = true, RenderSettings settings = RenderSettings.All)
     {
-        settings = settings & (RenderSettings.Lighting | RenderSettings.VertexColors);
+        settings &= RenderSettings.VertexColors;
 
         if (File.Exists(path) == false)
         {
-            System.PrintMessage($"File {path} does not exists", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. File {path} does not exists", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -39,7 +39,7 @@ public static class STLImporter
         if (Encoding.ASCII.GetString(reader.ReadBytes(5)) == "solid" &&
             (reader.BaseStream.Length - HEADER_SIZE - sizeof(uint)) % 50 != 0)
         {
-            System.PrintMessage("ASCII STL not supported yet");
+            System.PrintMessage("Error. ASCII STL not supported yet", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -50,13 +50,14 @@ public static class STLImporter
 
         if (trianglesCount > MAX_TRIANGLES_COUNT)
         {
-            System.PrintMessage($".STL model is too big ({trianglesCount}) triangles. Max supported triangles: 1000000");
+            System.PrintMessage($"Error. STL model is too big ({trianglesCount}) triangles. Max supported triangles: 1000000", MessageTypes.ErrorMessage);
             return null;
         }
 
         PrimitiveData primitive = new()
         {
-            Vertices = new byte[trianglesCount * FLOATS_PER_TRIANGLE * sizeof(float)]
+            Vertices = new byte[trianglesCount * FLOATS_PER_TRIANGLE * sizeof(float)],
+            Options = new() { Count = (int)trianglesCount }
         };
 
         byte[] normal = new byte[FLOATS_PER_POINT * sizeof(float)];
@@ -67,18 +68,18 @@ public static class STLImporter
         bool firstRead = true;
         bool hasColors = false;
 
-        if ((settings & RenderSettings.Lighting) != 0)
+        if (useLighting)
             primitive.Normals = new byte[trianglesCount * FLOATS_PER_TRIANGLE * sizeof(float)];
 
         try
         {
             for (int i = 0; i < trianglesCount; i++)
             {
-                if ((settings & RenderSettings.Lighting) != 0)
+                if (useLighting)
                 {
                     reader.Read(normal, 0, normal.Length);
 
-                    for (int j = 0; j < 3; j++)
+                    for (int j = 0; j < VERTICES_PER_TRIANGLE; j++)
                     {
                         var offsetN = i * FLOATS_PER_TRIANGLE * sizeof(float) + j * VERTICES_PER_TRIANGLE * sizeof(float);
                         Buffer.BlockCopy(normal, 0, primitive.Normals!, offsetN, FLOATS_PER_POINT * sizeof(float));
@@ -96,16 +97,16 @@ public static class STLImporter
 
                 if ((settings & RenderSettings.VertexColors) != 0)
                 {
-                    if (firstRead)
-                    {
-                        primitive.Colors = new byte[trianglesCount * FLOATS_PER_TRIANGLE * sizeof(float)];
-                        firstRead = false;
-                    }
-
                     ushort attributeByteCount = reader.ReadUInt16();
 
                     if (attributeByteCount >> 15 != 0)
                     {
+                        if (firstRead)
+                        {
+                            primitive.Colors = new byte[trianglesCount * (FLOATS_PER_POINT + 1) * VERTICES_PER_TRIANGLE * sizeof(float)];
+                            firstRead = false;
+                        }
+
                         hasColors = true;
 
                         colorsFloat[0] = _5bitsToFloat[(attributeByteCount >> 10) & 0x1F];
@@ -114,12 +115,14 @@ public static class STLImporter
                         colorsFloat[3] = 1.0f;
 
                         Buffer.BlockCopy(colorsFloat, 0, colors, 0, colors.Length);
-                    }
 
-                    for (int j = 0; j < 3; j++)
-                    {
-                        var offsetC = i * FLOATS_PER_TRIANGLE * sizeof(float) + j * VERTICES_PER_TRIANGLE * sizeof(float);
-                        Buffer.BlockCopy(colors, 0, primitive.Colors!, offsetC, (FLOATS_PER_POINT + 1) * sizeof(float));
+                        for (int j = 0; j < 3; j++)
+                        {
+                            var offsetC = i * (FLOATS_PER_POINT + 1) * VERTICES_PER_TRIANGLE * sizeof(float)
+                                        + j * (FLOATS_PER_POINT + 1) * sizeof(float);
+
+                            Buffer.BlockCopy(colors, 0, primitive.Colors!, offsetC, (FLOATS_PER_POINT + 1) * sizeof(float));
+                        }
                     }
                 }
                 else
@@ -133,7 +136,7 @@ public static class STLImporter
         }
         catch (SystemException)
         {
-            System.PrintMessage($"Error, file {path} is not valid");
+            System.PrintMessage($"Error, file {path} is not valid", MessageTypes.ErrorMessage);
             return null;
         }
 
