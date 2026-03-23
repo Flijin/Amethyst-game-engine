@@ -1,4 +1,4 @@
-﻿using Amethyst_game_engine.Core;
+﻿using Amethyst_game_engine.Core.Utilities;
 using System.Runtime.InteropServices;
 
 namespace Amethyst_game_engine.Models.GLBModule;

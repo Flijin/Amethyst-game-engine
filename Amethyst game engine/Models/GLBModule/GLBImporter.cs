@@ -1,8 +1,5 @@
-﻿using Amethyst_game_engine.Core;
-using Amethyst_game_engine.Render;
-using OpenTK.Graphics.OpenGL;
-using StbImageSharp;
-using System.Runtime.CompilerServices;
+﻿using Amethyst_game_engine.Core.Render.Settings;
+using Amethyst_game_engine.Core.Utilities;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
@@ -15,7 +12,7 @@ public class GLBImporter
     private byte[] _binChunk = [];
 
     private readonly Dictionary<MetadataTypes, string>? _metadata;
-    private readonly GLBMultiScene _multiScene;
+    //private readonly GLBMultiScene _multiScene;
 
     private string[] _extensions = [];
     private string[] _extensionsRequired = [];
@@ -35,25 +32,9 @@ public class GLBImporter
 
     public GLBImporter(string path, RenderSettings settings)
     {
-        _renderSettings = (uint)settings & (uint)Window.RenderKeys;
+        //_renderSettings = (uint)settings & (uint)Window.RenderKeys;
 
         BinaryReader reader = new(new FileStream(path, FileMode.Open));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public GLBMultiScene GetMultiScene() => _multiScene;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public GLBScene GetScene() => _multiScene!.GetDefaultScene();
-
-    public GLBModel? GetModel()
-    {
-        GLBScene scene = GetScene();
-
-        if (scene.ModelsCount == 0)
-            return null;
-        else
-            return scene.GetModelByIndex(0);
     }
 
     public string GetMetadata(MetadataTypes type)
