@@ -1,146 +1,202 @@
-﻿using Amethyst_game_engine.Core.Render.Settings;
+﻿using System.Text.Json;
+using Amethyst_game_engine.Core.Render.Settings;
 using Amethyst_game_engine.Core.Utilities;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
-public class GLBImporter
+public static class GLBImporter
 {
-    private const float MAX_SUPPORTED_VERSION = 2.0f;
-    private const uint USE_MESH_MATRIX = 1 << 24;
-
-    private readonly Dictionary<string, object> _jsonChunk;
-    private byte[] _binChunk = [];
-
-    private readonly Dictionary<MetadataTypes, string>? _metadata;
-    //private readonly GLBMultiScene _multiScene;
-
-    private string[] _extensions = [];
-    private string[] _extensionsRequired = [];
-
-    private int[] _glTextures = [];
-
-    private readonly uint _renderSettings;
-
-    private static readonly Dictionary<string, bool> _supportedExtensions = new()
+    public static GLBModelData? ReadModel(string path, RenderSettings settings = RenderSettings.All)
     {
-        { "KHR_materials_specular", false },
-        { "KHR_materials_emissive_strength", false },
-        { "KHR_materials_unlit", false }
-    };
-
-    public GLBImporter(string path) : this(path, RenderSettings.All) { }
-
-    public GLBImporter(string path, RenderSettings settings)
-    {
-        //_renderSettings = (uint)settings & (uint)Window.RenderKeys;
-
-        BinaryReader reader = new(new FileStream(path, FileMode.Open));
-    }
-
-    public string GetMetadata(MetadataTypes type)
-    {
-        if (_metadata!.TryGetValue(type, out string? value) && value is string result)
-            return result;
-        else
-            return "None";
-    }
-
-    private void CheckExtensions()
-    {
-        foreach (var extension in _extensions)
+        if (File.Exists(path) == false)
         {
-            if (_supportedExtensions.ContainsKey(extension))
-                _supportedExtensions[extension] = true;
+            System.PrintMessage($"Error. GLB-file {path} does not exists", MessageTypes.ErrorMessage);
+            return null;
         }
 
-        foreach (var extensionRequired in _extensionsRequired)
+        using FileStream stream = File.OpenRead(path);
+        using BinaryReader reader = new(stream);
+
+        if (stream.Length > 1024L * 1024L * 1024L)
         {
-            if (_supportedExtensions.ContainsKey(extensionRequired) == false)
-                throw new FileLoadException($"Error. The GLB-file uses an {extensionRequired} extension that is not supported.");
+            System.PrintMessage($"Error. GLB-file {path} is too big. Max supported size: 1 GB", MessageTypes.ErrorMessage);
+            return null;
+        }
+
+        try
+        {
+            return ReadFile(reader, path);
+        }
+        catch (Exception)
+        {
+            System.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
+            return null;
         }
     }
 
-    private Dictionary<MetadataTypes, string> ReadMetadata()
+    private static GLBModelData? ReadFile(BinaryReader reader, string path)
     {
-        Dictionary<MetadataTypes, string> result = [];
+        var magic = reader.ReadUInt32();
 
-        var asset = (Dictionary<string, object>)_jsonChunk["asset"];
-
-        if (((string)asset["version"])[0] != '2')
-            System.PrintMessage($"The file glTF is { asset["version"] } version. Max 2.0 is supported.", MessageTypes.WarningMessage);
-
-        if (asset.TryGetValue("minVersion", out object? minVersion) &&
-            float.Parse((string)minVersion) > MAX_SUPPORTED_VERSION)
+        if (magic != 0x46546C67)
         {
-            System.PrintMessage($"Error. The file requires glTF {minVersion} support. Max 2.0 is supported.", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. GLB-file {path} is not valid", MessageTypes.ErrorMessage);
+            return null;
         }
 
-        if (asset.TryGetValue("generator", out object? generagor))
-            result.Add(MetadataTypes.Generator, (string)generagor);
-
-        if (asset.TryGetValue("copyright", out object? copyright))
-            result.Add(MetadataTypes.Copyright, (string)copyright);
-
-        return result;
-    }
-
-    private static void ReadFile(BinaryReader reader)
-    {
-        if (reader.ReadUInt32() != 0x46546C67)
-            System.PrintMessage($"Error. GLB-file is invalid", MessageTypes.ErrorMessage);
+        void PrintUnsupportedVersion(object version)
+        {
+            System.PrintMessage($"Error. Unsupported GLB-file {path} version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
+        }
 
         var version = reader.ReadUInt32();
 
         if (version != 2)
-            System.PrintMessage($"Error. Unsupported GLB-file version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
-
-        reader.ReadUInt32();
-    }
-
-    private static Dictionary<string, object> ReadJsonChunk(BinaryReader reader)
-    {
-        uint chunkLength;
-
-        if ((chunkLength = reader.ReadUInt32()) > int.MaxValue)
-            throw new FileLoadException("Error. GLB-file is too big");
-
-        Dictionary<string, object?> chunkData;
-
-        if (reader.ReadUInt32() == 0x4E4F534A)
-            chunkData = JSONSerializer.JsonToObj(reader.ReadBytes((int)chunkLength));
-        else
-            throw new FileLoadException("Error. GLB-file is invalid");
-
-        var readerPos = reader.BaseStream.Position;
-
-        if ((readerPos & 3) != 0)
-            reader.BaseStream.Position += 4 - (readerPos % 4);
-
-        if (chunkData.ContainsValue(null) == false)
-            return chunkData!;
-        else
-            throw new FileLoadException("Error. GLB-file is invalid");
-    }
-
-    private void ReadBinaryChunk(BinaryReader reader)
-    {
-        if (reader.BaseStream.Position + 1 == reader.BaseStream.Length)
         {
-            reader.Dispose();
-            return;
+            PrintUnsupportedVersion(version);
+            return null;
         }
 
-        uint chunkLength;
+        reader.BaseStream.Seek(sizeof(uint), SeekOrigin.Current);
 
-        if ((chunkLength = reader.ReadUInt32()) > int.MaxValue)
-            throw new FileLoadException("Error. GLB-file is too big");
+        JsonElement? jsonChunkNullable = ReadJsonChunk(reader);
+        byte[]? binChunk = ReadBinaryChunk(reader);
 
-        if (reader.ReadUInt32() == 0x004E4942)
+        if (jsonChunkNullable is null || binChunk is null)
         {
-            _binChunk = reader.ReadBytes((int)chunkLength);
-            reader.Dispose();
+            System.PrintMessage($"Error. GLB-file {path} is not valid", MessageTypes.ErrorMessage);
+            return null;
+        }
+
+        var jsonChunk = (JsonElement)jsonChunkNullable;
+
+        var asset = jsonChunk.GetProperty("asset");
+        var versionJson = asset.GetProperty("version").GetString()!;
+
+        if (versionJson[0] != '2')
+        {
+            PrintUnsupportedVersion(versionJson);
+            return null;
+        }
+
+        var buffers = ReadBuffers(jsonChunk.GetProperty("buffers"), binChunk);
+
+        var result = ReadModelData(jsonChunk, buffers);
+
+        if (asset.TryGetProperty("extras", out JsonElement extras))
+            ReadExtras(extras, result);
+
+        return result;
+    }
+
+    private static JsonElement? ReadJsonChunk(BinaryReader reader)
+    {
+        JsonElement? chunkData;
+
+        var chunkLength = reader.ReadUInt32();
+        var chunkType = reader.ReadUInt32();
+
+        if (chunkType == 0x4E4F534A)
+        {
+            JsonDocument doc = JsonDocument.Parse(reader.ReadBytes((int)chunkLength));
+            chunkData = doc.RootElement.Clone();
+            doc.Dispose();
         }
         else
-            throw new FileLoadException("Error. GLB-file is invalid");
+        {
+            return null;
+        }
+
+        var baseStream = reader.BaseStream;
+        var padding = (int)((4 - (reader.BaseStream.Position % 4)) % 4);
+
+        baseStream.Seek(padding, SeekOrigin.Current);
+
+        return chunkData;
+    }
+
+    private static byte[]? ReadBinaryChunk(BinaryReader reader)
+    {
+        if (reader.BaseStream.Position == reader.BaseStream.Length)
+            return [];
+
+        var chunkLength = reader.ReadUInt32();
+        var chunkType = reader.ReadUInt32();
+
+        if (chunkType == 0x004E4942)
+        {
+            return reader.ReadBytes((int)chunkLength);
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private static void ReadExtras(JsonElement extras, GLBModelData model)
+    {
+        if (extras.TryGetProperty("author", out JsonElement author))
+            model.Author = author.GetString();
+
+        if (extras.TryGetProperty("license", out JsonElement license))
+            model.License = license.GetString();
+
+        if (extras.TryGetProperty("source", out JsonElement source))
+            model.Sourse = source.GetString();
+
+        if (extras.TryGetProperty("title", out JsonElement title))
+            model.Title = title.GetString();
+    }
+
+    private static byte[][] ReadBuffers(JsonElement buffers, byte[] binChunk)
+    {
+        var result = new byte[buffers.GetArrayLength()][];
+        int bufferIndex = 0;
+
+        foreach (var buffer in buffers.EnumerateArray())
+        {
+            if (buffer.TryGetProperty("uri", out JsonElement uri))
+            {
+                var base64 = uri.GetString()!.Substring("data:application/octet-stream;base64,".Length);
+                result[bufferIndex] = Convert.FromBase64String(base64);
+            }
+            else
+            {
+                result[bufferIndex] = binChunk;
+            }
+
+            bufferIndex++;
+        }
+
+        return result;
+    }
+
+    private static GLBModelData ReadModelData(JsonElement chunk, byte[][] buffers)
+    {
+        GLBScene[] scenes;
+
+        var scenesJson = chunk.GetProperty("scenes");
+        scenes = new GLBScene[scenesJson.GetArrayLength()];
+
+        int sceneIndex = 0;
+
+        foreach (var scene in scenesJson.EnumerateArray())
+        {
+            string? sceneName;
+
+            if (scene.TryGetProperty("name", out JsonElement sceneNameEl))
+                sceneName = sceneNameEl.GetString();
+            else
+                sceneName = null;
+
+            scenes[sceneIndex] = ReadScene(chunk, sceneName, scene.GetProperty("nodes").EnumerateArray());
+        }
+
+        return new GLBModelData(scenes);
+    }
+
+    private static GLBScene ReadScene(JsonElement chunk, string? sceneName, JsonElement.ArrayEnumerator sceneNodes)
+    {
+        return null;
     }
 }

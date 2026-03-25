@@ -29,11 +29,11 @@ public static class STLImporter
 
         if (File.Exists(path) == false)
         {
-            System.PrintMessage($"Error. File {path} does not exists", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. STL-file {path} does not exists", MessageTypes.ErrorMessage);
             return null;
         }
 
-        using FileStream stream = new(path, FileMode.Open);
+        using FileStream stream = File.OpenRead(path);
         using BinaryReader reader = new(stream);
 
         if (Encoding.ASCII.GetString(reader.ReadBytes(5)) == "solid" &&
@@ -50,7 +50,7 @@ public static class STLImporter
 
         if (trianglesCount > MAX_TRIANGLES_COUNT)
         {
-            System.PrintMessage($"Error. STL model is too big ({trianglesCount}) triangles. Max supported triangles: 1000000", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. STL model is too big ({trianglesCount}) triangles. Max supported triangles: 1 000 000", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -136,7 +136,7 @@ public static class STLImporter
         }
         catch (SystemException)
         {
-            System.PrintMessage($"Error, file {path} is not valid", MessageTypes.ErrorMessage);
+            System.PrintMessage($"Error. STL-file {path} is not valid", MessageTypes.ErrorMessage);
             return null;
         }
 
