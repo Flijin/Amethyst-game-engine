@@ -166,7 +166,7 @@ vec3 CalculateSpotlight(Spotlight light, vec3 normal, vec3 fragPos, vec3 viewPos
     float dist = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * dist * dist);
     
-    vec3 N = normal;
+    vec3 N = normalize(normal);
     float diffFactor = max(dot(N, L), 0.0);
     vec3 diffuse = diffFactor * light.color * light.intensity;
     
@@ -184,7 +184,7 @@ vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewP
     
     float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * dist * dist);
     
-    vec3 N = normal;
+    vec3 N = normalize(normal);
     float diffFactor = max(dot(N, L), 0.0);
     vec3 diffuse = diffFactor * light.color * light.intensity;
     
@@ -196,7 +196,7 @@ vec3 CalculatePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewP
 }
 
 vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewPos, float specularStrength, int shininess) {
-    vec3 N = normal;
+    vec3 N = normalize(normal);
     vec3 L = -light.direction;
     
     float diffFactor = max(dot(N, L), 0.0);
@@ -220,7 +220,7 @@ void main(void) {
         	for (int i = 0; i < directionalLights.numOfDirectionalLights; i++) {
                 if (directionalLights.directionalLights[i].isActive != 0) {
                 	diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
-													            normal, fragPos, _cameraPos, 1.0, shininess);
+													             normal, fragPos, _cameraPos, 1.0, shininess);
                 }
 	        }
 
@@ -229,7 +229,7 @@ void main(void) {
 
 			    if (dist <= pointLights.pointLights[i].radius && pointLights.pointLights[i].isActive != 0) {
 				    diffuseSpecular += CalculatePointLight(pointLights.pointLights[i],
-													        normal, fragPos, _cameraPos, 1.0, shininess);
+													       normal, fragPos, _cameraPos, 1.0, shininess);
 			    }
 		    }
 
@@ -238,7 +238,7 @@ void main(void) {
                 
 			    if (dist <= spotlights.spotlights[i].radius && spotlights.spotlights[i].isActive != 0) {
 				    diffuseSpecular += CalculateSpotlight(spotlights.spotlights[i],
-													        normal, fragPos, _cameraPos, 1.0, shininess);
+													      normal, fragPos, _cameraPos, 1.0, shininess);
 			    }
             }
 

@@ -1,5 +1,4 @@
-﻿using Amethyst_game_engine.Core.GameObjects.Components.Textures;
-using Amethyst_game_engine.Core.Render.Settings;
+﻿using Amethyst_game_engine.Core.Render.Settings;
 using Amethyst_game_engine.Core.Utilities;
 
 namespace Amethyst_game_engine.Core.GameObjects.Components;

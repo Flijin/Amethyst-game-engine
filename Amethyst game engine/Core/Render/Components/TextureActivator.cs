@@ -1,4 +1,4 @@
-﻿using Amethyst_game_engine.Core.GameObjects.Components.Textures;
+﻿using Amethyst_game_engine.Core.GameObjects.Components;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Core.Render.Components;

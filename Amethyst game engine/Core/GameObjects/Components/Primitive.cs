@@ -117,7 +117,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
     {
         foreach (var texture in Material.textures)
         {
-            if (texture is not null && (texture.textureSetting & activeShader.Props.RenderSettings) != 0)
+            if (texture is not null && (texture.key & activeShader.Props.RenderSettings) != 0)
             {
                 TextureActivator.UseTexture(texture, activeShader);
             }

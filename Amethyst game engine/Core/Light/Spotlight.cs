@@ -71,13 +71,13 @@ public class Spotlight
     public float InnerCutOff
     {
         get => _innerCutOff;
-        set => _innerCutOff = Mathematics.Clamp(value, 0.0f, 90.0f);
+        set => _innerCutOff = Mathematics.Clamp(value, 0.0f, 180.0f);
     }
 
     public float OuterCutOff
     {
         get => _outerCutOff;
-        set => _outerCutOff = Mathematics.Clamp(value, 0.0f, 90.0f);
+        set => _outerCutOff = Mathematics.Clamp(value, 0.0f, 180.0f);
     }
 
     internal SpotlightData GetLightData()
