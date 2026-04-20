@@ -115,6 +115,8 @@ public struct Material
         }
     }
 
+    public Material() => _materialKey = RenderSettings.None;
+
     private void UpdateFlag(RenderSettings setting, bool condition)
     {
         if (condition)
@@ -122,6 +124,4 @@ public struct Material
         else
             _materialKey &= ~setting;
     }
-
-    public Material() => _materialKey = RenderSettings.None;
 }

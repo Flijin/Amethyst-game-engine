@@ -4,10 +4,10 @@ namespace Amethyst_game_engine.Core.Utilities;
 
 internal readonly struct Quaternion
 {
-    public readonly float x;
-    public readonly float y;
-    public readonly float z;
-    public readonly float w;
+    private readonly float x;
+    private readonly float y;
+    private readonly float z;
+    private readonly float w;
 
     public Quaternion(float x, float y, float z, float w)
     {

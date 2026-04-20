@@ -61,7 +61,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
         SetTextures();
         SetFactors();
 
-        if (activeShader.Props.ShadingModel != ShadingModels.Unlit)
+        if (activeShader.Options.ShadingModel != ShadingModels.Unlit)
             activeShader.SetVector3("_cameraPos", cameraPos);
 
         if (_isIndexedGeometry)
@@ -74,9 +74,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
     {
         var gourandSettings = RenderSettings.NormalMap |
                       RenderSettings.OcclusionMap |
-                      RenderSettings.EmissiveMap |
-                      RenderSettings.UseNormalScale |
-                      RenderSettings.UseOcclusionStrength;
+                      RenderSettings.EmissiveMap;
 
         if (props.ShadingModel != ShadingModels.PBR_MetallicRoughness)
         {
@@ -100,16 +98,16 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
 
     private void SetFactors()
     {
-        if ((activeShader.Props.RenderSettings & RenderSettings.BaseColorFactor) != 0)
+        if ((activeShader.Options.RenderSettings & RenderSettings.BaseColorFactor) != 0)
             activeShader.SetVector4("_baseColorFactor", Material.BaseColorFactor.ConvertColorToVector4());
 
-        if ((activeShader.Props.RenderSettings & RenderSettings.EmissiveFactor) != 0)
+        if ((activeShader.Options.RenderSettings & RenderSettings.EmissiveFactor) != 0)
             activeShader.SetVector3("_emissiveFactor", Material.BaseColorFactor.ConvertColorToVector3());
 
-        if ((activeShader.Props.RenderSettings & RenderSettings.MetallicFactor) != 0)
+        if ((activeShader.Options.RenderSettings & RenderSettings.MetallicFactor) != 0)
             activeShader.SetFloat("_metallicFactor", Material.MetallicFactor);
 
-        if ((activeShader.Props.RenderSettings & RenderSettings.RoughnessFactor) != 0)
+        if ((activeShader.Options.RenderSettings & RenderSettings.RoughnessFactor) != 0)
             activeShader.SetFloat("_roughnessFactor", Material.RoughnessFactor);
     }
 
@@ -117,7 +115,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
     {
         foreach (var texture in Material.textures)
         {
-            if (texture is not null && (texture.key & activeShader.Props.RenderSettings) != 0)
+            if (texture is not null && (texture.Key & activeShader.Options.RenderSettings) != 0)
             {
                 TextureActivator.UseTexture(texture, activeShader);
             }
@@ -132,7 +130,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
         foreach (var texture in Material.textures)
         {
             if (texture is not null)
-                GL.DeleteTexture(texture.textureHandle);
+                GL.DeleteTexture(texture.TextureHandle);
         }
     }
 }

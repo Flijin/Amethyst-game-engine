@@ -51,6 +51,18 @@ internal static class Mathematics
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float[] CreateTranslationMatrix4(float x, float y, float z)
+    {
+        return
+        [
+             1.0f, 0.0f, 0.0f, x,
+             0.0f, 1.0f, 0.0f, y,
+             0.0f, 0.0f, 1.0f, z,
+             0.0f, 0.0f, 0.0f, 1.0f,
+        ];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe void CreateScaleMatrix4(float x, float y, float z, float* res)
     {
         float* temp = stackalloc float[16]
@@ -62,6 +74,19 @@ internal static class Mathematics
         };
 
         Buffer.MemoryCopy(temp, res, MATRIX_SIZE, MATRIX_SIZE);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+    public static float[] CreateScaleMatrix4(float x, float y, float z)
+    {
+        return
+        [
+            x,    0.0f, 0.0f, 0.0f,
+            0.0f, y,    0.0f, 0.0f,
+            0.0f, 0.0f, z,    0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f,
+        ];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,10 +137,10 @@ internal static class Mathematics
         }
     }
 
-    public static unsafe void TransposeMatrix4(float* matrix)
+    public static void TransposeMatrix4(float[] matrix)
     {
-        float* temp = stackalloc float[16];
-        Buffer.MemoryCopy(matrix, temp, MATRIX_SIZE, MATRIX_SIZE);
+        float[] temp = new float[16];
+        Array.Copy(matrix, temp, 16);
 
         for (int i = 0; i < 4; i++)
         {

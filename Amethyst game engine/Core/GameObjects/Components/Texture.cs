@@ -1,6 +1,8 @@
-﻿using Amethyst_game_engine.Core.Render;
+﻿using System.Buffers;
+using Amethyst_game_engine.Core.Render;
 using Amethyst_game_engine.Core.Render.Components;
 using Amethyst_game_engine.Core.Render.Settings;
+using Amethyst_game_engine.Models.Components;
 using OpenTK.Graphics.OpenGL4;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -9,45 +11,60 @@ namespace Amethyst_game_engine.Core.GameObjects.Components;
 
 internal sealed class Texture : IDisposable
 {
-    public readonly Guid id;
-    public readonly int textureHandle;
-    public readonly TextureUnit unit;
-    public readonly RenderSettings key;
+    public int TextureHandle { get; }
+    public TextureUnit Unit { get; }
+    public RenderSettings Key { get; }
 
-    public Texture(byte[] data, TextureOptions options, TextureUnit unit, RenderSettings key)
+    public unsafe Texture(TextureData texture)
     {
-        this.unit = unit;
-        this.key = key;
+        Unit = texture.Options.Unit;
+        Key = texture.Options.Key;
 
-        textureHandle = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, textureHandle);
+        TextureHandle = GL.GenTexture();
+        GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
 
-        id = Guid.NewGuid();
+        using var image = Image.Load<Rgba32>(texture.Data);
 
-        using var image = Image.Load<Rgba32>(data);
+        int size = image.Width * image.Height * 4;
+        byte[] pixels = ArrayPool<byte>.Shared.Rent(size);
+        Span<byte> pixelsSpan = new(pixels, 0, size);
 
-        byte[] pixels = new byte[image.Width * image.Height * 4];
-        image.CopyPixelDataTo(pixels);
+        image.CopyPixelDataTo(pixelsSpan);
 
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, options.Sampler.WrapS);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, options.Sampler.WrapT);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, options.Sampler.MagFilter);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, options.Sampler.MinFilter);
+        var minFilter = texture.Options.Sampler.MinFilter;
 
-        GL.TexImage2D(TextureTarget.Texture2D, 0,
-                      options.InternalFormat,
-                      image.Width, image.Height, 0,
-                      options.PixelFormat, PixelType.UnsignedByte,
-                      pixels);
+        var usesMipmaps = minFilter switch
+        {
+            9984 or 9985 or 9986 or 9987 => true,
+            _ => false
+        };
+
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, texture.Options.Sampler.WrapS);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, texture.Options.Sampler.WrapT);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, texture.Options.Sampler.MagFilter);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, minFilter);
+
+        fixed (byte* pixelsPtr = pixelsSpan)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D, 0,
+              texture.Options.InternalFormat,
+              image.Width, image.Height, 0,
+              PixelFormat.Rgba, PixelType.UnsignedByte,
+              (nint)pixelsPtr);
+        }
+
+        if (usesMipmaps)
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
         GL.BindTexture(TextureTarget.Texture2D, 0);
+        ArrayPool<byte>.Shared.Return(pixels);
     }
 
     public void UseTexture(Shader shader) => TextureActivator.UseTexture(this, shader);
 
     public void Dispose()
     {
-        GL.DeleteTexture(textureHandle);
+        GL.DeleteTexture(TextureHandle);
         GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 }

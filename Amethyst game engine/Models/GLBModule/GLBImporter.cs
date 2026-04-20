@@ -1,11 +1,9 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Amethyst_game_engine.Core.GameObjects.Components;
 using Amethyst_game_engine.Core.Render.Settings;
 using Amethyst_game_engine.Core.Utilities;
 using Amethyst_game_engine.Models.Components;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
@@ -15,6 +13,12 @@ public static class GLBImporter
     {
         public BufferViewData[] bufferViews;
         public AccessorData[] accessors;
+        public TextureData[] textures;
+        public MaterialData[] materials;
+        public Sampler[] samplers;
+        public Memory<byte>[] imagesData;
+        public HashSet<int> joints;
+        public MeshData[] meshes;
     }
 
     private struct AccessorData
@@ -22,6 +26,7 @@ public static class GLBImporter
         public byte[] data;
         public int componentType;
         public bool normalized;
+        public int count;
     }
 
     private struct BufferViewData
@@ -30,13 +35,7 @@ public static class GLBImporter
         public int stride;
     }
 
-    private struct TextureData
-    {
-        public TextureOptions sampler;
-        public Memory<byte> data;
-    }
-
-    public static GLBModelData? ReadModel(string path, RenderSettings settings = RenderSettings.All)
+    public static GLBScene[]? ReadModel(string path, RenderSettings settings = RenderSettings.All)
     {
         if (File.Exists(path) == false)
         {
@@ -53,18 +52,18 @@ public static class GLBImporter
             return null;
         }
 
-        //try
-        //{
-            return ReadFile(reader, path);
-        //}
-        //catch (Exception)
-        //{
-        //    System.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
-        //    return null;
-        //}
+        try
+        {
+            return ReadFile(reader, path, settings);
+    }
+        catch (Exception)
+        {
+            System.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
+            return null;
+        }
     }
 
-    private static GLBModelData? ReadFile(BinaryReader reader, string path)
+    private static GLBScene[]? ReadFile(BinaryReader reader, string path, RenderSettings settings)
     {
         var magic = reader.ReadUInt32();
 
@@ -109,13 +108,10 @@ public static class GLBImporter
             return null;
         }
 
-        var result = ReadModelData(jsonChunk, binChunk);
+        var result = ReadScenes(jsonChunk, binChunk, settings);
 
         if (result is null)
             return null;
-
-        if (asset.TryGetProperty("extras", out JsonElement extras))
-            ReadExtras(extras, result);
 
         return result;
     }
@@ -156,18 +152,14 @@ public static class GLBImporter
         var chunkType = reader.ReadUInt32();
 
         if (chunkType == 0x004E4942)
-        {
             return reader.ReadBytes((int)chunkLength);
-        }
         else
-        {
             return null;
-        }
     }
 
-    private static GLBModelData? ReadModelData(JsonElement jsonChunk, byte[] binChunk)
+    private static GLBScene[]? ReadScenes(JsonElement jsonChunk, byte[] binChunk, RenderSettings settings)
     {
-        GLBScene[] scenes;
+        GLBScene[] result;
 
         byte[][]? buffers = ReadBuffers(jsonChunk.GetProperty("buffers"), binChunk);
 
@@ -181,10 +173,29 @@ public static class GLBImporter
 
         componentsData.accessors = ReadAccessors(jsonChunk.GetProperty("accessors"), componentsData.bufferViews);
 
+        if (jsonChunk.TryGetProperty("samplers", out JsonElement samplers))
+            componentsData.samplers = ReadSamplers(samplers);
+
+        if (jsonChunk.TryGetProperty("images", out JsonElement images))
+            componentsData.imagesData = ReadImages(images, componentsData.bufferViews);
+
+        if (jsonChunk.TryGetProperty("textures", out JsonElement textures))
+            componentsData.textures = ReadTextures(textures, componentsData);
+
+        if (jsonChunk.TryGetProperty("materials", out JsonElement materials))
+            componentsData.materials = ReadMaterials(materials, componentsData, settings);
+
+        if (jsonChunk.TryGetProperty("skins", out JsonElement skins))
+            componentsData.joints = ReadJoints(skins);
+
+        componentsData.meshes = ReadMeshes(jsonChunk.GetProperty("meshes"), componentsData);
+
         JsonElement scenesJson = jsonChunk.GetProperty("scenes");
-        scenes = new GLBScene[scenesJson.GetArrayLength()];
+        result = new GLBScene[scenesJson.GetArrayLength()];
 
         int sceneIndex = 0;
+
+        JsonElement[] nodes = jsonChunk.GetProperty("nodes").Deserialize<JsonElement[]>()!;
 
         foreach (var scene in scenesJson.EnumerateArray())
         {
@@ -195,30 +206,59 @@ public static class GLBImporter
             else
                 sceneName = null;
 
-            scenes[sceneIndex] = ReadScene(jsonChunk, sceneName, scene.GetProperty("nodes").EnumerateArray());
+            int[] sceneNodesIndises = scene.GetProperty("nodes").Deserialize<int[]>()!;
+            Node[] sceneNodes = new Node[sceneNodesIndises.Length];
+
+            for (int i = 0; i < sceneNodes.Length; i++)
+            {
+                sceneNodes[i] = new(nodes[sceneNodesIndises[i]], nodes, componentsData.meshes, sceneNodesIndises[i]);
+            }
+
+            result[sceneIndex] = ReadScene(sceneName, sceneNodes, componentsData);
         }
 
-        return new GLBModelData(scenes);
+        return result;
     }
 
-    private static GLBScene ReadScene(JsonElement chunk, string? sceneName, JsonElement.ArrayEnumerator sceneNodes)
+    private static GLBScene ReadScene(string? sceneName, Node[] sceneNodes, GLTFComponentsData components)
     {
-        return null;
-    }
+        List<GLBModel> sceneModels = [];
 
-    private static void ReadExtras(JsonElement extras, GLBModelData model)
-    {
-        if (extras.TryGetProperty("author", out JsonElement author))
-            model.Author = author.GetString();
+        foreach (var node in sceneNodes)
+        {
+            CalculateLocalMatrices(node);
+            node.CalculateGlobalMatrices();
+            ExtractModels(node);
+        }
 
-        if (extras.TryGetProperty("license", out JsonElement license))
-            model.License = license.GetString();
+        static void CalculateLocalMatrices(Node node)
+        {
+            node.CalculateLocalMatrix();
 
-        if (extras.TryGetProperty("source", out JsonElement source))
-            model.Sourse = source.GetString();
+            if (node.Children is not null)
+            {
+                foreach (var child in node.Children)
+                {
+                    CalculateLocalMatrices(child);
+                }
+            }
+        }
 
-        if (extras.TryGetProperty("title", out JsonElement title))
-            model.Title = title.GetString();
+        void ExtractModels(Node node)
+        {
+            if (components.joints.Contains(node.NodeIndex) || node.Mesh is not null)
+                sceneModels.Add(new GLBModel(node.ExtractMeshes(), RenderSettings.All));
+
+            if (node.Children is not null)
+            {
+                foreach (var child in node.Children)
+                {
+                    ExtractModels(child);
+                }
+            }
+        }
+
+        return new GLBScene(sceneModels) { SceneName = sceneName };
     }
 
     private static byte[][]? ReadBuffers(JsonElement buffers, byte[] binChunk)
@@ -232,12 +272,12 @@ public static class GLBImporter
             if (buffer.TryGetProperty("uri", out JsonElement uri))
             {
                 string uriString = uri.GetString()!;
-                var indexOfEndURI = uriString.IndexOf("base64,", minMediatypeLength, StringComparison.Ordinal) + "base64,".Length;
+                int endURI = uriString.IndexOf("base64,", minMediatypeLength, StringComparison.Ordinal);
 
-                if (indexOfEndURI == -1)
+                if (endURI == -1)
                     return null;
 
-                var base64 = uriString[indexOfEndURI..];
+                string base64 = uriString[(endURI + "base64,".Length)..];
                 result[bufferIndex] = Convert.FromBase64String(base64);
             }
             else
@@ -254,7 +294,7 @@ public static class GLBImporter
     private static BufferViewData[] ReadBufferViews(JsonElement bufferViews, byte[][] buffers)
     {
         var result = new BufferViewData[bufferViews.GetArrayLength()];
-        int indexOfBufferView = 0;
+        int bufferViewIndex = 0;
 
         foreach (var bufferView in bufferViews.EnumerateArray())
         {
@@ -263,13 +303,13 @@ public static class GLBImporter
             int byteOffset = bufferView.TryGetProperty("byteOffset", out JsonElement byteOffsetEl) ? byteOffsetEl.GetInt32() : 0;
             int byteStride = bufferView.TryGetProperty("byteStride", out JsonElement byteStrideEl) ? byteStrideEl.GetInt32() : 0;
 
-            result[indexOfBufferView] = new()
+            result[bufferViewIndex] = new()
             {
                 data = new Memory<byte>(buffers[bufferIndex], byteOffset, byteLength),
                 stride = byteStride
             };
 
-            indexOfBufferView++;
+            bufferViewIndex++;
         }
 
         return result;
@@ -278,7 +318,7 @@ public static class GLBImporter
     private static AccessorData[] ReadAccessors(JsonElement accessors, BufferViewData[] bufferViews)
     {
         var result = new AccessorData[accessors.GetArrayLength()];
-        int indexOfAccessor = 0;
+        int accessorIndex = 0;
 
         foreach (var accessor in accessors.EnumerateArray())
         {
@@ -327,23 +367,25 @@ public static class GLBImporter
                 }
             }
 
-            result[indexOfAccessor] = new()
+            result[accessorIndex] = new()
             {
                 data = data,
                 componentType = componentType,
                 normalized = normalized,
+                count = count,
             };
 
-            indexOfAccessor++;
+            accessorIndex++;
         }
 
         static byte[] CopyData(BufferViewData bufferView, int offset, int elementSize, int count)
         {
-            if (bufferView.stride == 0)
+            if (bufferView.stride == 0 || bufferView.stride == elementSize)
                 return bufferView.data.Slice(offset, elementSize * count).ToArray();
 
             byte[] result = new byte[elementSize * count];
-
+            
+            int step = bufferView.stride - elementSize;
             int srsOffset = offset;
             int dstOffset = 0;
 
@@ -351,7 +393,7 @@ public static class GLBImporter
             {
                 bufferView.data.Slice(srsOffset, elementSize).CopyTo(result.AsMemory(dstOffset));
                 dstOffset += elementSize;
-                srsOffset += elementSize + bufferView.stride;
+                srsOffset += elementSize + step;
             }
 
             return result;
@@ -391,33 +433,130 @@ public static class GLBImporter
         return result;
     }
 
-    private static MaterialData[] ReadMaterials(JsonElement materials, AccessorData[] accessors)
+    private static MaterialData[] ReadMaterials(JsonElement materials, GLTFComponentsData components, RenderSettings settings)
     {
-        return [];
+        MaterialData[] result = new MaterialData[materials.GetArrayLength()];
+        int materialIndex = 0;
+
+        foreach (var material in materials.EnumerateArray())
+        {
+            MaterialData currentMaterial = new();
+
+            if (material.TryGetProperty("pbrMetallicRoughness", out JsonElement metallicRoughness))
+            {
+                if (metallicRoughness.TryGetProperty("baseColorFactor", out JsonElement baseColorFactor)
+                    && (settings & RenderSettings.BaseColorFactor) != 0)
+                {
+                    float[] baseColor = baseColorFactor.Deserialize<float[]>()!;
+                    currentMaterial.BaseColorFactor = new Color(baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
+                }
+
+                if (metallicRoughness.TryGetProperty("baseColorTexture", out JsonElement baseColorTex)
+                    && (settings & RenderSettings.AlbedoMap) != 0)
+                {
+                    currentMaterial.AlbedoMap = ConfigureTexture(components.textures[baseColorTex.GetProperty("index").GetInt32()],
+                                                                 TextureUnit.Texture0, PixelInternalFormat.Rgba8,
+                                                                 baseColorTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                                                 ? texCoord.GetInt32() : 0);
+                }
+
+                if (metallicRoughness.TryGetProperty("metallicFactor", out JsonElement metallicFactor)
+                    && (settings & RenderSettings.MetallicFactor) != 0)
+                    currentMaterial.MetallicFactor = metallicFactor.GetSingle();
+
+                if (metallicRoughness.TryGetProperty("roughnessFactor", out JsonElement roughnessFactor)
+                    && (settings & RenderSettings.RoughnessFactor) != 0)
+                    currentMaterial.RoughnessFactor = roughnessFactor.GetSingle();
+
+                if (metallicRoughness.TryGetProperty("metallicRoughnessTexture", out JsonElement metallicRoughnessTex)
+                    && (settings & RenderSettings.MetallicRoughnessMap) != 0)
+                {
+                    currentMaterial.MetallicRoughnessMap =
+                        ConfigureTexture(components.textures[metallicRoughnessTex.GetProperty("index").GetInt32()],
+                                                             TextureUnit.Texture4, PixelInternalFormat.Rg8,
+                                                             metallicRoughnessTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                                             ? texCoord.GetInt32() : 0);
+                }
+            }
+
+            if (material.TryGetProperty("normalTexture", out JsonElement normalTex)
+                && (settings & RenderSettings.NormalMap) != 0)
+            {
+                float scale = normalTex.TryGetProperty("scale", out JsonElement scaleEL) ? scaleEL.GetSingle() : 1.0f;
+
+                currentMaterial.NormalMap = (ConfigureTexture(components.textures[normalTex.GetProperty("index").GetInt32()],
+                                                             TextureUnit.Texture2, PixelInternalFormat.Rgba8,
+                                                             normalTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                                             ? texCoord.GetInt32() : 0), scale);
+            }
+
+            if (material.TryGetProperty("occlusionTexture", out JsonElement occlusionTex)
+                && (settings & RenderSettings.OcclusionMap) != 0)
+            {
+                float strength = occlusionTex.TryGetProperty("strength", out JsonElement strengthEl) ? strengthEl.GetSingle() : 1.0f;
+
+                currentMaterial.OcclusionMap = (ConfigureTexture(components.textures[occlusionTex.GetProperty("index").GetInt32()],
+                                                                 TextureUnit.Texture3, PixelInternalFormat.R8,
+                                                                 occlusionTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                                                 ? texCoord.GetInt32() : 0), strength);
+            }
+
+            if (material.TryGetProperty("emissiveTexture", out JsonElement emissiveTex)
+                && (settings & RenderSettings.EmissiveMap) != 0)
+            {
+                currentMaterial.EmissiveMap = ConfigureTexture(components.textures[emissiveTex.GetProperty("index").GetInt32()],
+                                                               TextureUnit.Texture1, PixelInternalFormat.Srgb8,
+                                                               emissiveTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                                               ? texCoord.GetInt32() : 0);
+            }
+
+            if (material.TryGetProperty("emissiveFactor", out JsonElement emissiveFactor)
+                && (settings & RenderSettings.EmissiveFactor) != 0)
+            {
+                float[] emissive = emissiveFactor.Deserialize<float[]>()!;
+                currentMaterial.EmissiveFactor = new Color(emissive[0], emissive[1], emissive[2]);
+            }
+
+            static TextureData ConfigureTexture(TextureData texture, TextureUnit unit, PixelInternalFormat pixelFormat, int texCoords)
+            {
+                Sampler sampler = texture.Options.Sampler;
+                texture.TexCoords = texCoords;
+
+                texture.Options = new()
+                {
+                    Sampler = sampler,
+                    InternalFormat = pixelFormat,
+                    Unit = unit
+                };
+
+                return texture;
+            }
+
+            result[materialIndex] = currentMaterial;
+
+            materialIndex++;
+        }
+
+        return result;
     }
 
-    private static TextureData[] ReadTextures(
-        JsonElement textures,
-        int[] imagesBuffViews,
-        BufferViewData[] bufferViews,
-        TextureOptions[] samplers)
+    private static TextureData[] ReadTextures(JsonElement textures, GLTFComponentsData components)
     {
         TextureData[] result = new TextureData[textures.GetArrayLength()];
-        int indexOfTexture = 0;
+        int textureIndex = 0;
 
         foreach (var texture in textures.EnumerateArray())
         {
-            BufferViewData bufferView = bufferViews[imagesBuffViews[texture.GetProperty("source").GetInt32()]];
-            TextureOptions sampler = texture.TryGetProperty("sampler", out JsonElement samplerEl) ?
-                samplers[samplerEl.GetInt32()] : new() { Sampler = Sampler.DefaultSampler };
+            TextureOptions textureOptions = texture.TryGetProperty("sampler", out JsonElement samplerEl) ?
+                new() { Sampler = components.samplers[samplerEl.GetInt32()] } : new() { Sampler = Sampler.DefaultSampler };
 
-            result[indexOfTexture] = new()
+            result[textureIndex] = new()
             {
-                data = bufferView.data.ToArray(),
-                sampler = sampler
+                Data = components.imagesData[texture.GetProperty("source").GetInt32()].ToArray(),
+                Options = textureOptions
             };
 
-            indexOfTexture++;
+            textureIndex++;
         }
 
         return result;
@@ -426,11 +565,11 @@ public static class GLBImporter
     private static Sampler[] ReadSamplers(JsonElement samplers) 
     {
         Sampler[] result = new Sampler[samplers.GetArrayLength()];
-        int indexOfSampler = 0;
+        int samplerIndex = 0;
 
         foreach (var sampler in samplers.EnumerateArray())
         {
-            result[indexOfSampler] = new()
+            result[samplerIndex] = new()
             {
                 MagFilter = sampler.TryGetProperty("magFilter", out JsonElement magFilter) && magFilter.GetInt32() is
                 9728 or 9729
@@ -453,7 +592,120 @@ public static class GLBImporter
                     : 10497
             };
 
-            indexOfSampler++;
+            samplerIndex++;
+        }
+
+        return result;
+    }
+
+    private static Memory<byte>[] ReadImages(JsonElement images, BufferViewData[] bufferViews)
+    {
+        Memory<byte>[] result = new Memory<byte>[images.GetArrayLength()];
+        int imageIndex = 0;
+
+        foreach (var image in images.EnumerateArray())
+        {
+            if (image.TryGetProperty("bufferView", out JsonElement bufferView))
+            {
+                result[imageIndex] = bufferViews[bufferView.GetInt32()].data;
+            }
+            else
+            {
+                string uri = image.GetProperty("uri").GetString()!;
+                int endURI = uri.IndexOf("base64,", StringComparison.Ordinal);
+
+                if (endURI == -1)
+                    throw new Exception();
+
+                string base64 = uri[(endURI + "base64,".Length)..];
+                result[imageIndex] = Convert.FromBase64String(base64);
+            }
+
+            imageIndex++;
+        }
+
+        return result;
+    }
+
+    private static MeshData[] ReadMeshes(JsonElement meshes, GLTFComponentsData components)
+    {
+        MeshData[] result = new MeshData[meshes.GetArrayLength()];
+        int meshIndex = 0;
+
+        foreach (var mesh in meshes.EnumerateArray())
+        {
+            JsonElement primitives = mesh.GetProperty("primitives");
+            int primitiveIndex = 0;
+            PrimitiveData[] meshPrimitives = new PrimitiveData[primitives.GetArrayLength()];
+
+            foreach (var primitive in primitives.EnumerateArray())
+            {
+                meshPrimitives[primitiveIndex] = ReadPrimitive(primitive, components);
+                primitiveIndex++;
+            }
+
+            result[meshIndex] = new(meshPrimitives);
+            meshIndex++;
+        }
+
+        static PrimitiveData ReadPrimitive(JsonElement primitive, GLTFComponentsData components)
+        {
+            PrimitiveData result = new();
+            Primitive.Options options = new();
+
+            if (primitive.TryGetProperty("indices", out JsonElement indices))
+            {
+                AccessorData indicesAccessor = components.accessors[indices.GetInt32()];
+
+                result.Indices = indicesAccessor.data;
+                options.Count = indicesAccessor.count;
+                options.DrawElementsType = (DrawElementsType)indicesAccessor.componentType;
+                options.IsIndexedGeometry = true;
+            }
+
+            if (primitive.TryGetProperty("material", out JsonElement material))
+                result.Material = components.materials[material.GetInt32()];
+
+            options.Mode = primitive.TryGetProperty("mode", out JsonElement mode) ?
+                (PrimitiveType)mode.GetInt32() : PrimitiveType.Triangles;
+
+            JsonElement attributes = primitive.GetProperty("attributes");
+
+            AccessorData verticesAccessor = components.accessors[attributes.GetProperty("POSITION").GetInt32()];
+            result.Vertices = verticesAccessor.data;
+
+            if (options.Count == 0)
+                options.Count = verticesAccessor.count;
+
+            if (attributes.TryGetProperty("NORMAL", out JsonElement normal))
+                result.Normals = components.accessors[normal.GetInt32()].data;
+
+            for (int i = 0; i < 5; i++)
+            {
+                if (attributes.TryGetProperty($"TEXCOORD_{i}", out JsonElement texCoord))
+                    result.UVSets[i] = components.accessors[texCoord.GetInt32()].data;
+                else
+                    break;
+            }
+
+            result.Options = options;
+
+            return result;
+        }
+
+        return result;
+    }
+
+    private static HashSet<int> ReadJoints(JsonElement skins)
+    {
+        HashSet<int> result = new();
+
+        foreach (var skin in skins.EnumerateArray())
+        {
+            foreach (var joint in skin.GetProperty("joints").EnumerateArray())
+            {
+                result.Add(joint.GetInt32());
+            }
         }
 
         return result;

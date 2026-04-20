@@ -26,7 +26,10 @@ internal static class MacrosCache
         {
             FieldInfo field = typeof(RenderSettings).GetField(((RenderSettings)currentFlag).ToString())!;
 
-            _renderSettingsCache[currentFlag] = field.GetCustomAttribute<GLSLMacrosAttribute>()!.Macro;
+            var attribute = field.GetCustomAttribute<GLSLMacrosAttribute>();
+
+            if (attribute is not null)
+                _renderSettingsCache[currentFlag] = attribute.Macro;
 
             currentFlag <<= 1;
         }

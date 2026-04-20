@@ -5,7 +5,6 @@ namespace Amethyst_game_engine.Core.Render.Settings;
 [Flags]
 public enum RenderSettings : uint
 {
-    [GLSLMacros("")]
     None = 0,
 
     [GLSLMacros("#define USE_VERTEX_COLORS")]
@@ -38,12 +37,5 @@ public enum RenderSettings : uint
     [GLSLMacros("#define USE_EMISSIVE_FACTOR")]
     EmissiveFactor = 1 << 9,
 
-    [GLSLMacros("#define USE_NORMAL_SCALE")]
-    UseNormalScale = 1 << 10,
-
-    [GLSLMacros("#define USE_OCCLUSION_STRENGTH")]
-    UseOcclusionStrength = 1 << 11,
-
-    [GLSLMacros(true)]
-    All = (1 << 12) - 1
+    All = (1 << 10) - 1
 }

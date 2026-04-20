@@ -1,8 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Amethyst_game_engine.Core;
-
-namespace Amethyst_game_engine.Models.Components;
+﻿namespace Amethyst_game_engine.Models.Components;
 
 internal sealed class MeshData
 {
@@ -17,7 +13,7 @@ internal sealed class MeshData
         set => _matrix = value;
     }
 
-    public MeshData(PrimitiveData[] primitives)
+    internal MeshData(PrimitiveData[] primitives)
     {
         _primitives = primitives;
     }

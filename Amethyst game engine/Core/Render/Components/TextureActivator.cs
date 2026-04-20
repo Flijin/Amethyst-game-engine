@@ -16,17 +16,17 @@ internal class TextureActivator
         [TextureUnit.Texture4] = "_metallicRoughnessTexture",
     };
 
-    public static void ResetTexture() => _lastTextures.Clear();
+    public static void ResetTextures() => _lastTextures.Clear();
 
     public static void UseTexture(Texture texture, Shader shader)
     {
-        if (_lastTextures.TryGetValue(texture.unit, out Texture? value) && value.id == texture.id)
+        if (_lastTextures.TryGetValue(texture.Unit, out Texture? value) && value == texture)
             return;
 
-        _lastTextures[texture.unit] = texture;
-        GL.ActiveTexture(texture.unit);
-        GL.BindTexture(TextureTarget.Texture2D, texture.textureHandle);
+        _lastTextures[texture.Unit] = texture;
+        GL.ActiveTexture(texture.Unit);
+        GL.BindTexture(TextureTarget.Texture2D, texture.TextureHandle);
 
-        shader.SetInt(_samplers[texture.unit], (int)texture.unit - (int)TextureUnit.Texture0);
+        shader.SetInt(_samplers[texture.Unit], (int)texture.Unit - (int)TextureUnit.Texture0);
     }
 }
