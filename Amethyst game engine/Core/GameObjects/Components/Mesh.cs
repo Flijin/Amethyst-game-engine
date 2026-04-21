@@ -60,8 +60,8 @@ internal class Mesh : IDisposable
 
     public void Dispose()
     {
-        unsafe { Marshal.FreeHGlobal((nint)_matrix); }
-
+        unsafe { NativeMemory.Free(_matrix); }
+        
         foreach (var primitive in _primitives)
             primitive.Dispose();
     }

@@ -50,10 +50,17 @@ public class GameApplication : GameWindow
         UseMonochromeAmbient = true,
     };
 
+    private readonly bool _editMode;
+
     public float WindowAspectRatio => _windowAspectRatio;
 
     public bool IsSceneLoaded => _sceneManager.CurrentScene is not null;
     public SceneManager SceneManager => _sceneManager;
+
+    public bool EditMode
+    {
+        get => _editMode;
+    }
 
     public bool ClearBackground
     {
@@ -99,12 +106,13 @@ public class GameApplication : GameWindow
 
 #endif
 
-    public GameApplication(NativeWindowSettings settings, float tickTime = 1.0f / 60.0f) :
+    public GameApplication(NativeWindowSettings settings, bool editMode, float tickTime = 1.0f / 60.0f) :
         base(GameWindowSettings.Default, settings)
     {
         _tickTime = Mathematics.Clamp(tickTime, 1.0f / 300.0f, 1.0f);
         _sceneManager.SetGameApplication(this);
         _windowAspectRatio = (float)ClientSize.X / ClientSize.Y;
+        _editMode = editMode;
     }
 
     public void LoadScene(BaseScene scene) => _sceneManager.LoadScene(scene);

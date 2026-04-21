@@ -1,9 +1,12 @@
-﻿using Amethyst_game_engine.Core.Utilities;
+﻿using Amethyst_game_engine.Core.Render.Settings;
+using Amethyst_game_engine.Core.Utilities;
 
 namespace Amethyst_game_engine.Models.Components;
 
 internal sealed class MaterialData
 {
+    public RenderSettings Flags { get; set; }
+
     public TextureData? AlbedoMap { get; set; }
     public TextureData? MetallicRoughnessMap { get; set; }
     public (TextureData, float)? NormalMap { get; set; }

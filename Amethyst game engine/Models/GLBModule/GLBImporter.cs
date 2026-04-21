@@ -35,7 +35,7 @@ public static class GLBImporter
         public int stride;
     }
 
-    public static GLBScene[]? ReadModel(string path, RenderSettings settings = RenderSettings.All)
+    public static GLBScene[]? LoadModel(string path, RenderSettings settings = RenderSettings.All)
     {
         if (File.Exists(path) == false)
         {
@@ -247,7 +247,10 @@ public static class GLBImporter
         void ExtractModels(Node node)
         {
             if (components.joints.Contains(node.NodeIndex) || node.Mesh is not null)
-                sceneModels.Add(new GLBModel(node.ExtractMeshes(), RenderSettings.All));
+            {
+                sceneModels.Add(new GLBModel(node.ExtractMeshes()));
+                return;
+            }
 
             if (node.Children is not null)
             {
@@ -258,7 +261,13 @@ public static class GLBImporter
             }
         }
 
-        return new GLBScene(sceneModels) { SceneName = sceneName };
+        for (int i = sceneModels.Count - 1; i >= 0; i--)
+        {
+            if (sceneModels[i].MeshesData.Count == 0)
+                sceneModels.RemoveAt(i);
+        }
+
+        return new GLBScene(sceneModels) { Name = sceneName };
     }
 
     private static byte[][]? ReadBuffers(JsonElement buffers, byte[] binChunk)
@@ -441,6 +450,7 @@ public static class GLBImporter
         foreach (var material in materials.EnumerateArray())
         {
             MaterialData currentMaterial = new();
+            RenderSettings flags = RenderSettings.None;
 
             if (material.TryGetProperty("pbrMetallicRoughness", out JsonElement metallicRoughness))
             {
@@ -449,6 +459,8 @@ public static class GLBImporter
                 {
                     float[] baseColor = baseColorFactor.Deserialize<float[]>()!;
                     currentMaterial.BaseColorFactor = new Color(baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
+
+                    flags |= RenderSettings.BaseColorFactor;
                 }
 
                 if (metallicRoughness.TryGetProperty("baseColorTexture", out JsonElement baseColorTex)
@@ -457,25 +469,35 @@ public static class GLBImporter
                     currentMaterial.AlbedoMap = ConfigureTexture(components.textures[baseColorTex.GetProperty("index").GetInt32()],
                                                                  TextureUnit.Texture0, PixelInternalFormat.Rgba8,
                                                                  baseColorTex.TryGetProperty("texCoord", out JsonElement texCoord)
-                                                                 ? texCoord.GetInt32() : 0);
+                                                                 ? texCoord.GetInt32() : 0, RenderSettings.AlbedoMap);
+
+                    flags |= RenderSettings.AlbedoMap;
                 }
 
                 if (metallicRoughness.TryGetProperty("metallicFactor", out JsonElement metallicFactor)
                     && (settings & RenderSettings.MetallicFactor) != 0)
+                {
                     currentMaterial.MetallicFactor = metallicFactor.GetSingle();
+                    flags |= RenderSettings.MetallicFactor;
+                }
 
                 if (metallicRoughness.TryGetProperty("roughnessFactor", out JsonElement roughnessFactor)
                     && (settings & RenderSettings.RoughnessFactor) != 0)
+                {
                     currentMaterial.RoughnessFactor = roughnessFactor.GetSingle();
+                    flags |= RenderSettings.RoughnessFactor;
+                }
 
                 if (metallicRoughness.TryGetProperty("metallicRoughnessTexture", out JsonElement metallicRoughnessTex)
                     && (settings & RenderSettings.MetallicRoughnessMap) != 0)
                 {
                     currentMaterial.MetallicRoughnessMap =
-                        ConfigureTexture(components.textures[metallicRoughnessTex.GetProperty("index").GetInt32()],
-                                                             TextureUnit.Texture4, PixelInternalFormat.Rg8,
-                                                             metallicRoughnessTex.TryGetProperty("texCoord", out JsonElement texCoord)
-                                                             ? texCoord.GetInt32() : 0);
+                    ConfigureTexture(components.textures[metallicRoughnessTex.GetProperty("index").GetInt32()],
+                                     TextureUnit.Texture4, PixelInternalFormat.Rg8,
+                                     metallicRoughnessTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                     ? texCoord.GetInt32() : 0, RenderSettings.MetallicRoughnessMap);
+
+                    flags |= RenderSettings.MetallicRoughnessMap;
                 }
             }
 
@@ -485,9 +507,11 @@ public static class GLBImporter
                 float scale = normalTex.TryGetProperty("scale", out JsonElement scaleEL) ? scaleEL.GetSingle() : 1.0f;
 
                 currentMaterial.NormalMap = (ConfigureTexture(components.textures[normalTex.GetProperty("index").GetInt32()],
-                                                             TextureUnit.Texture2, PixelInternalFormat.Rgba8,
-                                                             normalTex.TryGetProperty("texCoord", out JsonElement texCoord)
-                                                             ? texCoord.GetInt32() : 0), scale);
+                                                              TextureUnit.Texture2, PixelInternalFormat.Rgba8,
+                                                              normalTex.TryGetProperty("texCoord", out JsonElement texCoord)
+                                                              ? texCoord.GetInt32() : 0, RenderSettings.NormalMap), scale);
+
+                flags |= RenderSettings.NormalMap;
             }
 
             if (material.TryGetProperty("occlusionTexture", out JsonElement occlusionTex)
@@ -498,16 +522,20 @@ public static class GLBImporter
                 currentMaterial.OcclusionMap = (ConfigureTexture(components.textures[occlusionTex.GetProperty("index").GetInt32()],
                                                                  TextureUnit.Texture3, PixelInternalFormat.R8,
                                                                  occlusionTex.TryGetProperty("texCoord", out JsonElement texCoord)
-                                                                 ? texCoord.GetInt32() : 0), strength);
+                                                                 ? texCoord.GetInt32() : 0, RenderSettings.OcclusionMap), strength);
+
+                flags |= RenderSettings.OcclusionMap;
             }
 
             if (material.TryGetProperty("emissiveTexture", out JsonElement emissiveTex)
                 && (settings & RenderSettings.EmissiveMap) != 0)
             {
                 currentMaterial.EmissiveMap = ConfigureTexture(components.textures[emissiveTex.GetProperty("index").GetInt32()],
-                                                               TextureUnit.Texture1, PixelInternalFormat.Srgb8,
+                                                               TextureUnit.Texture1, PixelInternalFormat.Rgba8,
                                                                emissiveTex.TryGetProperty("texCoord", out JsonElement texCoord)
-                                                               ? texCoord.GetInt32() : 0);
+                                                               ? texCoord.GetInt32() : 0, RenderSettings.EmissiveMap);
+
+                flags |= RenderSettings.EmissiveMap;
             }
 
             if (material.TryGetProperty("emissiveFactor", out JsonElement emissiveFactor)
@@ -515,23 +543,26 @@ public static class GLBImporter
             {
                 float[] emissive = emissiveFactor.Deserialize<float[]>()!;
                 currentMaterial.EmissiveFactor = new Color(emissive[0], emissive[1], emissive[2]);
+
+                flags |= RenderSettings.EmissiveFactor;
             }
 
-            static TextureData ConfigureTexture(TextureData texture, TextureUnit unit, PixelInternalFormat pixelFormat, int texCoords)
+            static TextureData ConfigureTexture(TextureData texture, TextureUnit unit, PixelInternalFormat pixelFormat, int texCoords, RenderSettings key)
             {
                 Sampler sampler = texture.Options.Sampler;
                 texture.TexCoords = texCoords;
-
                 texture.Options = new()
                 {
                     Sampler = sampler,
                     InternalFormat = pixelFormat,
-                    Unit = unit
+                    Unit = unit,
+                    Key = key
                 };
 
                 return texture;
             }
 
+            currentMaterial.Flags = flags;
             result[materialIndex] = currentMaterial;
 
             materialIndex++;

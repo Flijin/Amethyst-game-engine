@@ -1,20 +1,14 @@
-﻿
-using Amethyst_game_engine.Core.Render.Settings;
-using Amethyst_game_engine.Models.Components;
+﻿using Amethyst_game_engine.Models.Components;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
 public class GLBModel
 {
-    private readonly List<MeshData> _meshData;
-    private readonly RenderSettings _settings;
-    
-    internal RenderSettings Settings => _settings;
-    internal List<MeshData> MeshData => _meshData;
+    private readonly List<MeshData> _meshesData;
+    internal List<MeshData> MeshesData => _meshesData;
 
-    internal GLBModel(List<MeshData> mesh, RenderSettings settings)
+    internal GLBModel(List<MeshData> mesh)
     {
-        _meshData = mesh;
-        _settings = settings;
+        _meshesData = mesh;
     }
 }

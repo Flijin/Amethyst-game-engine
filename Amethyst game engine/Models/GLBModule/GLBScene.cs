@@ -4,10 +4,10 @@ public class GLBScene
 {
     private readonly List<GLBModel> _models;
 
-    public List<GLBModel> Models => _models;
+    public IReadOnlyList<GLBModel> Models => _models;
     public int ModelsCount => _models.Count;
 
-    public string? SceneName { get; internal set; }
+    public string? Name { get; internal set; }
 
     internal GLBScene(List<GLBModel> models)
     {

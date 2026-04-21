@@ -82,6 +82,10 @@ in vec4 vertexColor;
         in vec3 normal;
         in vec3 fragPos;
     #endif
+
+    #ifdef USE_ROUGHNESS_FACTOR
+        uniform float _roughnessFactor;
+    #endif
 #endif
 
 #if defined(USE_PBR_METALLIC_ROUGHNESS)
@@ -92,10 +96,6 @@ in vec4 vertexColor;
 
     #ifdef USE_METALLIC_FACTOR
         uniform float _metallicFactor;
-    #endif
-
-    #ifdef USE_ROUGHNESS_FACTOR
-        uniform float _roughnessFactor;
     #endif
 #endif
 
@@ -214,13 +214,20 @@ void main(void) {
 
     #if defined(USE_BLINN_PHONG) || defined(USE_GOURAUD) || defined(USE_PBR_METALLIC_ROUGHNESS)
         #ifndef USE_GOURAUD
+
+            float roughness = 0.0;
+
+            #ifdef USE_ROUGHNESS_FACTOR
+                roughness = _roughnessFactor;
+            #endif
+
             vec3 diffuseSpecular = vec3(0.0);
 
             int shininess = MAX_SHININESS;
         	for (int i = 0; i < directionalLights.numOfDirectionalLights; i++) {
                 if (directionalLights.directionalLights[i].isActive != 0) {
                 	diffuseSpecular += CalculateDirectionalLight(directionalLights.directionalLights[i],
-													             normal, fragPos, _cameraPos, 1.0, shininess);
+													             normal, fragPos, _cameraPos, roughness, shininess);
                 }
 	        }
 
@@ -229,7 +236,7 @@ void main(void) {
 
 			    if (dist <= pointLights.pointLights[i].radius && pointLights.pointLights[i].isActive != 0) {
 				    diffuseSpecular += CalculatePointLight(pointLights.pointLights[i],
-													       normal, fragPos, _cameraPos, 1.0, shininess);
+													       normal, fragPos, _cameraPos, roughness, shininess);
 			    }
 		    }
 
@@ -238,7 +245,7 @@ void main(void) {
                 
 			    if (dist <= spotlights.spotlights[i].radius && spotlights.spotlights[i].isActive != 0) {
 				    diffuseSpecular += CalculateSpotlight(spotlights.spotlights[i],
-													      normal, fragPos, _cameraPos, 1.0, shininess);
+													      normal, fragPos, _cameraPos, roughness, shininess);
 			    }
             }
 
@@ -269,7 +276,8 @@ void main(void) {
                 emissive = _emissiveFactor;
             #endif
         #endif
-            fragColorVar.rgb += emissive;
+
+        fragColorVar.rgb += emissive;
     #endif
 
     fragColor = fragColorVar;

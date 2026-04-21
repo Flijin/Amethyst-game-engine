@@ -22,7 +22,7 @@ public class STLGameObject : DrawableObject
         {
             Count = stlPrimitive.Options.Count * 3,
             IsIndexedGeometry = false,
-            Mode = PrimitiveType.Triangles
+            Mode = PrimitiveType.Triangles,
         })
         {
             SettingsFromModel = model.Settings

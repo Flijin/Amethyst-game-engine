@@ -65,7 +65,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
             activeShader.SetVector3("_cameraPos", cameraPos);
 
         if (_isIndexedGeometry)
-            GL.DrawElements(_mode, _count, _drawElementsType, 0);
+            GL.DrawElements(_mode, _count * 3, _drawElementsType, 0);
         else
             GL.DrawArrays(_mode, 0, _count);
     }
@@ -79,8 +79,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
         if (props.ShadingModel != ShadingModels.PBR_MetallicRoughness)
         {
             props.RenderSettings &= ~(RenderSettings.MetallicRoughnessMap |
-                                      RenderSettings.MetallicFactor |
-                                      RenderSettings.RoughnessFactor);
+                                      RenderSettings.MetallicFactor);
         }
 
         if (props.ShadingModel == ShadingModels.Gouraud)

@@ -71,7 +71,7 @@ public abstract class DrawableObject : IDisposable
         }
         else
         {
-            System.PrintMessage("Error. You can change render settings after adding an object to the scene and load scene", MessageTypes.ErrorMessage);
+            System.PrintMessage("Warning. You can change render settings after adding an object to the scene and load scene", MessageTypes.WarningMessage);
         }
     }
 
@@ -124,7 +124,7 @@ public abstract class DrawableObject : IDisposable
                 primitive.activeShader.SetMatrix4("projectionMatrix", matrices[1]);
 
                 if (mesh.UseMeshMatrix)
-                    primitive.activeShader.SetMatrix4("_mesh", mesh.Matrix);
+                    primitive.activeShader.SetMatrix4("meshMatrix", mesh.Matrix);
 
                 primitive.DrawPrimitive(camPosition);
             }
