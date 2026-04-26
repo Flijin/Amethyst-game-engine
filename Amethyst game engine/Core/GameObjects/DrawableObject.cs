@@ -24,6 +24,10 @@ public abstract class DrawableObject : IDisposable
     public string? Tag { get; set; }
     public bool Visible { get; set; } = true;
 
+    [AllowNull]
+    internal string ModelPath { get; set; }
+    internal int ModelIndex { get; set; }
+
     public bool UseCamera
     {
         get => _useCamera;
@@ -71,7 +75,7 @@ public abstract class DrawableObject : IDisposable
         }
         else
         {
-            System.PrintMessage("Warning. You can change render settings after adding an object to the scene and load scene", MessageTypes.WarningMessage);
+            SystemCalls.PrintMessage("Warning. You can change render settings after adding an object to the scene and load scene", MessageTypes.WarningMessage);
         }
     }
 

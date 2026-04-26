@@ -41,7 +41,7 @@ public sealed class SceneManager : IDisposable
     public void LoadSceneByName(string name)
     {
         if (_scenesRegistry.TryGetValue(name, out BaseScene? result) == false)
-            System.PrintMessage($"Error. Scene {name} not found", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. Scene {name} not found", MessageTypes.ErrorMessage);
         else
             LoadScene(result);
     }
@@ -83,7 +83,7 @@ public sealed class SceneManager : IDisposable
 
         if (_scenesRegistry.ContainsKey(sceneName))
         {
-            System.PrintMessage($"Error. Scene {sceneName} already exist", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. Scene {sceneName} already exist", MessageTypes.ErrorMessage);
             return;
         }
 
@@ -103,10 +103,10 @@ public sealed class SceneManager : IDisposable
         if (_sceneHistory.Count != 0)
             LoadScene(_sceneHistory.Pop());
         else
-            System.PrintMessage("Warning. No scenes in history", MessageTypes.WarningMessage);
+            SystemCalls.PrintMessage("Warning. No scenes in history", MessageTypes.WarningMessage);
     }
 
-    internal void CleanUp()
+    internal void Cleanup()
     {
         BaseScene poppedScene;
 
@@ -128,6 +128,6 @@ public sealed class SceneManager : IDisposable
 
     void IDisposable.Dispose()
     {
-        CleanUp();
+        Cleanup();
     }
 }

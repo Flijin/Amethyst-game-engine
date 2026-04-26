@@ -7,6 +7,7 @@ using Amethyst_game_engine.Core.Utilities;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using System.Windows.Forms;
 
 namespace Amethyst_game_engine.Core;
 
@@ -115,11 +116,30 @@ public class GameApplication : GameWindow
         _editMode = editMode;
     }
 
-    public void LoadScene(BaseScene scene) => _sceneManager.LoadScene(scene);
     public void UnloadScene() => _sceneManager.UnloadScene();
     public void SetBackgroundColor(Color color) => _renderSystem.BackgroundColor = color;
 
     public void SetVSync(bool enabled) => VSync = enabled ? VSyncMode.On : VSyncMode.Off;
+
+    public void LoadScene(BaseScene scene)
+    {
+        _sceneManager.LoadScene(scene);
+        scene.LoadScene();
+    }
+
+    [STAThread]
+    public void RunApp()
+    {
+        if (EditMode)
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            var editorWindow = new EditorWindow(_sceneManager);
+            editorWindow.Show();
+        }
+
+        Run();
+    }
 
     protected override void OnLoad()
     {
@@ -136,8 +156,11 @@ public class GameApplication : GameWindow
 
     protected override void OnUnload()
     {
+        if (EditMode)
+            _sceneManager.CurrentScene?.SaveScene();
+
         _sceneManager.UnloadScene();
-        _sceneManager.CleanUp();
+        _sceneManager.Cleanup();
         ChangedAspectRatio = null;
 
         ShadersPool.Dispose();

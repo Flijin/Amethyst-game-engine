@@ -18,7 +18,7 @@ public sealed class CameraManager : IDisposable
     {
         if (_cameras.Contains(cam))
         {
-            System.PrintMessage("Error. Camera is already exists", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage("Warning. Camera is already exists", MessageTypes.WarningMessage);
             return false;
         }
 
@@ -30,7 +30,7 @@ public sealed class CameraManager : IDisposable
 
     public int RemoveCamera(Predicate<Camera> condition)
     {
-        for (int i = _cameras.Count - 1; i > 0; i++)
+        for (int i = _cameras.Count - 1; i >= 0; i++)
         {
             if (condition(_cameras[i]))
             {

@@ -43,7 +43,7 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
     {
         if (index < 0 || index >= _lightCount)
         {
-            System.PrintMessage($"Error, index of light {index} is incorrect", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error, index of light {index} is incorrect", MessageTypes.ErrorMessage);
             return;
         }
 
@@ -60,7 +60,7 @@ internal unsafe sealed class ShaderStorageBufferManager<T> : IDisposable where T
     {
         if (index < 0 || index >= _lightCount)
         {
-            System.PrintMessage($"Error, index of light {index} is incorrect", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error, index of light {index} is incorrect", MessageTypes.ErrorMessage);
             return;
         }
 

@@ -14,7 +14,7 @@ public class STLModel
     public int TrianglesCount { get; internal set; }
 
     [AllowNull]
-    public string Header { get; internal set; }
+    public string Path { get; internal set;  }
 
     internal STLModel(MeshData mesh, RenderSettings settings)
     {

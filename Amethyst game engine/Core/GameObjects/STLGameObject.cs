@@ -76,5 +76,6 @@ public class STLGameObject : DrawableObject
         }
 
         Meshes = [new Mesh([primitive], false)];
+        ModelPath = model.Path;
     }
 }

@@ -113,7 +113,7 @@ public sealed class LightManager : IDisposable
 
     public int RemoveDirectionalLights(Predicate<DirectionalLight> condition)
     {
-        for (int i = _dirLights.Count - 1; i > 0; i--)
+        for (int i = _dirLights.Count - 1; i >= 0; i--)
         {
             if (condition(_dirLights[i]))
             {
@@ -127,7 +127,7 @@ public sealed class LightManager : IDisposable
 
     public int RemovePointLights(Predicate<PointLight> condition)
     {
-        for (int i = _pointLights.Count - 1; i > 0; i--)
+        for (int i = _pointLights.Count - 1; i >= 0; i--)
         {
             if (condition(_pointLights[i]))
             {
@@ -141,7 +141,7 @@ public sealed class LightManager : IDisposable
 
     public int RemoveSpotlights(Predicate<Spotlight> condition)
     {
-        for (int i = _spotlights.Count - 1; i > 0; i--)
+        for (int i = _spotlights.Count - 1; i >= 0; i--)
         {
             if (condition(_spotlights[i]))
             {

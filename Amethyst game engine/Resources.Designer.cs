@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 
 namespace Amethyst_game_engine {
-    using global::System;
+    using System;
     
     
     /// <summary>
@@ -61,17 +61,8 @@ namespace Amethyst_game_engine {
         }
         
         /// <summary>
-        ///   Поиск локализованного ресурса типа System.Byte[].
-        /// </summary>
-        internal static byte[] BlinnPhongFuncs {
-            get {
-                object obj = ResourceManager.GetObject("BlinnPhongFuncs", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Ищет локализованную строку, похожую на #version 420 core
+        ///   Ищет локализованную строку, похожую на #version 430
+        ///
         ///
         ///#pragma optimize(on)
         ///#pragma debug(on)
@@ -87,6 +78,8 @@ namespace Amethyst_game_engine {
         ///    float linear;
         ///    float quadratic;
         ///	float radius;
+        ///    int isActive;
+        ///    
         ///};
         ///
         ///struct PointLight {
@@ -97,11 +90,10 @@ namespace Amethyst_game_engine {
         ///    float linear;
         ///    float quadratic;
         ///	float radius;
+        ///    int isActive;
         ///};
         ///
-        ///struct DirectionalLight {
-        ///    vec3 direction;
-        ///     [остаток строки не уместился]&quot;;.
+        ///struct Dire [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string UniversalFragmentShader {
             get {
@@ -110,7 +102,8 @@ namespace Amethyst_game_engine {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на #version 420
+        ///   Ищет локализованную строку, похожую на #version 430
+        ///
         ///
         ///#pragma optimize(on)
         ///#pragma debug(on)
@@ -140,7 +133,7 @@ namespace Amethyst_game_engine {
         ///
         ///struct DirectionalLight {
         ///    vec3 direction;
-        ///    vec3  [остаток строки не уместился]&quot;;.
+        ///    vec [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string UniversalVertexShader {
             get {

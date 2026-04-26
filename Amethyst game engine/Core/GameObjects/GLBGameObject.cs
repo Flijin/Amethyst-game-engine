@@ -8,6 +8,8 @@ namespace Amethyst_game_engine.Core.GameObjects;
 
 public class GLBGameObject : DrawableObject
 {
+    internal int GLBModelIndex { get; private set; }
+
     public GLBGameObject(GLBModel model)
     {
         BuildObject(model);
@@ -24,6 +26,8 @@ public class GLBGameObject : DrawableObject
         }
 
         Meshes = meshes;
+        ModelPath = model.Path;
+        GLBModelIndex = model.GLBModelIndex;
     }
 
     private static Mesh ConvertMeshDataToMesh(MeshData mesh)
@@ -161,7 +165,6 @@ public class GLBGameObject : DrawableObject
 
             result.Material = resultMaterial;
         }
-
 
         GL.BindVertexArray(0);
 

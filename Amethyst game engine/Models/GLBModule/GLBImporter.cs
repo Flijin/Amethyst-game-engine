@@ -39,7 +39,7 @@ public static class GLBImporter
     {
         if (File.Exists(path) == false)
         {
-            System.PrintMessage($"Error. GLB-file {path} does not exists", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. GLB-file {path} does not exists", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -48,7 +48,7 @@ public static class GLBImporter
 
         if (stream.Length > 1024L * 1024L * 1024L)
         {
-            System.PrintMessage($"Error. GLB-file {path} is too big. Max supported size: 1 GB", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. GLB-file {path} is too big. Max supported size: 1 GB", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -58,7 +58,7 @@ public static class GLBImporter
     }
         catch (Exception)
         {
-            System.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
             return null;
         }
     }
@@ -69,13 +69,13 @@ public static class GLBImporter
 
         if (magic != 0x46546C67)
         {
-            System.PrintMessage($"Error. GLB-file {path} is not valid", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. GLB-file {path} is not valid", MessageTypes.ErrorMessage);
             return null;
         }
 
         void PrintUnsupportedVersion(object version)
         {
-            System.PrintMessage($"Error. Unsupported GLB-file {path} version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. Unsupported GLB-file {path} version: ({version}). Only version 2.x is currently supported", MessageTypes.ErrorMessage);
         }
 
         var version = reader.ReadUInt32();
@@ -93,7 +93,7 @@ public static class GLBImporter
 
         if (jsonChunkNullable is null || binChunk is null)
         {
-            System.PrintMessage($"Error. GLB-file {path} is not valid", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. GLB-file {path} is not valid", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -108,7 +108,7 @@ public static class GLBImporter
             return null;
         }
 
-        var result = ReadScenes(jsonChunk, binChunk, settings);
+        var result = ReadScenes(jsonChunk, binChunk, settings, path);
 
         if (result is null)
             return null;
@@ -157,7 +157,7 @@ public static class GLBImporter
             return null;
     }
 
-    private static GLBScene[]? ReadScenes(JsonElement jsonChunk, byte[] binChunk, RenderSettings settings)
+    private static GLBScene[]? ReadScenes(JsonElement jsonChunk, byte[] binChunk, RenderSettings settings, string path)
     {
         GLBScene[] result;
 
@@ -214,13 +214,13 @@ public static class GLBImporter
                 sceneNodes[i] = new(nodes[sceneNodesIndises[i]], nodes, componentsData.meshes, sceneNodesIndises[i]);
             }
 
-            result[sceneIndex] = ReadScene(sceneName, sceneNodes, componentsData);
+            result[sceneIndex] = ReadScene(sceneName, sceneNodes, componentsData, path);
         }
 
         return result;
     }
 
-    private static GLBScene ReadScene(string? sceneName, Node[] sceneNodes, GLTFComponentsData components)
+    private static GLBScene ReadScene(string? sceneName, Node[] sceneNodes, GLTFComponentsData components, string path)
     {
         List<GLBModel> sceneModels = [];
 
@@ -248,7 +248,11 @@ public static class GLBImporter
         {
             if (components.joints.Contains(node.NodeIndex) || node.Mesh is not null)
             {
-                sceneModels.Add(new GLBModel(node.ExtractMeshes()));
+                sceneModels.Add(new GLBModel(node.ExtractMeshes())
+                {
+                    Path = path,
+                });
+
                 return;
             }
 
@@ -261,11 +265,10 @@ public static class GLBImporter
             }
         }
 
-        for (int i = sceneModels.Count - 1; i >= 0; i--)
-        {
-            if (sceneModels[i].MeshesData.Count == 0)
-                sceneModels.RemoveAt(i);
-        }
+        sceneModels.RemoveAll(model => model.MeshesData.Count == 0);
+
+        for (int i = 0; i < sceneModels.Count; i++)
+            sceneModels[i].GLBModelIndex = i;
 
         return new GLBScene(sceneModels) { Name = sceneName };
     }
@@ -729,7 +732,7 @@ public static class GLBImporter
 
     private static HashSet<int> ReadJoints(JsonElement skins)
     {
-        HashSet<int> result = new();
+        HashSet<int> result = [];
 
         foreach (var skin in skins.EnumerateArray())
         {

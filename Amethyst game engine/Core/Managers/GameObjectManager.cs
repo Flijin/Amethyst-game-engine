@@ -11,9 +11,13 @@ public sealed class GameObjectManager: IDisposable
     public event Action? OnClear;
 
     private readonly List<DrawableObject> _gameObjects = [];
+    private readonly List<string> _models = [];
+
     private BaseScene? _scene;
 
     public IReadOnlyList<DrawableObject> GameObjects => _gameObjects;
+    internal IReadOnlyList<string> Models => _models;
+
     public int Count => _gameObjects.Count;
 
     [MemberNotNull(nameof(_scene))]
@@ -21,29 +25,58 @@ public sealed class GameObjectManager: IDisposable
 
     public int RemoveGameObjects(Predicate<DrawableObject> condition)
     {
-        for (int i = _gameObjects.Count - 1; i > 0; i++)
+        var removedModels = new HashSet<string>();
+
+        for (int i = 0; i < _gameObjects.Count; i++)
         {
             if (condition(_gameObjects[i]))
             {
+                removedModels.Add(_gameObjects[i].ModelPath);
                 GameObjectRemoved?.Invoke(_gameObjects[i]);
                 _gameObjects[i].Cleanup();
             }
         }
 
-        return _gameObjects.RemoveAll(condition);
+        int removedCount = _gameObjects.RemoveAll(condition);
+
+        if (removedCount > 0)
+        {
+            var modelsToRemove = new List<string>();
+
+            foreach (var modelPath in removedModels)
+            {
+                bool modelStillUsed = _gameObjects.Any(go => go.ModelPath == modelPath);
+
+                if (modelStillUsed == false)
+                    modelsToRemove.Add(modelPath);
+            }
+
+            foreach (var modelPath in modelsToRemove)
+            {
+                int removedModelPos = _models.IndexOf(modelPath);
+                _models.Remove(modelPath);
+
+                foreach (var remainingObj in _gameObjects)
+                {
+                    if (remainingObj.ModelIndex > removedModelPos)
+                        remainingObj.ModelIndex--;
+                }
+            }
+        }
+
+        return removedCount;
     }
 
     public void AddGameObject(DrawableObject obj)
     {
-        if (_gameObjects.Contains(obj))
-        {
-            System.PrintMessage("Error. Game object is already exists", MessageTypes.ErrorMessage);
-            return;
-        }
-
         _gameObjects.Add(obj);
         obj.SetScene(_scene!);
         obj.UpdateRenderSettings();
+
+        if (_models.Contains(obj.ModelPath) == false)
+            _models.Add(obj.ModelPath);
+
+        obj.ModelIndex = _models.IndexOf(obj.ModelPath);
 
         GameObjectAdded?.Invoke(obj);
     }
@@ -52,10 +85,25 @@ public sealed class GameObjectManager: IDisposable
     {
         if (i >= 0 && i < _gameObjects.Count)
         {
+            string modelPath = _gameObjects[i].ModelPath;
             GameObjectRemoved?.Invoke(_gameObjects[i]);
-            
+
             _gameObjects[i].Cleanup();
             _gameObjects.RemoveAt(i);
+
+            bool modelStillUsed = _gameObjects.Any(go => go.ModelPath == modelPath);
+
+            if (modelStillUsed == false)
+            {
+                int removedModelPos = _models.IndexOf(modelPath);
+                _models.Remove(modelPath);
+
+                foreach (var remainingObj in _gameObjects)
+                {
+                    if (remainingObj.ModelIndex > removedModelPos)
+                        remainingObj.ModelIndex--;
+                }
+            }
 
             return true;
         }

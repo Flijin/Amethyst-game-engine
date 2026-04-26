@@ -29,7 +29,7 @@ public static class STLImporter
 
         if (File.Exists(path) == false)
         {
-            System.PrintMessage($"Error. STL-file {path} does not exists", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. STL-file {path} does not exists", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -39,7 +39,7 @@ public static class STLImporter
         if (Encoding.ASCII.GetString(reader.ReadBytes(5)) == "solid" &&
             (reader.BaseStream.Length - HEADER_SIZE - sizeof(uint)) % 50 != 0)
         {
-            System.PrintMessage("Error. ASCII STL not supported yet", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage("Error. ASCII STL not supported yet", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -50,7 +50,7 @@ public static class STLImporter
 
         if (trianglesCount > MAX_TRIANGLES_COUNT)
         {
-            System.PrintMessage($"Error. STL model is too big ({trianglesCount}) triangles. Max supported triangles: 1 000 000", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. STL model is too big ({trianglesCount}) triangles. Max supported triangles: 1 000 000", MessageTypes.ErrorMessage);
             return null;
         }
 
@@ -136,14 +136,14 @@ public static class STLImporter
         }
         catch (SystemException)
         {
-            System.PrintMessage($"Error. STL-file {path} is not valid", MessageTypes.ErrorMessage);
+            SystemCalls.PrintMessage($"Error. STL-file {path} is not valid", MessageTypes.ErrorMessage);
             return null;
         }
 
         if (hasColors == false)
             settings &= ~RenderSettings.VertexColors;
 
-        STLModel result = new(new MeshData([primitive]), settings);
+        STLModel result = new(new MeshData([primitive]), settings) { Path = path };
 
         return result;
     }

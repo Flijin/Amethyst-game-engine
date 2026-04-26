@@ -1,4 +1,5 @@
 ﻿using Amethyst_game_engine.Models.Components;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
@@ -6,6 +7,10 @@ public class GLBModel
 {
     private readonly List<MeshData> _meshesData;
     internal List<MeshData> MeshesData => _meshesData;
+
+    [AllowNull]
+    internal string Path { get; set; }
+    internal int GLBModelIndex { get; set; }
 
     internal GLBModel(List<MeshData> mesh)
     {
