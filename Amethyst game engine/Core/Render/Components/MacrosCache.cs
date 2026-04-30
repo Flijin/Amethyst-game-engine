@@ -38,8 +38,7 @@ internal static class MacrosCache
     private static void InitShadingModelCache()
     {
         byte currentFlag = 0;
-        byte maxValue = (byte)ShadingModels.PBR_MetallicRoughness;
-
+        byte maxValue = (byte)ShadingModels.Unlit;
         while (currentFlag <= maxValue)
         {
             FieldInfo field = typeof(ShadingModels).GetField(((ShadingModels)currentFlag).ToString())!;

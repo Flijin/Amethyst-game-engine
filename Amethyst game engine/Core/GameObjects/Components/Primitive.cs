@@ -89,7 +89,7 @@ internal sealed class Primitive(int vao, Primitive.Options options) : IDisposabl
 
         if (props.ShadingModel == ShadingModels.Unlit)
         {
-            props.RenderSettings &= ~(gourandSettings | RenderSettings.EmissiveFactor);
+            props.RenderSettings &= ~(gourandSettings | RenderSettings.EmissiveFactor | RenderSettings.RoughnessFactor);
         }
 
         return props;

@@ -122,31 +122,6 @@ internal class Node
         }
     }
 
-    public List<MeshData> ExtractMeshes()
-    {
-        List<MeshData> result = [];
-
-        ExtractMeshes(result, this);
-
-        static void ExtractMeshes(List<MeshData> meshes, Node currentNode)
-        {
-            if (currentNode.Mesh is not null)
-                meshes.Add(currentNode.Mesh);
-
-            if (currentNode.Children != null)
-            {
-                foreach (var child in currentNode.Children)
-                {
-                    ExtractMeshes(meshes, child);
-                }
-            }
-
-            return;
-        }
-
-        return result;
-    }
-
     public unsafe void CalculateGlobalMatrices()
     {
         CalculateGlobalMatrices(null, this);
@@ -176,8 +151,11 @@ internal class Node
 
             if (rootNode.Mesh is not null && globalMatrix is not null)
             {
-                rootNode.Mesh.Matrix = (float*)NativeMemory.Alloc(sizeof(float) * 16);
-                Buffer.MemoryCopy(globalMatrix, rootNode.Mesh.Matrix, sizeof(float) * 16, sizeof(float) * 16);
+                float* matrixPtr = (float*)NativeMemory.Alloc(sizeof(float) * 16);
+                Buffer.MemoryCopy(globalMatrix, matrixPtr, sizeof(float) * 16, sizeof(float) * 16);
+
+                rootNode.Mesh.Matrix = matrixPtr;
+                
             }
 
             if (rootNode.Children is not null)
@@ -188,5 +166,30 @@ internal class Node
                 }
             }
         }
+    }
+
+    public List<MeshData> ExtractMeshes()
+    {
+        List<MeshData> result = [];
+
+        ExtractMeshes(result, this);
+
+        static void ExtractMeshes(List<MeshData> meshes, Node currentNode)
+        {
+            if (currentNode.Mesh is not null)
+                meshes.Add(currentNode.Mesh);
+
+            if (currentNode.Children != null)
+            {
+                foreach (var child in currentNode.Children)
+                {
+                    ExtractMeshes(meshes, child);
+                }
+            }
+
+            return;
+        }
+
+        return result;
     }
 }

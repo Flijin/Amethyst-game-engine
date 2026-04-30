@@ -14,10 +14,17 @@ public sealed class Transform : IDisposable
     private Vector3 _rotation;
     private Vector3 _scale;
 
+    private readonly BoundingBox _localBox;
+
     private readonly unsafe float* _positionMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
     private readonly unsafe float* _rotationMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
     private readonly unsafe float* _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
     private readonly unsafe float* _resultMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
+
+    internal unsafe BoundingBox Box
+    {
+        get => BoundingBox.TransformBox(_localBox, ModelMatrix);
+    }
 
     public unsafe float* ModelMatrix
     {
@@ -77,8 +84,10 @@ public sealed class Transform : IDisposable
         }
     }
 
-    public unsafe Transform()
+    internal unsafe Transform(BoundingBox box)
     {
+        _localBox = box;
+
         Buffer.MemoryCopy(Mathematics.IDENTITY_MATRIX, _positionMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
         Buffer.MemoryCopy(Mathematics.IDENTITY_MATRIX, _rotationMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);
         Buffer.MemoryCopy(Mathematics.IDENTITY_MATRIX, _scaleMatrix, Mathematics.MATRIX_SIZE, Mathematics.MATRIX_SIZE);

@@ -7,32 +7,13 @@ using Amethyst_game_engine.Core.Utilities;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace Amethyst_game_engine.Core;
 
 public class GameApplication : GameWindow
 {
-    private struct FPSCounter
-    {
-        public int FrameCount { get; private set; }
-        public float FPSTime { get; private set; }
-
-        public void Reset()
-        {
-            FrameCount = 0;
-            FPSTime = 0;
-        }
-
-        public void UpdateValues(float fpsTime)
-        {
-            FrameCount++;
-            FPSTime += fpsTime;
-        }
-
-        public readonly float GetFPS() => FrameCount / FPSTime;
-    }
-
     public event Action<float>? ChangedAspectRatio;
 
     private readonly SceneManager _sceneManager = new();
@@ -52,11 +33,17 @@ public class GameApplication : GameWindow
     };
 
     private readonly bool _editMode;
+    private float _fpsTime;
+    private int _frameCount;
+
+    private EditorWindow? _editorWindow;
 
     public float WindowAspectRatio => _windowAspectRatio;
 
     public bool IsSceneLoaded => _sceneManager.CurrentScene is not null;
     public SceneManager SceneManager => _sceneManager;
+
+    public int FPS { get; private set; }
 
     public bool EditMode
     {
@@ -102,18 +89,15 @@ public class GameApplication : GameWindow
         }
     }
 
-#if DEBUG_MODE
-    private FPSCounter _counter;
-
-#endif
-
-    public GameApplication(NativeWindowSettings settings, bool editMode, float tickTime = 1.0f / 60.0f) :
-        base(GameWindowSettings.Default, settings)
+    public GameApplication(string title, bool editMode, float tickTime = 1.0f / 60.0f) :
+        base(GameWindowSettings.Default, new NativeWindowSettings() { Title = title, WindowState = WindowState.Maximized})
     {
         _tickTime = Mathematics.Clamp(tickTime, 1.0f / 300.0f, 1.0f);
         _sceneManager.SetGameApplication(this);
         _windowAspectRatio = (float)ClientSize.X / ClientSize.Y;
         _editMode = editMode;
+
+        GL.Viewport(0, 0, Size.X, Size.Y + 50);
     }
 
     public void UnloadScene() => _sceneManager.UnloadScene();
@@ -124,23 +108,9 @@ public class GameApplication : GameWindow
     public void LoadScene(BaseScene scene)
     {
         _sceneManager.LoadScene(scene);
-        scene.LoadScene();
     }
 
     [STAThread]
-    public void RunApp()
-    {
-        if (EditMode)
-        {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            var editorWindow = new EditorWindow(_sceneManager);
-            editorWindow.Show();
-        }
-
-        Run();
-    }
-
     protected override void OnLoad()
     {
         base.OnLoad();
@@ -152,12 +122,22 @@ public class GameApplication : GameWindow
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         _sceneManager.SetGameApplication(this);
+
+        if (EditMode && _sceneManager.CurrentScene is not null)
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            _editorWindow = new EditorWindow(_sceneManager);
+            _editorWindow.Show();
+            _editorWindow?.InitGameObjects();
+        }
     }
 
     protected override void OnUnload()
     {
         if (EditMode)
-            _sceneManager.CurrentScene?.SaveScene();
+            _sceneManager.CurrentScene?.SerializeScene();
 
         _sceneManager.UnloadScene();
         _sceneManager.Cleanup();
@@ -185,24 +165,32 @@ public class GameApplication : GameWindow
         float deltaTime = (float)args.Time;
 
 #if DEBUG_MODE
-        _counter.UpdateValues(deltaTime);
+        _fpsTime += deltaTime;
+        _frameCount++;
 
-        if (_counter.FPSTime >= 1)
+        if (_fpsTime >= 1)
         {
-            Console.WriteLine($"FPS: {_counter.GetFPS()}");
+            FPS = (int)MathF.Round(_frameCount / _fpsTime);
 
-            _counter.Reset();
+            Console.WriteLine($"FPS: {FPS}");
+
+            _fpsTime = 0.0f;
+            _frameCount = 0;
         }
 #endif
         _accumulator += deltaTime;
 
         while (_accumulator >= _tickTime)
         {
-            _sceneManager.CurrentScene?.FixedUpdate(_tickTime);
+            if (EditMode == false)
+                _sceneManager.CurrentScene?.FixedUpdate(_tickTime);
+
             _accumulator -= _tickTime;
         }
 
-        _sceneManager.CurrentScene?.Update(deltaTime);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.Update(deltaTime);
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -223,37 +211,49 @@ public class GameApplication : GameWindow
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
         base.OnKeyDown(e);
-        _sceneManager.CurrentScene?.OnKeyDown(e);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.OnKeyDown(e);
     }
 
     protected override void OnKeyUp(KeyboardKeyEventArgs e)
     {
         base.OnKeyUp(e);
-        _sceneManager.CurrentScene?.OnKeyUp(e);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.OnKeyUp(e);
     }
 
     protected override void OnMouseDown(MouseButtonEventArgs e)
     {
         base.OnMouseDown(e);
-        _sceneManager.CurrentScene?.OnMouseDown(e);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.OnMouseDown(e);
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {
         base.OnMouseUp(e);
-        _sceneManager.CurrentScene?.OnMouseUp(e);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.OnMouseUp(e);
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
-        _sceneManager.CurrentScene?.OnMouseWheel(e);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.OnMouseWheel(e);
     }
 
     protected override void OnMouseMove(MouseMoveEventArgs e)
     {
         base.OnMouseMove(e);
-        _sceneManager.CurrentScene?.OnMouseMove(e);
+
+        if (EditMode == false)
+            _sceneManager.CurrentScene?.OnMouseMove(e);
     }
 
     #endregion

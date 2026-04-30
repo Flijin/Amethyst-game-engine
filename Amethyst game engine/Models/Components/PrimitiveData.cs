@@ -15,4 +15,6 @@ internal sealed class PrimitiveData
     public byte[]? Colors { get; set; }
     public MaterialData? Material { get; set; }
     public Primitive.Options Options { get; set; }
+
+    public BoundingBox Box { get; set; }
 }

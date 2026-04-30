@@ -10,7 +10,7 @@ public class GLBGameObject : DrawableObject
 {
     internal int GLBModelIndex { get; private set; }
 
-    public GLBGameObject(GLBModel model)
+    public GLBGameObject(GLBModel model) : base(model.Box)
     {
         BuildObject(model);
     }

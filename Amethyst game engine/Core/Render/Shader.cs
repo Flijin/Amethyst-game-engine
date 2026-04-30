@@ -69,7 +69,7 @@ internal sealed class Shader : IDisposable
 
     private static int CreateAndAttachShader(ShaderType type, int handle, ShaderBuildingProps props)
     {
-        StringBuilder injectedCode = ValidateFlags(props, type);
+        StringBuilder injectedCode = ValidateFlags(props);
         StringBuilder sourse;
 
         if (type == ShaderType.VertexShader)
@@ -94,7 +94,7 @@ internal sealed class Shader : IDisposable
         return shaderDescriptor;
     }
 
-    private static StringBuilder ValidateFlags(ShaderBuildingProps props, ShaderType type)
+    private static StringBuilder ValidateFlags(ShaderBuildingProps props)
     {
         StringBuilder target = new();
         GLSLMacrosBuilder.BuildMacrosByFlags(props, target);

@@ -1,7 +1,9 @@
 ﻿using System.Text;
+using Amethyst_game_engine.Core.GameObjects.Components;
 using Amethyst_game_engine.Core.Render.Settings;
 using Amethyst_game_engine.Core.Utilities;
 using Amethyst_game_engine.Models.Components;
+using OpenTK.Mathematics;
 
 namespace Amethyst_game_engine.Models.STLModule;
 
@@ -23,7 +25,7 @@ public static class STLImporter
         }
     }
 
-    public static STLModel? LoadModel(string path, bool useLighting = true, RenderSettings settings = RenderSettings.All)
+    public static unsafe STLModel? LoadModel(string path, bool useLighting = true, RenderSettings settings = RenderSettings.All)
     {
         settings &= RenderSettings.VertexColors;
 
@@ -139,6 +141,26 @@ public static class STLImporter
             SystemCalls.PrintMessage($"Error. STL-file {path} is not valid", MessageTypes.ErrorMessage);
             return null;
         }
+
+        Vector3 min = new(float.MaxValue);
+        Vector3 max = new(float.MinValue);
+
+        fixed (void* vertexPtr = &primitive.Vertices[0])
+        {
+            float* floatPtr = (float*)vertexPtr;
+            int vertexCount = primitive.Vertices.Length / (3 * sizeof(float));
+
+            for (int i = 0; i < vertexCount; i++)
+            {
+                Vector3 currentVertex = new(floatPtr[0], floatPtr[1], floatPtr[2]);
+                min = Vector3.ComponentMin(min, currentVertex);
+                max = Vector3.ComponentMax(max, currentVertex);
+
+                floatPtr += 3;
+            }
+        }
+
+        primitive.Box = new BoundingBox(min, max);
 
         if (hasColors == false)
             settings &= ~RenderSettings.VertexColors;

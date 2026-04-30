@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Amethyst_game_engine.Core.CameraModule;
 using Amethyst_game_engine.Core.GameObjects.Components;
 using Amethyst_game_engine.Core.Render.Components;
 using Amethyst_game_engine.Core.Render.Settings;
@@ -12,7 +13,7 @@ public abstract class DrawableObject : IDisposable
 {
     private BaseScene? _scene;
 
-    private readonly Transform _transform = new();
+    private readonly Transform _transform;
 
     [AllowNull]
     private Mesh[] _meshes;
@@ -27,6 +28,7 @@ public abstract class DrawableObject : IDisposable
     [AllowNull]
     internal string ModelPath { get; set; }
     internal int ModelIndex { get; set; }
+    internal Guid ID { get; } = Guid.NewGuid();
 
     public bool UseCamera
     {
@@ -38,6 +40,14 @@ public abstract class DrawableObject : IDisposable
     {
         get => _meshes;
         set => _meshes = value;
+    }
+
+    internal DrawableObject(BoundingBox box)
+    {
+        _transform = new(box)
+        {
+            Scale = Vector3.One
+        };
     }
 
     protected internal virtual void OnStart() { }
@@ -115,6 +125,8 @@ public abstract class DrawableObject : IDisposable
         }
 
     }
+
+    internal unsafe void DrawObjectWithCamera(Camera cam) => DrawObject([cam.ViewMatrix, cam.ProjectionMatrix], cam.Position);
 
     private unsafe void DrawObject(float*[] matrices, Vector3 camPosition)
     {

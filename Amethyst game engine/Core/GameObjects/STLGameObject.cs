@@ -6,7 +6,7 @@ namespace Amethyst_game_engine.Core.GameObjects;
 
 public class STLGameObject : DrawableObject
 {
-    public STLGameObject(STLModel model)
+    public STLGameObject(STLModel model) : base(model.Box)
     {
         BuildObject(model);
     }

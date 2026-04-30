@@ -29,9 +29,9 @@ public sealed class SceneManager : IDisposable
 
             _scenePaused = value;
 
-            if (value)
+            if (value && Application!.EditMode == false)
                 _currentScene?.OnPause();
-            else
+            else if (Application!.EditMode == false)
                 _currentScene?.OnResume();
         }
     }
@@ -51,12 +51,17 @@ public sealed class SceneManager : IDisposable
         if (scene == _currentScene)
             return;
 
-        _currentScene?.OnExit();
+        if (Application!.EditMode == false)
+            _currentScene?.OnExit();
+
         _currentScene?.Cleanup();
 
         _currentScene = scene;
         _currentScene?.SetSceneManager(this);
-        _currentScene?.OnStart();
+        _currentScene?.DeserializeScene();
+
+        if (Application!.EditMode == false)
+            _currentScene?.OnStart();
 
         SceneLoaded?.Invoke(scene);
         SceneChanged?.Invoke(scene);
@@ -69,7 +74,9 @@ public sealed class SceneManager : IDisposable
 
         var unloadedScene = _currentScene;
 
-        _currentScene?.OnExit();
+        if (Application!.EditMode == false)
+            _currentScene?.OnExit();
+
         _currentScene?.Cleanup();
         _currentScene = null;
 

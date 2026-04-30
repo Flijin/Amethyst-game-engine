@@ -102,7 +102,7 @@ public abstract class BaseScene : IDisposable
     [MemberNotNull(nameof(_sceneManager))]
     internal void SetSceneManager(SceneManager manager) => _sceneManager = manager;
 
-    internal void LoadScene()
+    internal void DeserializeScene()
     {
         string fullName = Path.Combine(Path.Combine(Environment.CurrentDirectory, "Saves"), $"{GetType().Name}.json");
 
@@ -173,7 +173,7 @@ public abstract class BaseScene : IDisposable
         }
     }
 
-    internal void SaveScene()
+    internal void SerializeScene()
     {
         string savesFolder = Path.Combine(Environment.CurrentDirectory, "Saves");
 

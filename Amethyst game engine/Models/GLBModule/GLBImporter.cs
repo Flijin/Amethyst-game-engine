@@ -1,9 +1,11 @@
-﻿using System.Text.Json;
-using Amethyst_game_engine.Core.GameObjects.Components;
+﻿using Amethyst_game_engine.Core.GameObjects.Components;
 using Amethyst_game_engine.Core.Render.Settings;
 using Amethyst_game_engine.Core.Utilities;
 using Amethyst_game_engine.Models.Components;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+using System.Collections;
+using System.Text.Json;
 
 namespace Amethyst_game_engine.Models.GLBModule;
 
@@ -27,6 +29,8 @@ public static class GLBImporter
         public int componentType;
         public bool normalized;
         public int count;
+        public Vector3? min;
+        public Vector3? max;
     }
 
     private struct BufferViewData
@@ -52,15 +56,15 @@ public static class GLBImporter
             return null;
         }
 
-        try
-        {
+        //try
+        //{
             return ReadFile(reader, path, settings);
-    }
-        catch (Exception)
-        {
-            SystemCalls.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
-            return null;
-        }
+        //}
+        //catch (Exception)
+        //{
+        //    SystemCalls.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
+        //    return null;
+        //}
     }
 
     private static GLBScene[]? ReadFile(BinaryReader reader, string path, RenderSettings settings)
@@ -187,6 +191,8 @@ public static class GLBImporter
 
         if (jsonChunk.TryGetProperty("skins", out JsonElement skins))
             componentsData.joints = ReadJoints(skins);
+        else
+            componentsData.joints = [];
 
         componentsData.meshes = ReadMeshes(jsonChunk.GetProperty("meshes"), componentsData);
 
@@ -344,6 +350,21 @@ public static class GLBImporter
             bool normalized = accessor.TryGetProperty("normalized", out JsonElement normalizedEl) && normalizedEl.GetBoolean();
             int bufferView = accessor.TryGetProperty("bufferView", out JsonElement bufferViewEl) ? bufferViewEl.GetInt32() : -1;
 
+            Vector3? min = null;
+            Vector3? max = null;
+
+            if (accessor.TryGetProperty("min", out JsonElement minJson))
+            {
+                float[] minArray = minJson.Deserialize<float[]>()!;
+                min = new(minArray[0], minArray[1], minArray.Length == 3 ? minArray[2] : -1);
+            }
+
+            if (accessor.TryGetProperty("max", out JsonElement maxJson))
+            {
+                float[] maxArray = maxJson.Deserialize<float[]>()!;
+                max = new(maxArray[0], maxArray[1], maxArray.Length == 3 ? maxArray[2] : -1);
+            }
+
             byte[] data;
 
             if (bufferView == -1)
@@ -385,6 +406,8 @@ public static class GLBImporter
                 componentType = componentType,
                 normalized = normalized,
                 count = count,
+                min = min,
+                max = max
             };
 
             accessorIndex++;
@@ -682,7 +705,7 @@ public static class GLBImporter
             meshIndex++;
         }
 
-        static PrimitiveData ReadPrimitive(JsonElement primitive, GLTFComponentsData components)
+        static unsafe PrimitiveData ReadPrimitive(JsonElement primitive, GLTFComponentsData components)
         {
             PrimitiveData result = new();
             Primitive.Options options = new();
@@ -723,6 +746,34 @@ public static class GLBImporter
             }
 
             result.Options = options;
+
+            if (verticesAccessor.max is not null && verticesAccessor.min is not null)
+            {
+                result.Box = new((Vector3)verticesAccessor.min, (Vector3)verticesAccessor.max);
+                return result;
+            }
+
+            Vector3 min = new(float.MaxValue);
+            Vector3 max = new(float.MinValue);
+
+            byte[] vertices = result.Vertices;
+
+            fixed (void* verticesPtr = &vertices[0])
+            {
+                float* floatPtr = (float*)verticesPtr;
+                int vertexCount = vertices.Length / (3 * sizeof(float));
+
+                for (int i = 0; i < vertexCount; i++)
+                {
+                    Vector3 currentVertex = new(floatPtr[0], floatPtr[1], floatPtr[2]);
+                    min = Vector3.ComponentMin(min, currentVertex);
+                    max = Vector3.ComponentMax(max, currentVertex);
+
+                    floatPtr += 3;
+                }
+            }
+
+            result.Box = new(min, max);
 
             return result;
         }
