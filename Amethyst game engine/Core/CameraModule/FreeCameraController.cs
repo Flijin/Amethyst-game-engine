@@ -1,8 +1,7 @@
-using Amethyst_game_engine.Core.CameraModule;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Amethyst_game_engine.CameraModule;
+namespace Amethyst_game_engine.Core.CameraModule;
 
 public class FreeCameraController
 {

@@ -7,7 +7,6 @@ using Amethyst_game_engine.Core.Utilities;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace Amethyst_game_engine.Core;
@@ -45,10 +44,7 @@ public class GameApplication : GameWindow
 
     public int FPS { get; private set; }
 
-    public bool EditMode
-    {
-        get => _editMode;
-    }
+    public bool EditMode => _editMode;
 
     public bool ClearBackground
     {

@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Amethyst_game_engine.Core.GameObjects;
-using Amethyst_game_engine.Core.GameObjects.Components;
 using Amethyst_game_engine.Core.Managers;
 using Amethyst_game_engine.Models.GLBModule;
 using Amethyst_game_engine.Models.STLModule;

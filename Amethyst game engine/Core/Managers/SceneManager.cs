@@ -108,7 +108,12 @@ public sealed class SceneManager : IDisposable
     public void PopScene()
     {
         if (_sceneHistory.Count != 0)
+        {
+            if (_currentScene is not null)
+                UnloadScene();
+
             LoadScene(_sceneHistory.Pop());
+        }
         else
             SystemCalls.PrintMessage("Warning. No scenes in history", MessageTypes.WarningMessage);
     }

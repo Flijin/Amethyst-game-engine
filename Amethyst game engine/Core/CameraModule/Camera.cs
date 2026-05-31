@@ -166,6 +166,42 @@ public sealed class Camera : IDisposable
             _fov = 0.7854f;
     }
 
+    internal unsafe Vector3 GetPickRay(float mouseX, float mouseY, int screenWidth, int screenHeight)
+    {
+        float x = (2.0f * mouseX) / screenWidth - 1.0f;
+        float y = 1.0f - (2.0f * mouseY) / screenHeight;
+
+        float* viewPtr = ViewMatrix;
+        float* projPtr = ProjectionMatrix;
+
+        Matrix4 viewMatrix = new(viewPtr[0], viewPtr[4], viewPtr[8], viewPtr[12],
+                                 viewPtr[1], viewPtr[5], viewPtr[9], viewPtr[13],
+                                 viewPtr[2], viewPtr[6], viewPtr[10], viewPtr[14],
+                                 viewPtr[3], viewPtr[7], viewPtr[11], viewPtr[15]);
+
+        Matrix4 projectionMatrix = new(projPtr[0], projPtr[4], projPtr[8], projPtr[12],
+                                       projPtr[1], projPtr[5], projPtr[9], projPtr[13],
+                                       projPtr[2], projPtr[6], projPtr[10], projPtr[14],
+                                       projPtr[3], projPtr[7], projPtr[11], projPtr[15]);
+
+        Matrix4 invVP = Matrix4.Invert(projectionMatrix * viewMatrix);
+
+        Vector4 rayStart_NDS = new(x, y, -1.0f, 1.0f);
+        Vector4 rayEnd_NDS = new(x, y, 1.0f, 1.0f);
+
+        Vector4 rayStartWorld = invVP * rayStart_NDS;
+        rayStartWorld /= rayStartWorld.W;
+        Vector4 rayEndWorld = invVP * rayEnd_NDS;
+        rayEndWorld /= rayEndWorld.W;
+
+        Vector3 rayDirection = Vector3.Normalize(new Vector3(
+            rayEndWorld.X - rayStartWorld.X,
+            rayEndWorld.Y - rayStartWorld.Y,
+            rayEndWorld.Z - rayStartWorld.Z
+        ));
+
+        return rayDirection;
+    }
 
     private void CalculateVectors()
     {

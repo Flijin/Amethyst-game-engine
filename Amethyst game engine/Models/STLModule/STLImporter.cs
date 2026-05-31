@@ -25,7 +25,7 @@ public static class STLImporter
         }
     }
 
-    public static unsafe STLModel? LoadModel(string path, bool useLighting = true, RenderSettings settings = RenderSettings.All)
+    public static unsafe STLModel? LoadModel(string path, RenderSettings settings = RenderSettings.All)
     {
         settings &= RenderSettings.VertexColors;
 
@@ -70,26 +70,18 @@ public static class STLImporter
         bool firstRead = true;
         bool hasColors = false;
 
-        if (useLighting)
-            primitive.Normals = new byte[trianglesCount * FLOATS_PER_TRIANGLE * sizeof(float)];
+        primitive.Normals = new byte[trianglesCount * FLOATS_PER_TRIANGLE * sizeof(float)];
 
         try
         {
             for (int i = 0; i < trianglesCount; i++)
             {
-                if (useLighting)
-                {
-                    reader.Read(normal, 0, normal.Length);
+                reader.Read(normal, 0, normal.Length);
 
-                    for (int j = 0; j < VERTICES_PER_TRIANGLE; j++)
-                    {
-                        var offsetN = i * FLOATS_PER_TRIANGLE * sizeof(float) + j * VERTICES_PER_TRIANGLE * sizeof(float);
-                        Buffer.BlockCopy(normal, 0, primitive.Normals!, offsetN, FLOATS_PER_POINT * sizeof(float));
-                    }
-                }
-                else
+                for (int j = 0; j < VERTICES_PER_TRIANGLE; j++)
                 {
-                    reader.BaseStream.Seek(3 * sizeof(float), SeekOrigin.Current);
+                    var offsetN = i * FLOATS_PER_TRIANGLE * sizeof(float) + j * VERTICES_PER_TRIANGLE * sizeof(float);
+                    Buffer.BlockCopy(normal, 0, primitive.Normals!, offsetN, FLOATS_PER_POINT * sizeof(float));
                 }
 
                 reader.Read(vertices, 0, vertices.Length);

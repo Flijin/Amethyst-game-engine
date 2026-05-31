@@ -30,7 +30,7 @@ public sealed class CameraManager : IDisposable
 
     public int RemoveCamera(Predicate<Camera> condition)
     {
-        for (int i = _cameras.Count - 1; i >= 0; i++)
+        for (int i = _cameras.Count - 1; i >= 0; i--)
         {
             if (condition(_cameras[i]))
             {
@@ -42,12 +42,12 @@ public sealed class CameraManager : IDisposable
         return _cameras.RemoveAll(condition);
     }
 
-    public bool RemoveCameraAt(int i)
+    public bool RemoveCameraAt(int index)
     {
-        if (i >= 0 && i < _cameras.Count)
+        if (index >= 0 && index < _cameras.Count)
         {
-            CameraRemoved?.Invoke(_cameras[i]);
-            _cameras.RemoveAt(i);
+            CameraRemoved?.Invoke(_cameras[index]);
+            _cameras.RemoveAt(index);
 
             return true;
         }

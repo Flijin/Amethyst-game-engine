@@ -1,5 +1,4 @@
-﻿using Amethyst_game_engine.CameraModule;
-using Amethyst_game_engine.Core.CameraModule;
+﻿using Amethyst_game_engine.Core.CameraModule;
 using Amethyst_game_engine.Core.GameObjects;
 using Amethyst_game_engine.Core.Managers;
 using Amethyst_game_engine.Core.Render;
@@ -77,6 +76,7 @@ internal partial class EditorWindow : Form
         ShowInTaskbar = false;
         BackColor = Color.FromArgb(0, 0, 1);
         TransparencyKey = Color.FromArgb(0, 0, 1);
+        //Size = new(1600, 1100);
 
         SetStyle(ControlStyles.Selectable, false);
         System.Windows.Forms.Timer timer = new();

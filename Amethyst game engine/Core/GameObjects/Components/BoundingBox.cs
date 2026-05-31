@@ -2,7 +2,7 @@
 
 namespace Amethyst_game_engine.Core.GameObjects.Components;
 
-internal readonly struct BoundingBox(Vector3 min, Vector3 max)
+public readonly struct BoundingBox(Vector3 min, Vector3 max)
 {
     public Vector3 Min { get; } = min;
     public Vector3 Max { get; } = max;

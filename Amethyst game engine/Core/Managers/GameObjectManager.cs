@@ -1,6 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Amethyst_game_engine.Core.CameraModule;
 using Amethyst_game_engine.Core.GameObjects;
-using Amethyst_game_engine.Core.Utilities;
+using Amethyst_game_engine.Core.GameObjects.Components;
+using OpenTK.Mathematics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Amethyst_game_engine.Core.Managers;
 
@@ -69,8 +71,11 @@ public sealed class GameObjectManager: IDisposable
 
     public void AddGameObject(DrawableObject obj)
     {
+        if (_scene is null)
+            return;
+
         _gameObjects.Add(obj);
-        obj.SetScene(_scene!);
+        obj.SetScene(_scene);
         obj.UpdateRenderSettings();
 
         if (_models.Contains(obj.ModelPath) == false)
@@ -81,15 +86,45 @@ public sealed class GameObjectManager: IDisposable
         GameObjectAdded?.Invoke(obj);
     }
 
-    public bool RemoveGameObjectAt(int i)
+    public bool RemoveGameObjectAt(int index)
     {
-        if (i >= 0 && i < _gameObjects.Count)
+        if (index >= 0 && index < _gameObjects.Count)
         {
-            string modelPath = _gameObjects[i].ModelPath;
-            GameObjectRemoved?.Invoke(_gameObjects[i]);
+            string modelPath = _gameObjects[index].ModelPath;
+            GameObjectRemoved?.Invoke(_gameObjects[index]);
 
-            _gameObjects[i].Cleanup();
-            _gameObjects.RemoveAt(i);
+            _gameObjects[index].Cleanup();
+            _gameObjects.RemoveAt(index);
+
+            bool modelStillUsed = _gameObjects.Any(go => go.ModelPath == modelPath);
+
+            if (modelStillUsed == false)
+            {
+                int removedModelPos = _models.IndexOf(modelPath);
+                _models.Remove(modelPath);
+
+                foreach (var remainingObj in _gameObjects)
+                {
+                    if (remainingObj.ModelIndex > removedModelPos)
+                        remainingObj.ModelIndex--;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool RemoveGameObject(DrawableObject obj)
+    {
+        if (_gameObjects.Contains(obj))
+        {
+            string modelPath = obj.ModelPath;
+            GameObjectRemoved?.Invoke(obj);
+
+            obj.Cleanup();
+            _gameObjects.Remove(obj);
 
             bool modelStillUsed = _gameObjects.Any(go => go.ModelPath == modelPath);
 
@@ -126,6 +161,29 @@ public sealed class GameObjectManager: IDisposable
             return _gameObjects[index];
         else
             return null;
+    }
+
+    public DrawableObject? PickObject(float mouseX, float mouseY, int screenWidth, int screenHeight, Camera cam)
+    {
+        DrawableObject? closest = null;
+        float closestDistance = float.MaxValue;
+
+        Vector3 rayOrigin = cam.Position;
+        Vector3 rayDirection = cam.GetPickRay(mouseX, mouseY, screenWidth, screenHeight);
+
+        foreach (var obj in _gameObjects)
+        {
+            if (obj.RayIntersectsAABB(rayOrigin, rayDirection, out float distance))
+            {
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = obj;
+                }
+            }
+        }
+
+        return closest;
     }
 
     public void Clear()

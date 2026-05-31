@@ -95,13 +95,6 @@ public sealed class Transform : IDisposable
         _updateResultMatrix = false;
     }
 
-    public void ModifyObject(Vector3 position, Vector3 rotation, Vector3 scale)
-    {
-        Position = position;
-        Rotation = rotation;
-        Scale = scale;
-    }
-
     public unsafe void Dispose()
     {
         Marshal.FreeHGlobal((nint)_positionMatrix);

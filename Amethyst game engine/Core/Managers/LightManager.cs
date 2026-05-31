@@ -153,13 +153,13 @@ public sealed class LightManager : IDisposable
         return _spotlights.RemoveAll(condition);
     }
 
-    public bool RemoveDirectionalLightAt(int i)
+    public bool RemoveDirectionalLightAt(int index)
     {
-        if (i >= 0 && i < _dirLights.Count)
+        if (index >= 0 && index < _dirLights.Count)
         {
-            DirLightRemoved?.Invoke(_dirLights[i]);
-            _dirLights.RemoveAt(i);
-            _dirLightsManager.RemoveLight(i);
+            DirLightRemoved?.Invoke(_dirLights[index]);
+            _dirLights.RemoveAt(index);
+            _dirLightsManager.RemoveLight(index);
 
             return true;
         }
@@ -167,13 +167,13 @@ public sealed class LightManager : IDisposable
         return false;
     }
 
-    public bool RemovePointLightAt(int i)
+    public bool RemovePointLightAt(int index)
     {
-        if (i >= 0 && i < _pointLights.Count)
+        if (index >= 0 && index < _pointLights.Count)
         {
-            PointLightRemoved?.Invoke(_pointLights[i]);
-            _pointLights.RemoveAt(i);
-            _pointLightsManager.RemoveLight(i);
+            PointLightRemoved?.Invoke(_pointLights[index]);
+            _pointLights.RemoveAt(index);
+            _pointLightsManager.RemoveLight(index);
 
             return true;
         }
@@ -181,13 +181,13 @@ public sealed class LightManager : IDisposable
         return false;
     }
 
-    public bool RemoveSpotlightAt(int i)
+    public bool RemoveSpotlightAt(int index)
     {
-        if (i >= 0 && i < _spotlights.Count)
+        if (index >= 0 && index < _spotlights.Count)
         {
-            SpotlightRemoved?.Invoke(_spotlights[i]);
-            _spotlights.RemoveAt(i);
-            _spotlightsManager.RemoveLight(i);
+            SpotlightRemoved?.Invoke(_spotlights[index]);
+            _spotlights.RemoveAt(index);
+            _spotlightsManager.RemoveLight(index);
 
             return true;
         }
