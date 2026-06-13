@@ -21,7 +21,7 @@ public sealed class Transform : IDisposable
     private readonly unsafe float* _scaleMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
     private readonly unsafe float* _resultMatrix = (float*)Marshal.AllocHGlobal(Mathematics.MATRIX_SIZE);
 
-    internal unsafe BoundingBox Box
+    public unsafe BoundingBox Box
     {
         get => BoundingBox.TransformBox(_localBox, ModelMatrix);
     }

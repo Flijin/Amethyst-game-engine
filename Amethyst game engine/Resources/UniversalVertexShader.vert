@@ -189,6 +189,10 @@ void main(void) {
 	#endif
 
 	#ifdef USE_MESH_MATRIX
+
+	if (aPosition == vec3(-10.0, -1.0, 0.0))
+		float test = metallicRoughnessCoords;
+
 		gl_Position = projectionMatrix * viewMatrix * modelMatrix * meshMatrix * vec4(aPosition, 1.0);
 		#ifndef USE_UNLIT
 			mat4 modelViewMatrix = modelMatrix * meshMatrix;

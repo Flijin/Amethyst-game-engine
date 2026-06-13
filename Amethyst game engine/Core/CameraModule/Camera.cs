@@ -81,7 +81,7 @@ public sealed class Camera : IDisposable
         }
     }
 
-    internal unsafe float* ProjectionMatrix
+    public unsafe float* ProjectionMatrix
     {
         get
         {
@@ -115,7 +115,7 @@ public sealed class Camera : IDisposable
         }
     }
 
-    internal unsafe float* ViewMatrix
+    public unsafe float* ViewMatrix
     {
         get
         {

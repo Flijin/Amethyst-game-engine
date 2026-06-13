@@ -6,7 +6,7 @@ using Numerics = System.Numerics;
 
 namespace Amethyst_game_engine.Core.Utilities;
 
-internal static class Mathematics
+public static class Mathematics
 {
     public const int MATRIX_SIZE = sizeof(float) * 16;
     public static unsafe readonly float* IDENTITY_MATRIX;

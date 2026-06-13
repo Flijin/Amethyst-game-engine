@@ -3,7 +3,7 @@ using Amethyst_game_engine.Core.Render.Settings;
 
 namespace Amethyst_game_engine.Core.Render.Components;
 
-internal sealed class ShaderBuildingProps
+public sealed class ShaderBuildingProps
 {
     public RenderSettings RenderSettings { get; set; }
     public ShadingModels ShadingModel { get; set; }

@@ -280,5 +280,7 @@ void main(void) {
         fragColorVar.rgb += emissive;
     #endif
 
-    fragColor = fragColorVar;
+    //fragColor = fragColorVar;
+    vec4 color = fragColorVar;  
+    fragColor = vec4(tan(color.r), tan(color.g), tan(color.b), 1);
 }

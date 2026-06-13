@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Amethyst_game_engine.Core.Render;
 
-internal sealed class Shader : IDisposable
+public sealed class Shader : IDisposable
 {
     private const int START_WRITE = 16;
 

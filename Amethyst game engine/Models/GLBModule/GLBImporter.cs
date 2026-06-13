@@ -56,15 +56,15 @@ public static class GLBImporter
             return null;
         }
 
-        //try
-        //{
+        try
+        {
             return ReadFile(reader, path, settings);
-        //}
-        //catch (Exception)
-        //{
-        //    SystemCalls.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
-        //    return null;
-        //}
+        }
+        catch (Exception)
+        {
+           SystemCalls.PrintMessage($"Error. GLB-file {path} is invalid", MessageTypes.ErrorMessage);
+           return null;
+        }
     }
 
     private static GLBScene[]? ReadFile(BinaryReader reader, string path, RenderSettings settings)
@@ -421,14 +421,14 @@ public static class GLBImporter
             byte[] result = new byte[elementSize * count];
             
             int step = bufferView.stride - elementSize;
-            int srsOffset = offset;
+            int srcOffset = offset;
             int dstOffset = 0;
 
             for (int i = 0; i < count; i++)
             {
-                bufferView.data.Slice(srsOffset, elementSize).CopyTo(result.AsMemory(dstOffset));
+                bufferView.data.Slice(srcOffset, elementSize).CopyTo(result.AsMemory(dstOffset));
                 dstOffset += elementSize;
-                srsOffset += elementSize + step;
+                srcOffset += elementSize + step;
             }
 
             return result;
